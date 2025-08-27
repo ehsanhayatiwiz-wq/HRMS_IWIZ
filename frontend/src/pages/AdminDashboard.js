@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FiHome, FiUsers, FiClock, FiFileText, FiBarChart2, FiSearch, FiDownload, FiCheck, FiX, FiEdit, FiTrash2, FiEye, FiCalendar, FiUser, FiTrendingUp, FiTrendingDown, FiBell, FiDollarSign } from 'react-icons/fi';
-import axios from 'axios';
+import api from '../services/api';
 import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
@@ -55,9 +55,9 @@ const AdminDashboard = () => {
       
       if (activeSection === 'dashboard') {
         const [adminRes, employeesRes, leavesRes] = await Promise.all([
-          axios.get('/api/dashboard/admin'),
-          axios.get('/api/employees?page=1&limit=10'),
-          axios.get('/api/leaves/all?page=1&limit=20&status=pending')
+          api.get('/dashboard/admin'),
+          api.get('/employees?page=1&limit=10'),
+          api.get('/leaves/all?page=1&limit=20&status=pending')
         ]);
 
         const s = adminRes.data?.data?.employeeStats || {};
@@ -69,13 +69,13 @@ const AdminDashboard = () => {
           attendanceRate: s.attendanceRate || 0,
           onLeaveToday: s.onLeaveEmployees || 0
         });
-        setEmployees(employeesRes.data.data.employees);
-        setLeaveRequests(leavesRes.data.data.leaves);
+        setEmployees(employeesRes.data?.data?.employees || []);
+        setLeaveRequests(leavesRes.data?.data?.leaves || []);
       } else if (activeSection === 'employees') {
         try {
-          const response = await axios.get(`/api/employees?page=${currentPage}&limit=20&search=${searchTerm}&department=${filterDepartment}`);
-          setEmployees(response.data.data.employees);
-          setTotalPages(response.data.data.pagination.totalPages);
+          const response = await api.get(`/employees?page=${currentPage}&limit=20&search=${searchTerm}&department=${filterDepartment}`);
+          setEmployees(response.data?.data?.employees || []);
+          setTotalPages(response.data?.data?.pagination?.totalPages || 1);
         } catch (error) {
           console.error('Error fetching employees:', error);
           toast.error('Failed to load employees data');
@@ -84,9 +84,9 @@ const AdminDashboard = () => {
         }
       } else if (activeSection === 'attendance') {
         try {
-          const response = await axios.get(`/api/attendance/all?page=${currentPage}&limit=20&date=${selectedDate}`);
-          setAttendanceRecords(response.data.data.attendance);
-          setTotalPages(response.data.data.pagination.totalPages);
+          const response = await api.get(`/attendance/all?page=${currentPage}&limit=20&date=${selectedDate}`);
+          setAttendanceRecords(response.data?.data?.attendance || []);
+          setTotalPages(response.data?.data?.pagination?.totalPages || 1);
         } catch (error) {
           console.error('Error fetching attendance:', error);
           toast.error('Failed to load attendance data');
@@ -95,9 +95,9 @@ const AdminDashboard = () => {
         }
       } else if (activeSection === 'leaves') {
         try {
-          const response = await axios.get(`/api/leaves/all?page=${currentPage}&limit=20&status=${filterStatus}`);
-          setLeaveRequests(response.data.data.leaves);
-          setTotalPages(response.data.data.pagination.totalPages);
+          const response = await api.get(`/leaves/all?page=${currentPage}&limit=20&status=${filterStatus}`);
+          setLeaveRequests(response.data?.data?.leaves || []);
+          setTotalPages(response.data?.data?.pagination?.totalPages || 1);
         } catch (error) {
           console.error('Error fetching leaves:', error);
           toast.error('Failed to load leave data');
@@ -178,7 +178,7 @@ const AdminDashboard = () => {
   const handleApproveLeave = async (leaveId) => {
     try {
       const leave = leaveRequests.find(l => l.id === leaveId);
-      await axios.put(`/api/leaves/${leaveId}/approve`, {
+      await api.put(`/leaves/${leaveId}/approve`, {
         notes: 'Approved by admin'
       });
       toast.success('Leave request approved successfully!');
@@ -205,7 +205,7 @@ const AdminDashboard = () => {
     
     try {
       const leave = leaveRequests.find(l => l.id === leaveId);
-      await axios.put(`/api/leaves/${leaveId}/reject`, {
+      await api.put(`/leaves/${leaveId}/reject`, {
         rejectionReason: reason
       });
       toast.success('Leave request rejected successfully!');
@@ -244,7 +244,7 @@ const AdminDashboard = () => {
   const handleDeleteEmployee = async (employeeId) => {
     if (window.confirm('Are you sure you want to delete this employee? This action cannot be undone.')) {
       try {
-        await axios.delete(`/api/employees/${employeeId}`);
+        await api.delete(`/employees/${employeeId}`);
         toast.success('Employee deleted successfully');
         fetchDashboardData();
       } catch (error) {
@@ -256,7 +256,7 @@ const AdminDashboard = () => {
   const handleSaveEmployee = async (employeeData) => {
     try {
       if (editingEmployee) {
-        await axios.put(`/api/employees/${editingEmployee.id}`, employeeData);
+        await api.put(`/employees/${editingEmployee.id}`, employeeData);
         toast.success('Employee updated successfully');
       } else {
         // Always use manual creation with admin-set temporary password
@@ -272,7 +272,7 @@ const AdminDashboard = () => {
           address: employeeData.address,
           leaveBalance: employeeData.leaveBalance
         };
-        await axios.post('/api/employees', payload);
+        await api.post('/employees', payload);
         toast.success('Employee created successfully');
       }
       setShowEmployeeModal(false);
@@ -286,7 +286,7 @@ const AdminDashboard = () => {
   const downloadAttendanceReport = async () => {
     try {
       // Align with backend reports endpoint; use the same date for start and end
-      const response = await axios.get(`/api/reports/attendance/csv?startDate=${selectedDate}&endDate=${selectedDate}`, {
+      const response = await api.get(`/reports/attendance/csv?startDate=${selectedDate}&endDate=${selectedDate}`, {
         responseType: 'blob'
       });
       
@@ -309,7 +309,7 @@ const AdminDashboard = () => {
       // Align with backend reports endpoint; export across a wide date range
       const startDate = '1970-01-01';
       const endDate = new Date().toISOString().slice(0, 10);
-      const response = await axios.get(`/api/reports/leaves/csv?startDate=${startDate}&endDate=${endDate}` + (filterStatus ? `&status=${filterStatus}` : ''), {
+      const response = await api.get(`/reports/leaves/csv?startDate=${startDate}&endDate=${endDate}` + (filterStatus ? `&status=${filterStatus}` : ''), {
         responseType: 'blob'
       });
       
