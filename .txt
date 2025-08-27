@@ -11,3 +11,9 @@ versal frontend
 now make me new environment variables 
 
 also update the env.examples i will update the envs myself
+
+
+
+
+id: irtazamadadnaqvi@iwiz.com
+pass: 03145372506

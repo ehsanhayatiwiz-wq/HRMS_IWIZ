@@ -23,9 +23,16 @@ async function getNextAdminId() {
 }
 
 async function run() {
-  const email = 'irtazamira@gmail.com';
-  const password = '123456';
-  const fullName = 'Irtaza Mira';
+  const email = process.env.ADMIN_EMAIL;
+  const password = process.env.ADMIN_PASSWORD;
+  const fullName = process.env.ADMIN_NAME || 'System Administrator';
+
+  if (!email || !password) {
+    console.error('❌ ADMIN_EMAIL and ADMIN_PASSWORD must be provided as environment variables');
+    console.error('   Example (Render Shell):');
+    console.error('   ADMIN_EMAIL="admin@example.com" ADMIN_PASSWORD="yourpassword" ADMIN_NAME="Failsafe Admin" node scripts/create-admin.js');
+    process.exit(1);
+  }
 
   try {
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/iwiz-hrms');
@@ -39,7 +46,7 @@ async function run() {
       // const salt = await bcrypt.genSalt(12);
       // const hashed = await bcrypt.hash(password, salt);
       // Use updateOne to bypass pre-save hooks
-      await Admin.updateOne({ email }, { password: password });
+      await Admin.updateOne({ email }, { password: password, fullName });
       console.log('🎉 Admin password updated successfully');
       console.log('Email:', email);
       console.log('Password:', password);
