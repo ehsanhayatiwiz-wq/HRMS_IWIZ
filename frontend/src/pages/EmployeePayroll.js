@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FiDownload, FiCalendar, FiEye } from 'react-icons/fi';
-import axios from 'axios';
+import api from '../services/api';
 import { toast } from 'react-toastify';
 import moment from 'moment';
 import { useAuth } from '../contexts/AuthContext';
@@ -19,7 +19,7 @@ const EmployeePayroll = () => {
   const fetchPayrollData = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`/api/payroll/${user.id}?page=${currentPage}&limit=12`);
+      const response = await api.get(`/payroll/${user.id}?page=${currentPage}&limit=12`);
       setPayrolls(response.data.data.payrolls);
       setTotalPages(response.data.data.pagination.totalPages);
     } catch (error) {
@@ -36,7 +36,7 @@ const EmployeePayroll = () => {
 
   const downloadSalarySlip = async (payrollId) => {
     try {
-      const response = await axios.get(`/api/payroll/${payrollId}/download`, {
+      const response = await api.get(`/payroll/${payrollId}/download`, {
         responseType: 'blob'
       });
       

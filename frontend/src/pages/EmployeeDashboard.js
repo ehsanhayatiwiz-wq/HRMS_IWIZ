@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FiClock, FiCalendar, FiTrendingUp, FiActivity, FiBell, FiCheck, FiX } from 'react-icons/fi';
-import axios from 'axios';
+import api from '../services/api';
 import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts';
@@ -27,10 +27,10 @@ const EmployeeDashboard = () => {
   const fetchDashboardData = useCallback(async () => {
     try {
       const [dashRes, todayRes] = await Promise.all([
-        axios.get('/api/dashboard/employee'),
-        axios.get('/api/attendance/today')
+        api.get('/dashboard/employee'),
+        api.get('/attendance/today')
       ]);
-      setDashboardData(dashRes.data.data);
+      setDashboardData(dashRes.data?.data || {});
       if (todayRes?.data?.data) {
         setTodayStatus({
           canCheckIn: todayRes.data.data.canCheckIn,
@@ -42,7 +42,7 @@ const EmployeeDashboard = () => {
       }
       
       // Check for new leave status updates and create notifications
-      const recentLeaves = dashRes.data.data.recentLeaves || [];
+      const recentLeaves = dashRes.data?.data?.recentLeaves || [];
       // Generate notifications for any approved/rejected leaves that are not yet in context
       recentLeaves.forEach(leave => {
         if (leave.status === 'approved' || leave.status === 'rejected') {
@@ -105,7 +105,7 @@ const EmployeeDashboard = () => {
   const handleCheckIn = async () => {
     setCheckInLoading(true);
     try {
-      await axios.post('/api/attendance/checkin');
+      await api.post('/attendance/checkin');
       toast.success('Check-in successful!');
       fetchDashboardData(); // Refresh data and action flags
     } catch (error) {
@@ -119,7 +119,7 @@ const EmployeeDashboard = () => {
   const handleCheckOut = async () => {
     setCheckOutLoading(true);
     try {
-      await axios.post('/api/attendance/checkout');
+      await api.post('/attendance/checkout');
       toast.success('Check-out successful!');
       fetchDashboardData();
     } catch (error) {
@@ -133,7 +133,7 @@ const EmployeeDashboard = () => {
   const handleReCheckIn = async () => {
     setReCheckInLoading(true);
     try {
-      await axios.post('/api/attendance/re-checkin');
+      await api.post('/attendance/re-checkin');
       toast.success('Re-check-in successful!');
       fetchDashboardData();
     } catch (error) {
@@ -147,7 +147,7 @@ const EmployeeDashboard = () => {
   const handleReCheckOut = async () => {
     setReCheckOutLoading(true);
     try {
-      await axios.post('/api/attendance/re-checkout');
+      await api.post('/attendance/re-checkout');
       toast.success('Re-check-out successful!');
       fetchDashboardData();
     } catch (error) {

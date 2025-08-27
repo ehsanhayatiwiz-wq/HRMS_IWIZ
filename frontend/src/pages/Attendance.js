@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { toast } from 'react-toastify';
 // moment.js removed - using native Date methods
 import { FiClock, FiCheckCircle, FiXCircle, FiCalendar, FiTrendingUp, FiRefreshCw } from 'react-icons/fi';
@@ -26,8 +26,8 @@ const Attendance = () => {
     try {
       setLoading(true);
       const [todayRes, historyRes] = await Promise.all([
-        axios.get('/api/attendance/today'),
-        axios.get('/api/attendance/history?page=1&limit=10')
+        api.get('/attendance/today'),
+        api.get('/attendance/history?page=1&limit=10')
       ]);
 
       const todayData = todayRes.data.data;
@@ -48,7 +48,7 @@ const Attendance = () => {
   const handleCheckIn = async () => {
     try {
       setCheckingIn(true);
-      await axios.post('/api/attendance/checkin');
+      await api.post('/attendance/checkin');
       toast.success('Check-in successful!');
       fetchAttendanceData();
     } catch (error) {
@@ -62,7 +62,7 @@ const Attendance = () => {
   const handleCheckOut = async () => {
     try {
       setCheckingOut(true);
-      await axios.post('/api/attendance/checkout');
+      await api.post('/attendance/checkout');
       toast.success('Check-out successful!');
       fetchAttendanceData();
     } catch (error) {
@@ -76,7 +76,7 @@ const Attendance = () => {
   const handleReCheckIn = async () => {
     try {
       setReCheckingIn(true);
-      await axios.post('/api/attendance/re-checkin');
+      await api.post('/attendance/re-checkin');
       toast.success('Re-check-in successful!');
       fetchAttendanceData();
     } catch (error) {
@@ -90,7 +90,7 @@ const Attendance = () => {
   const handleReCheckOut = async () => {
     try {
       setReCheckingOut(true);
-      await axios.post('/api/attendance/re-checkout');
+      await api.post('/attendance/re-checkout');
       toast.success('Re-check-out successful!');
       fetchAttendanceData();
     } catch (error) {

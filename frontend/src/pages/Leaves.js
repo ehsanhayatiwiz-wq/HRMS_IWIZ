@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts';
-import axios from 'axios';
+import api from '../services/api';
 import { toast } from 'react-toastify';
 import moment from 'moment';
 import { FiCalendar, FiFileText, FiPlus } from 'react-icons/fi';
@@ -29,7 +29,7 @@ const Leaves = () => {
   const fetchLeaveHistory = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/leaves/my-leaves');
+      const response = await api.get('/leaves/my-leaves');
       setLeaveHistory(response.data.data.leaves);
     } catch (error) {
       console.error('Error fetching leave history:', error);
@@ -97,9 +97,9 @@ const Leaves = () => {
       };
 
       console.log('Submitting leave request:', requestData);
-      console.log('API endpoint:', '/api/leaves/request');
+      console.log('API endpoint:', '/leaves/request');
 
-      const response = await axios.post('/api/leaves/request', requestData);
+      const response = await api.post('/leaves/request', requestData);
       
       console.log('Leave submission response:', response.data);
       
