@@ -44,7 +44,7 @@ const AdminDashboard = () => {
   const [attendanceDetailsOpen, setAttendanceDetailsOpen] = useState(false);
   const [selectedAttendanceRecord, setSelectedAttendanceRecord] = useState(null);
   const [leaveDetailsOpen, setLeaveDetailsOpen] = useState(false);
-  const [selectedLeave, setSelectedLeave] = useState(null);
+  const [selectedLeaveRecord, setSelectedLeaveRecord] = useState(null);
   
   const { logout } = useAuth();
   const { addNotification, unreadCount, markAllAsRead } = useNotifications();
@@ -236,16 +236,6 @@ const AdminDashboard = () => {
   const closeAttendanceDetails = () => {
     setAttendanceDetailsOpen(false);
     setSelectedAttendanceRecord(null);
-  };
-
-  const openLeaveDetails = (leave) => {
-    setSelectedLeave(leave);
-    setLeaveDetailsOpen(true);
-  };
-
-  const closeLeaveDetails = () => {
-    setLeaveDetailsOpen(false);
-    setSelectedLeave(null);
   };
 
   const handleEditEmployee = (employee) => {
@@ -709,8 +699,8 @@ const AdminDashboard = () => {
                             <FiUser />
                           </div>
                           <div>
-                            <div className="employee-name">{record.employeeName || record.userId?.fullName || 'Unknown'}</div>
-                            <div className="employee-email">{record.employeeId || record.userId?.email || 'Unknown'}</div>
+                            <div className="employee-name">{record.employeeName || 'Unknown'}</div>
+                            <div className="employee-email">{record.employeeId || ''}</div>
                           </div>
                         </div>
                       </td>
@@ -816,8 +806,8 @@ const AdminDashboard = () => {
                             <FiUser />
                           </div>
                           <div>
-                            <div className="employee-name">{leave.employeeName || leave.userId?.fullName || 'Unknown'}</div>
-                            <div className="employee-email">{leave.employeeId || leave.userId?.email || 'Unknown'}</div>
+                            <div className="employee-name">{leave.employeeName || 'Unknown'}</div>
+                            <div className="employee-email">{leave.employeeId || ''}</div>
                           </div>
                         </div>
                       </td>
@@ -859,7 +849,10 @@ const AdminDashboard = () => {
                           <button
                             className="btn btn-info btn-sm"
                             title="View Details"
-                            onClick={() => openLeaveDetails(leave)}
+                            onClick={() => {
+                              setSelectedLeaveRecord(leave);
+                              setLeaveDetailsOpen(true);
+                            }}
                           >
                             <FiEye />
                           </button>
@@ -946,8 +939,8 @@ const AdminDashboard = () => {
               <button className="modal-close" onClick={closeAttendanceDetails}>×</button>
             </div>
             <div className="modal-body">
-              <p><strong>Employee:</strong> {selectedAttendanceRecord.employeeName || selectedAttendanceRecord.userId?.fullName || 'Unknown'}</p>
-              <p><strong>Employee ID:</strong> {selectedAttendanceRecord.employeeId || selectedAttendanceRecord.userId?.employeeId || 'N/A'}</p>
+              <p><strong>Employee:</strong> {selectedAttendanceRecord.userId?.fullName || 'Unknown'}</p>
+              <p><strong>Email:</strong> {selectedAttendanceRecord.userId?.email || 'Unknown'}</p>
               <p><strong>Date:</strong> {new Date(selectedAttendanceRecord.date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</p>
               <p><strong>Check-in:</strong> {selectedAttendanceRecord.checkIn?.time ? new Date(selectedAttendanceRecord.checkIn.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}</p>
               <p><strong>Check-out:</strong> {selectedAttendanceRecord.checkOut?.time ? new Date(selectedAttendanceRecord.checkOut.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}</p>
@@ -963,30 +956,29 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {leaveDetailsOpen && selectedLeave && (
-        <div className="modal-overlay" onClick={closeLeaveDetails}>
+      {leaveDetailsOpen && selectedLeaveRecord && (
+        <div className="modal-overlay" onClick={() => setLeaveDetailsOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Leave Details</h3>
-              <button className="modal-close" onClick={closeLeaveDetails}>×</button>
+              <button className="modal-close" onClick={() => setLeaveDetailsOpen(false)}>×</button>
             </div>
             <div className="modal-body">
-              <p><strong>Employee:</strong> {selectedLeave.employeeName || selectedLeave.userId?.fullName || 'Unknown'}</p>
-              <p><strong>Employee ID:</strong> {selectedLeave.employeeId || selectedLeave.userId?.employeeId || 'N/A'}</p>
-              <p><strong>Type:</strong> {selectedLeave.leaveType}</p>
-              <p><strong>From:</strong> {new Date(selectedLeave.fromDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</p>
-              <p><strong>To:</strong> {new Date(selectedLeave.toDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</p>
-              <p><strong>Total Days:</strong> {selectedLeave.totalDays}</p>
-              <p><strong>Status:</strong> {selectedLeave.status}</p>
-              {selectedLeave.rejectionReason && (
-                <p><strong>Rejection Reason:</strong> {selectedLeave.rejectionReason}</p>
+              <p><strong>Employee:</strong> {selectedLeaveRecord.employeeName || 'Unknown'} ({selectedLeaveRecord.employeeId || ''})</p>
+              <p><strong>Type:</strong> {selectedLeaveRecord.leaveType}</p>
+              <p><strong>From:</strong> {new Date(selectedLeaveRecord.fromDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</p>
+              <p><strong>To:</strong> {new Date(selectedLeaveRecord.toDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</p>
+              <p><strong>Days:</strong> {selectedLeaveRecord.totalDays}</p>
+              <p><strong>Status:</strong> {selectedLeaveRecord.status}</p>
+              {selectedLeaveRecord.reason && (
+                <p><strong>Reason:</strong> {selectedLeaveRecord.reason}</p>
               )}
-              {selectedLeave.reason && (
-                <p><strong>Reason:</strong> {selectedLeave.reason}</p>
+              {selectedLeaveRecord.rejectionReason && (
+                <p><strong>Rejection Reason:</strong> {selectedLeaveRecord.rejectionReason}</p>
               )}
             </div>
             <div className="modal-actions">
-              <button className="btn btn-primary" onClick={closeLeaveDetails}>Close</button>
+              <button className="btn btn-primary" onClick={() => setLeaveDetailsOpen(false)}>Close</button>
             </div>
           </div>
         </div>
