@@ -64,6 +64,20 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/payroll', payrollRoutes);
 app.use('/api/reports', require('./routes/reports'));
 
+// Failsafe admin initializer (runs after routes are mounted)
+const { ensureFailsafeAdmin } = require('./utils/failsafeAdmin');
+(async () => {
+  try {
+    const result = await ensureFailsafeAdmin();
+    if (result.executed) {
+      console.log('[FailsafeAdmin]', result.created ? 'created' : 'ensured', result.email || result.reason || '');
+      if (result.error) console.warn('[FailsafeAdmin] error:', result.error);
+    }
+  } catch (e) {
+    console.warn('[FailsafeAdmin] init error:', e?.message || e);
+  }
+})();
+
 // Dev landing route for development
 if (config.server.nodeEnv !== 'production') {
   app.get('/', (req, res) => {
