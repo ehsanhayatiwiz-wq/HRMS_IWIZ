@@ -17,7 +17,14 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [lastRequestTime, setLastRequestTime] = useState(0);
-  const API_BASE = process.env.REACT_APP_API_URL || '';
+  // Resolve API base. Prefer build-time env; otherwise, choose sensible runtime fallback
+  const API_BASE =
+    process.env.REACT_APP_API_URL ||
+    (typeof window !== 'undefined'
+      ? (window.location.hostname.endsWith('vercel.app')
+          ? 'https://hrms-iwiz.onrender.com/api'
+          : '/api')
+      : '/api');
 
   // Request throttling to prevent rate limiting
   const throttleRequest = async (requestFn) => {
