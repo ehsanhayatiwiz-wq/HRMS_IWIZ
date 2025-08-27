@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import api from '../services/api';
 import { toast } from 'react-toastify';
 
 const AuthContext = createContext();
@@ -55,7 +56,7 @@ export const AuthProvider = ({ children }) => {
   const testBackendConnection = async () => {
     try {
       console.log('Testing backend connection...');
-      const response = await axios.get(`${API_BASE}/auth/test`, { 
+      const response = await api.get('/auth/test', { 
         timeout: 5000,
         headers: {
           'Cache-Control': 'no-cache',
@@ -86,7 +87,7 @@ export const AuthProvider = ({ children }) => {
     const checkAuth = async () => {
       if (token) {
         try {
-          const response = await axios.get(`${API_BASE}/auth/me`);
+          const response = await api.get('/auth/me');
           setUser(response.data.data.user);
         } catch (error) {
           console.error('Auth check failed:', error);
@@ -129,7 +130,7 @@ export const AuthProvider = ({ children }) => {
       
       const response = await throttleRequest(async () => {
         return await retryWithBackoff(async () => {
-          return await axios.post(`${API_BASE}/auth/login`, payload);
+          return await api.post('/auth/login', payload);
         });
       });
       
@@ -199,7 +200,7 @@ export const AuthProvider = ({ children }) => {
       
       const response = await throttleRequest(async () => {
         return await retryWithBackoff(async () => {
-          return await axios.post(`${API_BASE}/auth/register`, payload);
+          return await api.post('/auth/register', payload);
         });
       });
       
@@ -270,7 +271,7 @@ export const AuthProvider = ({ children }) => {
 
   const updateProfile = async (profileData) => {
     try {
-      const response = await axios.put(`${API_BASE}/auth/profile`, profileData);
+      const response = await api.put('/auth/profile', profileData);
       setUser(response.data.data.user);
       toast.success('Profile updated successfully!');
       return { success: true };
@@ -283,7 +284,7 @@ export const AuthProvider = ({ children }) => {
 
   const changePassword = async (currentPassword, newPassword) => {
     try {
-      await axios.post(`${API_BASE}/auth/change-password`, {
+      await api.post('/auth/change-password', {
         currentPassword,
         newPassword
       });

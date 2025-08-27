@@ -151,22 +151,21 @@ const employeeSchema = new mongoose.Schema({
 // employeeSchema.index({ department: 1 });
 // employeeSchema.index({ status: 1 });
 
-// Hash password before saving
-employeeSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  
-  try {
-    const salt = await bcrypt.genSalt(12);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error);
-  }
-});
+// TEMPORARILY DISABLED: Hash password before saving (store plain text for testing)
+// employeeSchema.pre('save', async function(next) {
+//   if (!this.isModified('password')) return next();
+//   try {
+//     const salt = await bcrypt.genSalt(12);
+//     this.password = await bcrypt.hash(this.password, salt);
+//     next();
+//   } catch (error) {
+//     next(error);
+//   }
+// });
 
-// Compare password method
+// TEMPORARILY DISABLED: Compare password using bcrypt (use plain-text for testing)
 employeeSchema.methods.comparePassword = async function(candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
+  return candidatePassword === this.password;
 };
 
 // Generate employee ID
