@@ -1,0 +1,506 @@
+/* Login/Register Container */
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Login Card */
+.login-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 40px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+}
+
+/* Header */
+.login-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.logo-icon {
+  font-size: 32px;
+  color: #667eea;
+}
+
+.login-header h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #2d3748;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.login-subtitle {
+  margin: 0;
+  color: #718096;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* General Error */
+.general-error {
+  background: rgba(245, 101, 101, 0.1);
+  border: 1px solid rgba(245, 101, 101, 0.2);
+  color: #e53e3e;
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Form */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-label {
+  margin-bottom: 8px;
+  color: #2d3748;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Input Wrapper */
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 16px;
+  color: #a0aec0;
+  font-size: 18px;
+  z-index: 2;
+}
+
+.form-input {
+  width: 100%;
+  padding: 14px 16px 14px 48px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background: white;
+  color: #2d3748;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-input.error {
+  border-color: #f56565;
+  box-shadow: 0 0 0 3px rgba(245, 101, 101, 0.1);
+}
+
+.form-input:disabled {
+  background: #f7fafc;
+  color: #a0aec0;
+  cursor: not-allowed;
+}
+
+.form-input::placeholder {
+  color: #a0aec0;
+}
+
+/* Password Toggle */
+.password-toggle {
+  position: absolute;
+  right: 16px;
+  background: none;
+  border: none;
+  color: #a0aec0;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+
+.password-toggle:hover {
+  color: #718096;
+  background: rgba(160, 174, 192, 0.1);
+}
+
+.password-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Role Selector */
+.role-selector {
+  position: relative;
+}
+
+.role-selector-btn {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  color: #2d3748;
+}
+
+.role-selector-btn:hover {
+  border-color: #cbd5e0;
+}
+
+.role-selector-btn.active {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.role-selector-btn.error {
+  border-color: #f56565;
+  box-shadow: 0 0 0 3px rgba(245, 101, 101, 0.1);
+}
+
+.role-selector-btn:disabled {
+  background: #f7fafc;
+  color: #a0aec0;
+  cursor: not-allowed;
+}
+
+.role-icon {
+  font-size: 20px;
+  margin-right: 12px;
+}
+
+.role-text {
+  flex: 1;
+  text-align: left;
+}
+
+.dropdown-icon {
+  color: #a0aec0;
+  transition: transform 0.2s ease;
+}
+
+.dropdown-icon.rotated {
+  transform: rotate(180deg);
+}
+
+/* Role Dropdown */
+.role-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.role-option {
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: white;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  color: #2d3748;
+}
+
+.role-option:hover {
+  background: #f7fafc;
+}
+
+.role-option.selected {
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+  font-weight: 600;
+}
+
+/* Error Messages */
+.error-message {
+  color: #f56565;
+  font-size: 12px;
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+/* Submit Button */
+.login-btn {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.login-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.login-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Loading Spinner */
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Footer */
+.login-footer {
+  text-align: center;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.login-footer p {
+  margin: 0;
+  color: #718096;
+  font-size: 14px;
+}
+
+.register-link {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.register-link:hover {
+  color: #5a67d8;
+  text-decoration: underline;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .login-container {
+    padding: 16px;
+  }
+  
+  .login-card {
+    padding: 32px 24px;
+    border-radius: 20px;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .login-header h1 {
+    font-size: 24px;
+  }
+  
+  .logo-icon {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-card {
+    padding: 24px 20px;
+  }
+  
+  .login-header h1 {
+    font-size: 22px;
+  }
+  
+  .form-label {
+    font-size: 13px;
+  }
+  
+  .form-input {
+    padding: 12px 14px 12px 44px;
+    font-size: 13px;
+  }
+  
+  .input-icon {
+    font-size: 16px;
+    left: 14px;
+  }
+  
+  .password-toggle {
+    right: 14px;
+  }
+}
+
+/* Enhanced Focus States */
+.form-input:focus,
+.role-selector-btn:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .form-input,
+  .login-btn,
+  .role-selector-btn,
+  .dropdown-icon {
+    transition: none;
+  }
+  
+  .spinner {
+    animation: none;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .form-input {
+    border-width: 3px;
+  }
+  
+  .login-btn {
+    border: 2px solid white;
+  }
+}
+
+/* Scoped input/icon fixes to prevent overlap */
+.login-card .input-wrapper {
+  position: relative;
+}
+
+.login-card .input-wrapper .input-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #a0aec0;
+  font-size: 18px;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* Ensure inputs and selects inside auth forms have enough left padding for icons */
+.login-card .input-wrapper input.form-input,
+.login-card .input-wrapper select.form-input,
+.login-card .form-input {
+  padding-left: 48px !important;
+}
+
+/* Ensure dropdown overlays within the card render above other elements */
+.login-card .role-dropdown {
+  z-index: 20;
+}
+
+/* Test Connection Button */
+.test-connection-btn {
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 12px;
+}
+
+.test-connection-btn:hover {
+  background: rgba(102, 126, 234, 0.2);
+  border-color: rgba(102, 126, 234, 0.5);
+}
+
+/* Throttling Message */
+.throttling-message {
+  background: rgba(237, 137, 54, 0.1);
+  border: 1px solid rgba(237, 137, 54, 0.2);
+  color: #dd6b20;
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}

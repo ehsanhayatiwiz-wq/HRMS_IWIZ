@@ -1,0 +1,511 @@
+.employee-payroll {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.page-header h2 {
+  color: #2c3e50;
+  margin-bottom: 10px;
+  font-size: 2rem;
+}
+
+.page-header p {
+  color: #7f8c8d;
+  font-size: 1.1rem;
+}
+
+.loading {
+  text-align: center;
+  padding: 60px;
+  color: #7f8c8d;
+  font-size: 1.2rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #7f8c8d;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  color: #bdc3c7;
+  margin-bottom: 20px;
+}
+
+.empty-state h3 {
+  color: #2c3e50;
+  margin-bottom: 10px;
+  font-size: 1.5rem;
+}
+
+.empty-state p {
+  font-size: 1.1rem;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* Payroll Content */
+.payroll-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.payroll-list {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.list-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #ecf0f1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.list-header h3 {
+  color: #2c3e50;
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.list-header p {
+  color: #7f8c8d;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* Payroll Cards */
+.payroll-cards {
+  padding: 20px;
+  display: grid;
+  gap: 20px;
+}
+
+.payroll-card {
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.payroll-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  background: white;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.month-year {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.month-year svg {
+  color: #3498db;
+}
+
+.status-indicator {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: white;
+  text-transform: capitalize;
+}
+
+.card-body {
+  padding: 20px;
+}
+
+.salary-info {
+  margin-bottom: 20px;
+}
+
+.net-pay {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: white;
+  border-radius: 8px;
+  border-left: 4px solid #27ae60;
+}
+
+.net-pay .label {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.net-pay .amount {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #27ae60;
+}
+
+.salary-breakdown {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.breakdown-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.breakdown-item span:first-child {
+  color: #7f8c8d;
+}
+
+.breakdown-item span:last-child {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.breakdown-item.overtime span:last-child {
+  color: #e67e22;
+}
+
+.attendance-summary {
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+}
+
+.attendance-summary h4 {
+  color: #2c3e50;
+  margin: 0 0 12px 0;
+  font-size: 1rem;
+}
+
+.attendance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.attendance-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.attendance-item span:first-child {
+  color: #7f8c8d;
+}
+
+.attendance-item span:last-child {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.card-actions {
+  padding: 16px 20px;
+  background: white;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+/* Buttons */
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.btn-primary {
+  background: #3498db;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #2980b9;
+}
+
+.btn-secondary {
+  background: #95a5a6;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #7f8c8d;
+}
+
+.btn-info {
+  background: #17a2b8;
+  color: white;
+}
+
+.btn-info:hover {
+  background: #138496;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  border-top: 1px solid #ecf0f1;
+}
+
+.page-info {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #ecf0f1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  color: #2c3e50;
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #7f8c8d;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.3s ease;
+}
+
+.modal-close:hover {
+  background: #f8f9fa;
+  color: #2c3e50;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.details-section {
+  margin-bottom: 24px;
+}
+
+.details-section h4 {
+  color: #2c3e50;
+  margin: 0 0 16px 0;
+  font-size: 1.1rem;
+  border-bottom: 2px solid #ecf0f1;
+  padding-bottom: 8px;
+}
+
+.details-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.detail-item span:first-child {
+  color: #7f8c8d;
+}
+
+.detail-item span:last-child {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.detail-item.total {
+  background: #e8f5e8;
+  font-weight: 600;
+}
+
+.detail-item.total span:last-child {
+  color: #27ae60;
+}
+
+.final-calculation {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  border: 2px solid #ecf0f1;
+}
+
+.calculation-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 0.9rem;
+}
+
+.calculation-item span:first-child {
+  color: #7f8c8d;
+}
+
+.calculation-item span:last-child {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.calculation-item.final {
+  border-top: 2px solid #ecf0f1;
+  margin-top: 8px;
+  padding-top: 12px;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.calculation-item.final span:last-child {
+  color: #27ae60;
+  font-size: 1.2rem;
+}
+
+.modal-footer {
+  padding: 20px 24px;
+  border-top: 1px solid #ecf0f1;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .employee-payroll {
+    padding: 15px;
+  }
+  
+  .list-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .salary-breakdown {
+    grid-template-columns: 1fr;
+  }
+  
+  .attendance-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .card-actions {
+    flex-direction: column;
+  }
+  
+  .modal-content {
+    margin: 10px;
+    max-height: 95vh;
+  }
+  
+  .modal-footer {
+    flex-direction: column;
+  }
+  
+  .pagination {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .attendance-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .card-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .month-year {
+    justify-content: center;
+  }
+  
+  .status-indicator {
+    align-self: center;
+    width: fit-content;
+  }
+}

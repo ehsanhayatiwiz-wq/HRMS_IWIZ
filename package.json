@@ -1,0 +1,31 @@
+{
+  "name": "iwiz-hrms",
+  "version": "1.0.0",
+  "description": "IWIZ Human Resource Management System",
+  "main": "index.js",
+  "scripts": {
+    "setup": "node setup.js",
+    "install-all": "npm install && cd frontend && npm install && cd ../backend && npm install",
+    "dev": "concurrently \"cd backend && npm run dev\" \"cd frontend && npm start\"",
+    "start": "cd backend && npm start",
+    "build": "cd frontend && npm run build",
+    "create-admin": "cd backend && npm run create-admin"
+  },
+  "keywords": [
+    "hrms",
+    "human-resources",
+    "management",
+    "nodejs",
+    "react",
+    "mongodb"
+  ],
+  "author": "IWIZ Company",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "workspaces": [
+    "backend",
+    "frontend"
+  ]
+}
