@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FiDollarSign, FiDownload, FiCalendar, FiUsers, FiBarChart2, FiCheck, FiRefreshCw } from 'react-icons/fi';
-import axios from 'axios';
+import api from '../services/api';
 import { toast } from 'react-toastify';
 import moment from 'moment';
 import './Payroll.css';
@@ -22,17 +22,17 @@ const Payroll = () => {
       
       if (activeTab === 'overview') {
         const [payrollsRes, summaryRes] = await Promise.all([
-          axios.get(`/api/payroll/all?page=${currentPage}&limit=10&month=${moment(selectedMonth).month() + 1}&year=${selectedYear}`),
-          axios.get(`/api/payroll/reports/summary?month=${moment(selectedMonth).month() + 1}&year=${selectedYear}`)
+          api.get(`/payroll/all?page=${currentPage}&limit=10&month=${moment(selectedMonth).month() + 1}&year=${selectedYear}`),
+          api.get(`/payroll/reports/summary?month=${moment(selectedMonth).month() + 1}&year=${selectedYear}`)
         ]);
         
-        setPayrolls(payrollsRes.data.data.payrolls);
-        setTotalPages(payrollsRes.data.data.pagination.totalPages);
-        setSummary(summaryRes.data.data.summary);
+        setPayrolls(payrollsRes.data?.data?.payrolls || []);
+        setTotalPages(payrollsRes.data?.data?.pagination?.totalPages || 1);
+        setSummary(summaryRes.data?.data?.summary || {});
       } else if (activeTab === 'generate') {
         // Fetch recent payrolls for reference
-        const response = await axios.get('/api/payroll/all?page=1&limit=5');
-        setPayrolls(response.data.data.payrolls);
+        const response = await api.get('/payroll/all?page=1&limit=5');
+        setPayrolls(response.data?.data?.payrolls || []);
       }
     } catch (error) {
       console.error('Error fetching payroll data:', error);
@@ -52,7 +52,7 @@ const Payroll = () => {
       const month = moment(selectedMonth).month() + 1;
       const year = parseInt(selectedYear);
       
-      const response = await axios.post('/api/payroll/generate', { month, year });
+      const response = await api.post('/payroll/generate', { month, year });
       
       toast.success(response.data.message);
       fetchPayrollData();
@@ -66,7 +66,7 @@ const Payroll = () => {
 
   const downloadSalarySlip = async (payrollId) => {
     try {
-      const response = await axios.get(`/api/payroll/${payrollId}/download`, {
+      const response = await api.get(`/payroll/${payrollId}/download`, {
         responseType: 'blob'
       });
       
@@ -87,7 +87,7 @@ const Payroll = () => {
 
   const updatePayrollStatus = async (payrollId, status) => {
     try {
-      await axios.put(`/api/payroll/${payrollId}/status`, { status });
+      await api.put(`/payroll/${payrollId}/status`, { status });
       toast.success('Payroll status updated successfully');
       fetchPayrollData();
     } catch (error) {
