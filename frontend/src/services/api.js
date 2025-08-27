@@ -1,8 +1,17 @@
 import axios from 'axios';
 
+// Resolve API base with safe runtime fallback for Vercel
+const resolvedBaseURL =
+  process.env.REACT_APP_API_URL ||
+  (typeof window !== 'undefined'
+    ? (window.location.hostname.endsWith('vercel.app')
+        ? 'https://hrms-iwiz.onrender.com/api'
+        : '/api')
+    : '/api');
+
 // Create axios instance with default config
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  baseURL: resolvedBaseURL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
