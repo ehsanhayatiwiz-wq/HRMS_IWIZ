@@ -87,6 +87,11 @@ const AdminDashboard = () => {
       } else if (activeSection === 'attendance') {
         try {
           const response = await api.get(`/attendance/all?page=${currentPage}&limit=20&date=${selectedDate}`);
+          console.log('Attendance API response:', response.data);
+          console.log('Attendance records:', response.data?.data?.attendance);
+          if (response.data?.data?.attendance?.length > 0) {
+            console.log('First attendance record:', response.data.data.attendance[0]);
+          }
           setAttendanceRecords(response.data?.data?.attendance || []);
           setTotalPages(response.data?.data?.pagination?.totalPages || 1);
         } catch (error) {
@@ -98,6 +103,11 @@ const AdminDashboard = () => {
       } else if (activeSection === 'leaves') {
         try {
           const response = await api.get(`/leaves/all?page=${currentPage}&limit=20&status=${filterStatus}`);
+          console.log('Leaves API response:', response.data);
+          console.log('Leave records:', response.data?.data?.leaves);
+          if (response.data?.data?.leaves?.length > 0) {
+            console.log('First leave record:', response.data.data.leaves[0]);
+          }
           setLeaveRequests(response.data?.data?.leaves || []);
           setTotalPages(response.data?.data?.pagination?.totalPages || 1);
         } catch (error) {
@@ -691,47 +701,50 @@ const AdminDashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {attendanceRecords.map((record) => (
-                    <tr key={record._id}>
-                      <td>
-                        <div className="employee-info">
-                          <div className="employee-avatar">
-                            <FiUser />
+                  {attendanceRecords.map((record) => {
+                    console.log('Rendering attendance record:', record);
+                    return (
+                      <tr key={record._id}>
+                        <td>
+                          <div className="employee-info">
+                            <div className="employee-avatar">
+                              <FiUser />
+                            </div>
+                            <div>
+                              <div className="employee-name">{record.employeeName || 'Unknown'}</div>
+                              <div className="employee-email">{record.employeeId || ''}</div>
+                            </div>
                           </div>
-                          <div>
-                            <div className="employee-name">{record.employeeName || 'Unknown'}</div>
-                            <div className="employee-email">{record.employeeId || ''}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td>{new Date(record.date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</td>
-                      <td>
-                        {record.checkIn?.time ? new Date(record.checkIn.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
-                      </td>
-                      <td>
-                        {record.checkOut?.time ? new Date(record.checkOut.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
-                      </td>
-                      <td>
-                        <span className="hours-display">
-                          {record.totalHours || 0}h
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`badge badge-${record.status === 'present' ? 'success' : 'warning'}`}>
-                          {record.status}
-                        </span>
-                      </td>
-                      <td>
-                        <button
-                          className="btn btn-info btn-sm"
-                          title="View Details"
-                          onClick={() => openAttendanceDetails(record)}
-                        >
-                          <FiEye />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td>{new Date(record.date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</td>
+                        <td>
+                          {record.checkIn?.time ? new Date(record.checkIn.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
+                        </td>
+                        <td>
+                          {record.checkOut?.time ? new Date(record.checkOut.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
+                        </td>
+                        <td>
+                          <span className="hours-display">
+                            {record.totalHours || 0}h
+                          </span>
+                        </td>
+                        <td>
+                          <span className={`badge badge-${record.status === 'present' ? 'success' : 'warning'}`}>
+                            {record.status}
+                          </span>
+                        </td>
+                        <td>
+                          <button
+                            className="btn btn-info btn-sm"
+                            title="View Details"
+                            onClick={() => openAttendanceDetails(record)}
+                          >
+                            <FiEye />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
               
@@ -798,8 +811,10 @@ const AdminDashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {leaveRequests.map((leave) => (
-                    <tr key={leave.id}>
+                  {leaveRequests.map((leave) => {
+                    console.log('Rendering leave record:', leave);
+                    return (
+                      <tr key={leave.id}>
                       <td>
                         <div className="employee-info">
                           <div className="employee-avatar">
@@ -859,7 +874,8 @@ const AdminDashboard = () => {
                         )}
                       </td>
                     </tr>
-                  ))}
+                  );
+                  })}
                 </tbody>
               </table>
               

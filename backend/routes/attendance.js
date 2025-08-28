@@ -404,6 +404,13 @@ router.get('/all', protect, authorize('admin'), async (req, res) => {
     const total = await Attendance.countDocuments(query);
 
     console.log(`Found ${attendance.length} attendance records`);
+    
+    // Debug: Log the first record to see the structure
+    if (attendance.length > 0) {
+      console.log('First attendance record structure:', JSON.stringify(attendance[0], null, 2));
+      console.log('First record userId:', attendance[0].userId);
+      console.log('First record userId.fullName:', attendance[0].userId?.fullName);
+    }
 
     res.json({
       success: true,

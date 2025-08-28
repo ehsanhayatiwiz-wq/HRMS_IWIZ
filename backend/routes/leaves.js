@@ -271,6 +271,13 @@ router.get('/all', protect, authorize('admin'), async (req, res) => {
     const total = await Leave.countDocuments(query);
 
     console.log(`Found ${leaves.length} leave requests`);
+    
+    // Debug: Log the first record to see the structure
+    if (leaves.length > 0) {
+      console.log('First leave record structure:', JSON.stringify(leaves[0], null, 2));
+      console.log('First record userId:', leaves[0].userId);
+      console.log('First record userId.fullName:', leaves[0].userId?.fullName);
+    }
 
     res.json({
       success: true,
