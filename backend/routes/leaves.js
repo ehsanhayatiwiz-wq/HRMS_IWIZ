@@ -250,8 +250,8 @@ router.get('/all', protect, authorize('admin'), async (req, res) => {
     
     const { page = 1, limit = 20, status, leaveType, employeeId } = req.query;
     
-    // Build query
-    const query = { userType: 'employee' };
+    // Build query - include all leaves regardless of stored userType to avoid legacy data exclusion
+    const query = {};
     
     if (status) {
       query.status = status;
