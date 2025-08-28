@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FiDownload, FiCalendar, FiEye } from 'react-icons/fi';
+import Button from '../components/common/Button';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 import moment from 'moment';
@@ -173,21 +174,13 @@ const EmployeePayroll = () => {
                     </div>
                   </div>
 
-                  <div className="card-actions">
-                    <button
-                      className="btn btn-info"
-                      onClick={() => viewPayrollDetails(payroll)}
-                    >
-                      <FiEye />
+                  <div className="card-actions" style={{ display: 'flex', gap: 12 }}>
+                    <Button variant="secondary" onClick={() => viewPayrollDetails(payroll)} icon={<FiEye />}>
                       View Details
-                    </button>
-                    <button
-                      className="btn btn-primary"
-                      onClick={() => downloadSalarySlip(payroll._id)}
-                    >
-                      <FiDownload />
+                    </Button>
+                    <Button variant="primary" onClick={() => downloadSalarySlip(payroll._id)} icon={<FiDownload />}>
                       Download Slip
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -343,17 +336,11 @@ const EmployeePayroll = () => {
               </div>
             </div>
             
-            <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={closeDetails}>
-                Close
-              </button>
-              <button
-                className="btn btn-primary"
-                onClick={() => downloadSalarySlip(selectedPayroll._id)}
-              >
-                <FiDownload />
+            <div className="modal-footer" style={{ display: 'flex', gap: 12 }}>
+              <Button variant="neutral" onClick={closeDetails}>Close</Button>
+              <Button variant="primary" onClick={() => downloadSalarySlip(selectedPayroll._id)} icon={<FiDownload />}>
                 Download PDF
-              </button>
+              </Button>
             </div>
           </div>
         </div>

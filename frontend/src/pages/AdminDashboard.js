@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { FiHome, FiUsers, FiClock, FiFileText, FiBarChart2, FiSearch, FiDownload, FiCheck, FiX, FiEdit, FiTrash2, FiEye, FiCalendar, FiUser, FiTrendingUp, FiTrendingDown, FiBell, FiDollarSign } from 'react-icons/fi';
+import { FiHome, FiUsers, FiClock, FiFileText, FiBarChart2, FiSearch, FiDownload, FiCheck, FiX, FiEdit, FiTrash2, FiEye, FiCalendar, FiUser, FiTrendingUp, FiTrendingDown, FiBell, FiDollarSign, FiRefreshCw } from 'react-icons/fi';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
@@ -9,6 +9,7 @@ import { Reports } from '../components/dashboard';
 // moment.js removed - using native Date methods
 import './AdminDashboard.css';
 import Payroll from './Payroll';
+import Button from '../components/common/Button';
 
 const sidebarItems = [
   { label: 'Dashboard Overview', icon: FiHome, section: 'dashboard' },
@@ -168,6 +169,17 @@ const AdminDashboard = () => {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
+  // Lightweight polling to keep data fresh while admin is viewing
+  useEffect(() => {
+    // Poll only on dynamic sections where data changes frequently
+    const shouldPoll = activeSection === 'dashboard' || activeSection === 'leaves' || activeSection === 'employees' || activeSection === 'attendance';
+    if (!shouldPoll) return;
+    const interval = setInterval(() => {
+      fetchDashboardData();
+    }, 30000); // 30s
+    return () => clearInterval(interval);
+  }, [activeSection, fetchDashboardData]);
+
   // Sync internal section state with the URL path (e.g., /admin/leaves → 'leaves')
   useEffect(() => {
     const path = location.pathname || '';
@@ -198,13 +210,13 @@ const AdminDashboard = () => {
   };
 
   const handleApproveLeave = async (leaveId) => {
+    // Optimistic update
+    const previousLeaves = leaveRequests;
+    setLeaveRequests(prev => prev.map(l => l.id === leaveId ? { ...l, status: 'approved' } : l));
     try {
-      const leave = leaveRequests.find(l => l.id === leaveId);
-      await api.put(`/leaves/${leaveId}/approve`, {
-        notes: 'Approved by admin'
-      });
+      const leave = previousLeaves.find(l => l.id === leaveId);
+      await api.put(`/leaves/${leaveId}/approve`, { notes: 'Approved by admin' });
       toast.success('Leave request approved successfully!');
-      
       if (leave) {
         addNotification({
           type: 'leave_approved',
@@ -213,9 +225,10 @@ const AdminDashboard = () => {
           employeeId: leave.userId?.id || leave.userId
         });
       }
-      
       fetchDashboardData();
     } catch (error) {
+      // Rollback on failure
+      setLeaveRequests(previousLeaves);
       console.error('Approve leave error:', error);
       toast.error(error.response?.data?.message || 'Failed to approve leave request');
     }
@@ -225,13 +238,13 @@ const AdminDashboard = () => {
     const reason = prompt('Please provide a reason for rejection:');
     if (!reason) return;
     
+    // Optimistic update
+    const previousLeaves = leaveRequests;
+    setLeaveRequests(prev => prev.map(l => l.id === leaveId ? { ...l, status: 'rejected', rejectionReason: reason } : l));
     try {
-      const leave = leaveRequests.find(l => l.id === leaveId);
-      await api.put(`/leaves/${leaveId}/reject`, {
-        rejectionReason: reason
-      });
+      const leave = previousLeaves.find(l => l.id === leaveId);
+      await api.put(`/leaves/${leaveId}/reject`, { rejectionReason: reason });
       toast.success('Leave request rejected successfully!');
-      
       if (leave) {
         addNotification({
           type: 'leave_rejected',
@@ -240,9 +253,10 @@ const AdminDashboard = () => {
           employeeId: leave.userId?.id || leave.userId
         });
       }
-      
       fetchDashboardData();
     } catch (error) {
+      // Rollback on failure
+      setLeaveRequests(previousLeaves);
       console.error('Reject leave error:', error);
       toast.error(error.response?.data?.message || 'Failed to reject leave request');
     }
@@ -416,28 +430,10 @@ const AdminDashboard = () => {
             {/* Quick Actions */}
             <div className="quick-actions">
               <h3>Quick Actions</h3>
-              <div className="action-buttons">
-                <button 
-                  className="action-btn primary"
-                  onClick={() => handleSidebarClick('leaves')}
-                >
-                  <FiFileText />
-                  <span>Review Leave Requests</span>
-                </button>
-                <button 
-                  className="action-btn success"
-                  onClick={() => handleSidebarClick('attendance')}
-                >
-                  <FiClock />
-                  <span>View Attendance</span>
-                </button>
-                <button 
-                  className="action-btn info"
-                  onClick={() => handleSidebarClick('employees')}
-                >
-                  <FiUsers />
-                  <span>Manage Employees</span>
-                </button>
+              <div className="action-buttons" style={{ display: 'flex', gap: 12 }}>
+                <Button variant="primary" onClick={() => handleSidebarClick('leaves')} icon={<FiFileText />}>Review Leave Requests</Button>
+                <Button variant="primary" onClick={() => handleSidebarClick('attendance')} icon={<FiClock />}>View Attendance</Button>
+                <Button variant="secondary" onClick={() => handleSidebarClick('employees')} icon={<FiUsers />}>Manage Employees</Button>
               </div>
             </div>
 
@@ -484,7 +480,7 @@ const AdminDashboard = () => {
           <div className="employees-section">
             <div className="section-header">
               <h3>Employee Management</h3>
-              <div className="header-actions">
+              <div className="header-actions" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                 <div className="search-container">
                   <FiSearch className="search-icon" />
                   <input
@@ -495,6 +491,7 @@ const AdminDashboard = () => {
                     className="search-input"
                   />
                 </div>
+                <Button variant="secondary" onClick={fetchDashboardData}>Refresh</Button>
                 <select
                   value={filterDepartment}
                   onChange={(e) => setFilterDepartment(e.target.value)}
@@ -505,16 +502,7 @@ const AdminDashboard = () => {
                   <option value="Operation">Operation</option>
                   <option value="Management">Management</option>
                 </select>
-                <button 
-                  className="btn btn-primary"
-                  onClick={() => {
-                    setEditingEmployee(null);
-                    setShowEmployeeModal(true);
-                  }}
-                >
-                  <FiUser />
-                  <span>Add Employee</span>
-                </button>
+                <Button variant="primary" onClick={() => { setEditingEmployee(null); setShowEmployeeModal(true); }} icon={<FiUser />}>Add Employee</Button>
               </div>
             </div>
 
@@ -615,21 +603,9 @@ const AdminDashboard = () => {
                             </span>
                           </td>
                           <td>
-                            <div className="action-buttons">
-                              <button
-                                className="btn btn-info btn-sm"
-                                onClick={() => handleEditEmployee(employee)}
-                                title="Edit Employee"
-                              >
-                                <FiEdit />
-                              </button>
-                              <button
-                                className="btn btn-danger btn-sm"
-                                onClick={() => handleDeleteEmployee(employee.id)}
-                                title="Delete Employee"
-                              >
-                                <FiTrash2 />
-                              </button>
+                            <div className="action-buttons" style={{ display: 'flex', gap: 8 }}>
+                              <Button variant="secondary" onClick={() => handleEditEmployee(employee)} icon={<FiEdit />} />
+                              <Button variant="danger" onClick={() => handleDeleteEmployee(employee.id)} icon={<FiTrash2 />} />
                             </div>
                           </td>
                         </tr>
@@ -639,24 +615,24 @@ const AdminDashboard = () => {
                   
                   {/* Pagination */}
                   {totalPages > 1 && (
-                    <div className="pagination">
-                      <button 
-                        className="btn btn-secondary btn-sm"
+                    <div className="pagination" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                      <Button 
+                        variant="secondary"
                         disabled={currentPage === 1}
                         onClick={() => setCurrentPage(prev => prev - 1)}
                       >
                         Previous
-                      </button>
+                      </Button>
                       <span className="page-info">
                         Page {currentPage} of {totalPages}
                       </span>
-                      <button 
-                        className="btn btn-secondary btn-sm"
+                      <Button 
+                        variant="secondary"
                         disabled={currentPage === totalPages}
                         onClick={() => setCurrentPage(prev => prev + 1)}
                       >
                         Next
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </>
@@ -690,10 +666,8 @@ const AdminDashboard = () => {
                     className="search-input"
                   />
                 </div>
-                <button className="btn btn-success" onClick={downloadAttendanceReport}>
-                  <FiDownload />
-                  <span>Export Report</span>
-                </button>
+                <Button variant="secondary" onClick={fetchDashboardData}>Refresh</Button>
+                <Button variant="primary" onClick={downloadAttendanceReport} icon={<FiDownload />}>Export Report</Button>
               </div>
             </div>
             
@@ -744,13 +718,12 @@ const AdminDashboard = () => {
                           </span>
                         </td>
                         <td>
-                          <button
-                            className="btn btn-info btn-sm"
+                          <Button
+                            variant="secondary"
                             title="View Details"
                             onClick={() => openAttendanceDetails(record)}
-                          >
-                            <FiEye />
-                          </button>
+                            icon={<FiEye />}
+                          />
                         </td>
                       </tr>
                     );
@@ -760,24 +733,24 @@ const AdminDashboard = () => {
               
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="pagination">
-                  <button 
-                    className="btn btn-secondary btn-sm"
+                <div className="pagination" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                  <Button 
+                    variant="secondary"
                     disabled={currentPage === 1}
                     onClick={() => setCurrentPage(prev => prev - 1)}
                   >
                     Previous
-                  </button>
+                  </Button>
                   <span className="page-info">
                     Page {currentPage} of {totalPages}
                   </span>
-                  <button 
-                    className="btn btn-secondary btn-sm"
+                  <Button 
+                    variant="secondary"
                     disabled={currentPage === totalPages}
                     onClick={() => setCurrentPage(prev => prev + 1)}
                   >
                     Next
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
@@ -789,7 +762,7 @@ const AdminDashboard = () => {
           <div className="leaves-section">
             <div className="section-header">
               <h3>Leave Management</h3>
-              <div className="header-actions">
+              <div className="header-actions" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
@@ -800,10 +773,8 @@ const AdminDashboard = () => {
                   <option value="approved">Approved</option>
                   <option value="rejected">Rejected</option>
                 </select>
-                <button className="btn btn-success" onClick={downloadLeaveReport}>
-                  <FiDownload />
-                  <span>Export Report</span>
-                </button>
+                <Button variant="secondary" onClick={fetchDashboardData}>Refresh</Button>
+                <Button variant="primary" onClick={downloadLeaveReport} icon={<FiDownload />}>Export Report</Button>
               </div>
             </div>
             
@@ -975,8 +946,8 @@ const AdminDashboard = () => {
               <p><strong>Total Hours:</strong> {selectedAttendanceRecord.totalHours || 0}h</p>
               <p><strong>Status:</strong> {selectedAttendanceRecord.status}</p>
             </div>
-            <div className="modal-actions">
-              <button className="btn btn-primary" onClick={closeAttendanceDetails}>Close</button>
+            <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button variant="neutral" onClick={closeAttendanceDetails}>Close</Button>
             </div>
           </div>
         </div>
@@ -1003,8 +974,8 @@ const AdminDashboard = () => {
                 <p><strong>Rejection Reason:</strong> {selectedLeaveRecord.rejectionReason}</p>
               )}
             </div>
-            <div className="modal-actions">
-              <button className="btn btn-primary" onClick={() => setLeaveDetailsOpen(false)}>Close</button>
+            <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button variant="neutral" onClick={() => setLeaveDetailsOpen(false)}>Close</Button>
             </div>
           </div>
         </div>

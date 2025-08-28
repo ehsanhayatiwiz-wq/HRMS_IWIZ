@@ -15,6 +15,7 @@ import {
 } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 import './Sidebar.css';
+import Button from '../common/Button';
 
 const Sidebar = ({ collapsed, onToggle, user }) => {
   const { logout } = useAuth();
@@ -86,9 +87,7 @@ const Sidebar = ({ collapsed, onToggle, user }) => {
             {!collapsed && <span className="brand-text">IWIZ</span>}
           </div>
         </div>
-        <button className="sidebar-toggle" onClick={onToggle}>
-          {collapsed ? <FiMenu /> : <FiX />}
-        </button>
+        <Button variant="secondary" onClick={onToggle} icon={collapsed ? <FiMenu /> : <FiX />}></Button>
       </div>
 
       {/* Search Bar */}
@@ -132,12 +131,9 @@ const Sidebar = ({ collapsed, onToggle, user }) => {
 
       {/* Logout Section */}
       <div className="sidebar-footer">
-        <button className="logout-btn" onClick={handleLogout}>
-          <div className="icon-text-container">
-            <FiLogOut className="logout-icon" />
-            {!collapsed && <span>Logout</span>}
-          </div>
-        </button>
+        <Button variant="neutral" onClick={handleLogout} icon={<FiLogOut />}>
+          {!collapsed && 'Logout'}
+        </Button>
       </div>
     </div>
   );

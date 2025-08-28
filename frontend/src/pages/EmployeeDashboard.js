@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FiClock, FiCalendar, FiTrendingUp, FiActivity, FiBell, FiCheck, FiX } from 'react-icons/fi';
+import Button from '../components/common/Button';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
@@ -184,12 +185,7 @@ const EmployeeDashboard = () => {
           <div className="notifications-dropdown">
             <div className="notifications-header">
               <h4>Notifications</h4>
-              <button 
-                className="clear-all-btn"
-                onClick={markAllAsRead}
-              >
-                Mark all read
-              </button>
+              <Button variant="secondary" onClick={markAllAsRead}>Mark all read</Button>
             </div>
             {notifications.length > 0 ? (
               <div className="notifications-list">
@@ -273,79 +269,23 @@ const EmployeeDashboard = () => {
               </div>
             )}
             
-            <div className="attendance-actions">
+            <div className="attendance-actions" style={{ display: 'flex', gap: 12 }}>
               {todayStatus.canCheckIn ? (
-                <button 
-                  className="btn btn-primary btn-check-in"
-                  onClick={handleCheckIn}
-                  disabled={checkInLoading}
-                >
-                  {checkInLoading ? (
-                    <>
-                      <div className="spinner"></div>
-                      Checking in...
-                    </>
-                  ) : (
-                    <>
-                      <FiClock />
-                      Check In
-                    </>
-                  )}
-                </button>
+                <Button variant="primary" onClick={handleCheckIn} disabled={checkInLoading} icon={<FiClock />}>
+                  {checkInLoading ? 'Checking in...' : 'Check In'}
+                </Button>
               ) : todayStatus.canCheckOut ? (
-                <button 
-                  className="btn btn-secondary btn-check-out"
-                  onClick={handleCheckOut}
-                  disabled={checkOutLoading}
-                >
-                  {checkOutLoading ? (
-                    <>
-                      <div className="spinner"></div>
-                      Checking out...
-                    </>
-                  ) : (
-                    <>
-                      <FiClock />
-                      Check Out
-                    </>
-                  )}
-                </button>
+                <Button variant="primary" onClick={handleCheckOut} disabled={checkOutLoading} icon={<FiClock />}>
+                  {checkOutLoading ? 'Checking out...' : 'Check Out'}
+                </Button>
               ) : todayStatus.canReCheckIn ? (
-                <button 
-                  className="btn btn-primary btn-check-in"
-                  onClick={handleReCheckIn}
-                  disabled={reCheckInLoading}
-                >
-                  {reCheckInLoading ? (
-                    <>
-                      <div className="spinner"></div>
-                      Re-checking in...
-                    </>
-                  ) : (
-                    <>
-                      <FiClock />
-                      Re-Check In
-                    </>
-                  )}
-                </button>
+                <Button variant="secondary" onClick={handleReCheckIn} disabled={reCheckInLoading} icon={<FiClock />}>
+                  {reCheckInLoading ? 'Re-checking in...' : 'Re-Check In'}
+                </Button>
               ) : todayStatus.canReCheckOut ? (
-                <button 
-                  className="btn btn-secondary btn-check-out"
-                  onClick={handleReCheckOut}
-                  disabled={reCheckOutLoading}
-                >
-                  {reCheckOutLoading ? (
-                    <>
-                      <div className="spinner"></div>
-                      Re-checking out...
-                    </>
-                  ) : (
-                    <>
-                      <FiClock />
-                      Re-Check Out
-                    </>
-                  )}
-                </button>
+                <Button variant="secondary" onClick={handleReCheckOut} disabled={reCheckOutLoading} icon={<FiClock />}>
+                  {reCheckOutLoading ? 'Re-checking out...' : 'Re-Check Out'}
+                </Button>
               ) : (
                 <div className="attendance-complete">
                   <span className="complete-text">✓ Day Complete</span>

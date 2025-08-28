@@ -3,6 +3,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { FiDownload, FiFileText, FiBarChart2, FiUsers, FiCalendar } from 'react-icons/fi';
 import './Reports.css';
+import Button from '../common/Button';
 
 const Reports = () => {
   const [loading, setLoading] = useState(false);
@@ -201,24 +202,23 @@ const Reports = () => {
             
             <p className="report-description">{report.description}</p>
             
-            <div className="report-actions">
-              <button
-                className={`btn btn-${report.color}`}
+            <div className="report-actions" style={{ display: 'flex', gap: 12 }}>
+              <Button
+                variant={report.id === 'performance' ? 'accent' : 'primary'}
                 onClick={() => handleGenerateReport(report.id)}
                 disabled={loading || (report.id !== 'employee' && (!dateRange.startDate || !dateRange.endDate))}
+                icon={<FiDownload />}
               >
-                <FiDownload />
-                <span>Download PDF</span>
-              </button>
-              
-              <button
-                className="btn btn-secondary"
+                Download PDF
+              </Button>
+              <Button
+                variant="secondary"
                 onClick={() => handleExportCSV(report.id)}
                 disabled={loading || (report.id !== 'employee' && (!dateRange.startDate || !dateRange.endDate))}
+                icon={<FiDownload />}
               >
-                <FiDownload />
-                <span>Export CSV</span>
-              </button>
+                Export CSV
+              </Button>
             </div>
           </div>
         ))}

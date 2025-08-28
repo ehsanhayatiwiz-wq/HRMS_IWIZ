@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useNavigate } from 'react-router-dom';
 import './Header.css';
+import Button from '../common/Button';
 
 const Header = ({ onSidebarToggle, user, onShowNotifications }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -30,11 +31,7 @@ const Header = ({ onSidebarToggle, user, onShowNotifications }) => {
   return (
     <header className="header">
       <div className="header-left">
-        <button className="sidebar-toggle-btn" onClick={onSidebarToggle}>
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
+        <Button variant="secondary" onClick={onSidebarToggle}>Menu</Button>
       </div>
 
       <div className="header-right">
@@ -44,23 +41,19 @@ const Header = ({ onSidebarToggle, user, onShowNotifications }) => {
         </div>
         {/* Notifications */}
         <div className="header-item">
-          <button className="notification-btn" onClick={handleNotificationClick}>
-            <FiBell className="notification-icon" />
+          <Button variant="secondary" onClick={handleNotificationClick} icon={<FiBell />}>
             {unreadCount > 0 && (
               <span className="notification-badge" aria-label={`You have ${unreadCount} unread notifications`}>
                 {unreadCount}
               </span>
             )}
-          </button>
+          </Button>
         </div>
 
         {/* User Profile */}
         <div className="header-item">
           <div className="user-profile-dropdown">
-            <button 
-              className="profile-btn"
-              onClick={() => setShowProfileMenu(!showProfileMenu)}
-            >
+            <Button variant="secondary" onClick={() => setShowProfileMenu(!showProfileMenu)}>
               <div className="user-avatar">
                 {user?.profilePicture ? (
                   <img src={user.profilePicture} alt={user.fullName} />
@@ -72,7 +65,7 @@ const Header = ({ onSidebarToggle, user, onShowNotifications }) => {
                 <div className="user-name">{user?.fullName}</div>
                 <div className="user-role">{user?.role}</div>
               </div>
-            </button>
+            </Button>
 
             {showProfileMenu && (
               <div className="profile-menu">

@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts';
 import { FiUser, FiMail, FiLock, FiChevronDown, FiEye, FiEyeOff } from 'react-icons/fi';
 import './Login.css';
+import Button from '../components/common/Button';
 import { toast } from 'react-toastify';
 
 const Login = () => {
@@ -143,14 +144,7 @@ const Login = () => {
           <p className="login-subtitle">Sign in to your account</p>
           
           {/* Test Connection Button */}
-          <button
-            type="button"
-            onClick={handleTestConnection}
-            className="test-connection-btn"
-            title="Test backend connection"
-          >
-            Test Connection
-          </button>
+          <Button type="button" onClick={handleTestConnection} variant="secondary">Test Connection</Button>
         </div>
 
         {generalError && (
@@ -253,25 +247,9 @@ const Login = () => {
           </div>
 
           {/* Submit Button */}
-          <button
-            type="submit"
-            className="login-btn"
-            disabled={loading || isThrottled}
-          >
-            {loading ? (
-              <>
-                <div className="spinner"></div>
-                <span>Signing in...</span>
-              </>
-            ) : isThrottled ? (
-              <>
-                <div className="spinner"></div>
-                <span>Please wait...</span>
-              </>
-            ) : (
-              'Sign In'
-            )}
-          </button>
+          <Button type="submit" variant="primary" disabled={loading || isThrottled}>
+            {loading ? 'Signing in...' : isThrottled ? 'Please wait...' : 'Sign In'}
+          </Button>
         </form>
 
         {/* Registration disabled: Admin creates accounts */}

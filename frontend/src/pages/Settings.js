@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Button from '../components/common/Button';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
@@ -180,9 +181,9 @@ const Settings = () => {
               minLength={6}
             />
           </div>
-          <button type="submit" className="btn-primary" disabled={submitting}>
+          <Button type="submit" variant="accent" disabled={submitting}>
             {submitting ? 'Changing...' : 'Change Password'}
-          </button>
+          </Button>
         </form>
       </div>
     </div>

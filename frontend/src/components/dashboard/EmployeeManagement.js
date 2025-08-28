@@ -11,6 +11,7 @@ import {
   FiUser
 } from 'react-icons/fi';
 import './EmployeeManagement.css';
+import Button from '../common/Button';
 
 const EmployeeManagement = () => {
   const [employees, setEmployees] = useState([]);
@@ -216,15 +217,9 @@ const EmployeeManagement = () => {
           <h1 className="page-title">Employee Management</h1>
           <p className="page-subtitle">Manage employee information and records</p>
         </div>
-        <div className="header-actions">
-          <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
-            <FiUserPlus />
-            <span>Add Employee</span>
-          </button>
-          <button className="btn btn-secondary" onClick={downloadEmployeeReport}>
-            <FiDownload />
-            <span>Download Report</span>
-          </button>
+        <div className="header-actions" style={{ display: 'flex', gap: 12 }}>
+          <Button variant="primary" onClick={() => setShowAddModal(true)} icon={<FiUserPlus />}>Add Employee</Button>
+          <Button variant="secondary" onClick={downloadEmployeeReport} icon={<FiDownload />}>Download Report</Button>
         </div>
       </div>
 
@@ -310,35 +305,28 @@ const EmployeeManagement = () => {
                   </span>
                 </td>
                 <td>
-                  <div className="action-buttons">
-                    <button
-                      className="btn-icon btn-view"
+                  <div className="action-buttons" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <Button
+                      variant="secondary"
                       onClick={() => handleViewEmployee(employee)}
-                      title="View Details"
-                    >
-                      <FiEye />
-                    </button>
-                    <button
-                      className="btn-icon btn-edit"
+                      icon={<FiEye />}
+                    />
+                    <Button
+                      variant="secondary"
                       onClick={() => handleEditClick(employee)}
-                      title="Edit Employee"
-                    >
-                      <FiEdit />
-                    </button>
-                    <button
-                      className="btn-icon btn-delete"
+                      icon={<FiEdit />}
+                    />
+                    <Button
+                      variant="danger"
                       onClick={() => handleDeleteEmployee(employee._id)}
-                      title="Delete Employee"
-                    >
-                      <FiTrash2 />
-                    </button>
-                    <button
-                      className="btn-icon btn-edit"
+                      icon={<FiTrash2 />}
+                    />
+                    <Button
+                      variant="accent"
                       onClick={() => handleResetPassword(employee._id)}
-                      title="Reset Password"
                     >
                       🔒
-                    </button>
+                    </Button>
                     <select
                       value={employee.status}
                       onChange={(e) => handleStatusChange(employee._id, e.target.value)}
@@ -358,24 +346,24 @@ const EmployeeManagement = () => {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="pagination">
-          <button
-            className="btn btn-secondary"
+        <div className="pagination" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <Button
+            variant="secondary"
             onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
             disabled={currentPage === 1}
           >
             Previous
-          </button>
+          </Button>
           <span className="page-info">
             Page {currentPage} of {totalPages}
           </span>
-          <button
-            className="btn btn-secondary"
+          <Button
+            variant="secondary"
             onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
             disabled={currentPage === totalPages}
           >
             Next
-          </button>
+          </Button>
         </div>
       )}
 
@@ -504,13 +492,9 @@ const EmployeeManagement = () => {
                 </div>
               </div>
               
-              <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowAddModal(false)}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-primary">
-                  {autoGeneratePassword ? 'Add & Email Credentials' : 'Add Employee'}
-                </button>
+              <div className="modal-footer" style={{ display: 'flex', gap: 12 }}>
+                <Button type="button" variant="neutral" onClick={() => setShowAddModal(false)}>Cancel</Button>
+                <Button type="submit" variant="primary">{autoGeneratePassword ? 'Add & Email Credentials' : 'Add Employee'}</Button>
               </div>
             </form>
           </div>
@@ -605,13 +589,9 @@ const EmployeeManagement = () => {
                 </div>
               </div>
               
-              <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowEditModal(false)}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-primary">
-                  Update Employee
-                </button>
+              <div className="modal-footer" style={{ display: 'flex', gap: 12 }}>
+                <Button type="button" variant="neutral" onClick={() => setShowEditModal(false)}>Cancel</Button>
+                <Button type="submit" variant="primary">Update Employee</Button>
               </div>
             </form>
           </div>

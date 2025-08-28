@@ -3,6 +3,7 @@ import api from '../services/api';
 import { toast } from 'react-toastify';
 // moment.js removed - using native Date methods
 import { FiClock, FiCheckCircle, FiXCircle, FiCalendar, FiTrendingUp, FiRefreshCw } from 'react-icons/fi';
+import Button from '../components/common/Button';
 import './Dashboard.css';
 
 const Attendance = () => {
@@ -232,43 +233,43 @@ const Attendance = () => {
               </div>
             )}
             
-            <div className="attendance-actions">
+            <div className="attendance-actions" style={{ display: 'flex', gap: 12 }}>
               {canCheckIn ? (
-                <button
-                  className="btn-check-in"
+                <Button
+                  variant="primary"
                   onClick={handleCheckIn}
                   disabled={checkingIn}
+                  icon={<FiCheckCircle />}
                 >
-                  <FiCheckCircle />
                   {checkingIn ? 'Checking in...' : 'Check In'}
-                </button>
+                </Button>
               ) : canCheckOut ? (
-                <button
-                  className="btn-check-out"
+                <Button
+                  variant="primary"
                   onClick={handleCheckOut}
                   disabled={checkingOut}
+                  icon={<FiXCircle />}
                 >
-                  <FiXCircle />
                   {checkingOut ? 'Checking out...' : 'Check Out'}
-                </button>
+                </Button>
               ) : canReCheckIn ? (
-                <button
-                  className="btn-check-in"
+                <Button
+                  variant="secondary"
                   onClick={handleReCheckIn}
                   disabled={reCheckingIn}
+                  icon={<FiRefreshCw />}
                 >
-                  <FiRefreshCw />
                   {reCheckingIn ? 'Re-checking in...' : 'Re-Check In'}
-                </button>
+                </Button>
               ) : canReCheckOut ? (
-                <button
-                  className="btn-check-out"
+                <Button
+                  variant="secondary"
                   onClick={handleReCheckOut}
                   disabled={reCheckingOut}
+                  icon={<FiXCircle />}
                 >
-                  <FiXCircle />
                   {reCheckingOut ? 'Re-checking out...' : 'Re-Check Out'}
-                </button>
+                </Button>
               ) : (
                 <div className="attendance-complete">
                   <div className="completed-message">
