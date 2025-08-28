@@ -180,10 +180,26 @@ router.get('/:payrollId/download', protect, async (req, res) => {
     // Set response headers
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=salary_slip_${payroll.employeeId.employeeId}_${payroll.month}_${payroll.year}.pdf`);
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Pragma', 'no-cache');
 
     // Pipe PDF to response
     doc.pipe(res);
-
+    
+        // Handle PDF errors
+    doc.on('error', (error) => {
+      console.error('PDF generation error:', error);
+      if (!res.headersSent) {
+        res.status(500).json({ message: 'PDF generation failed' });
+      }
+    });
+    
+    // Handle response errors
+    res.on('error', (error) => {
+      console.error('Response error during PDF generation:', error);
+      doc.destroy();
+    });
+    
     // Add content to PDF
     doc.fontSize(20).text('SALARY SLIP', { align: 'center' });
     doc.moveDown();
@@ -247,6 +263,20 @@ router.get('/:payrollId/download', protect, async (req, res) => {
 
     // Finalize PDF
     doc.end();
+    
+    // Ensure response is properly closed
+    res.on('finish', () => {
+      console.log('PDF download completed successfully');
+    });
+    
+    res.on('error', (error) => {
+      console.error('PDF download error:', error);
+    });
+    
+    // Handle stream end
+    doc.on('end', () => {
+      console.log('PDF stream ended successfully');
+    });
 
   } catch (error) {
     console.error('Download salary slip error:', error);

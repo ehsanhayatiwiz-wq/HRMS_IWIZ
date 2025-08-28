@@ -17,7 +17,25 @@ router.get('/employees', async (req, res) => {
     const doc = new PDFDocument();
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename=employee-report.pdf');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Pragma', 'no-cache');
+    
+    // Pipe PDF to response
     doc.pipe(res);
+    
+    // Handle PDF errors
+    doc.on('error', (error) => {
+      console.error('PDF generation error:', error);
+      if (!res.headersSent) {
+        res.status(500).json({ message: 'PDF generation failed' });
+      }
+    });
+    
+    // Handle response errors
+    res.on('error', (error) => {
+      console.error('Response error during PDF generation:', error);
+      doc.destroy();
+    });
 
     doc.fontSize(24).text('Employee Report', { align: 'center' });
     doc.moveDown();
@@ -37,7 +55,22 @@ router.get('/employees', async (req, res) => {
       doc.moveDown(0.5);
     });
 
+    // Finalize PDF
     doc.end();
+    
+    // Ensure response is properly closed
+    res.on('finish', () => {
+      console.log('PDF report generated successfully');
+    });
+    
+    res.on('error', (error) => {
+      console.error('PDF report error:', error);
+    });
+    
+    // Handle stream end
+    doc.on('end', () => {
+      console.log('PDF stream ended successfully');
+    });
   } catch (error) {
     console.error('Error generating employee report:', error);
     res.status(500).json({ message: 'Failed to generate employee report' });
@@ -58,8 +91,29 @@ router.get('/attendance', async (req, res) => {
 
     const doc = new PDFDocument();
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename=attendance-report-${startDate}-to-${endDate}.pdf`);
+    // Sanitize filename to prevent issues
+    const sanitizedStartDate = startDate.replace(/[^a-zA-Z0-9]/g, '-');
+    const sanitizedEndDate = endDate.replace(/[^a-zA-Z0-9]/g, '-');
+    res.setHeader('Content-Disposition', `attachment; filename=attendance-report-${sanitizedStartDate}-to-${sanitizedEndDate}.pdf`);
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Pragma', 'no-cache');
+    
+    // Pipe PDF to response
     doc.pipe(res);
+    
+    // Handle PDF errors
+    doc.on('error', (error) => {
+      console.error('PDF generation error:', error);
+      if (!res.headersSent) {
+        res.status(500).json({ message: 'PDF generation failed' });
+      }
+    });
+    
+    // Handle response errors
+    res.on('error', (error) => {
+      console.error('Response error during PDF generation:', error);
+      doc.destroy();
+    });
 
     doc.fontSize(24).text('Attendance Report', { align: 'center' });
     doc.moveDown();
@@ -93,7 +147,22 @@ router.get('/attendance', async (req, res) => {
       doc.moveDown(0.5);
     });
 
+    // Finalize PDF
     doc.end();
+    
+    // Ensure response is properly closed
+    res.on('finish', () => {
+      console.log('PDF attendance report generated successfully');
+    });
+    
+    res.on('error', (error) => {
+      console.error('PDF attendance report error:', error);
+    });
+    
+    // Handle stream end
+    doc.on('end', () => {
+      console.log('PDF attendance stream ended successfully');
+    });
   } catch (error) {
     console.error('Error generating attendance report:', error);
     res.status(500).json({ message: 'Failed to generate attendance report' });

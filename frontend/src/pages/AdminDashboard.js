@@ -72,6 +72,16 @@ const AdminDashboard = () => {
           onLeaveToday: s.onLeaveEmployees || 0
         });
         setEmployees(employeesRes.data?.data?.employees || []);
+        
+        // Debug: Log the leave requests data for dashboard
+        console.log('Dashboard leaves API response:', leavesRes.data);
+        console.log('Dashboard leave records:', leavesRes.data?.data?.leaves);
+        if (leavesRes.data?.data?.leaves?.length > 0) {
+          console.log('First dashboard leave record:', leavesRes.data.data.leaves[0]);
+          console.log('First record employeeName:', leavesRes.data.data.leaves[0].employeeName);
+          console.log('First record userId:', leavesRes.data.data.leaves[0].userId);
+        }
+        
         setLeaveRequests(leavesRes.data?.data?.leaves || []);
       } else if (activeSection === 'employees') {
         try {
