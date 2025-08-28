@@ -1,12 +1,19 @@
 import axios from 'axios';
 
-// Force API base to Render URL to avoid any mis-configuration during testing
-const resolvedBaseURL = 'https://hrms-iwiz.onrender.com/api';
+// Resolve API base URL with env first, then sensible fallbacks
+const resolvedBaseURL =
+  process.env.REACT_APP_API_URL ||
+  (typeof window !== 'undefined'
+    ? (window.location.hostname.endsWith('vercel.app')
+        ? 'https://hrms-iwiz.onrender.com/api'
+        : '/api')
+    : '/api');
 
 // Create axios instance with default config
 const api = axios.create({
   baseURL: resolvedBaseURL,
-  timeout: 10000,
+  // Render cold starts can take >10s. Use a generous timeout.
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -29,11 +36,31 @@ api.interceptors.request.use(
 // Response interceptor for error handling
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    // Redirect to login on unauthorized
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       window.location.href = '/login';
+      return Promise.reject(error);
     }
+
+    // Simple retry on timeouts and network errors (up to 2 retries with backoff)
+    const config = error.config || {};
+    const shouldRetry =
+      error.code === 'ECONNABORTED' ||
+      error.message?.toLowerCase().includes('timeout') ||
+      error.message === 'Network Error';
+
+    if (shouldRetry) {
+      config.__retryCount = config.__retryCount || 0;
+      if (config.__retryCount < 2) {
+        config.__retryCount += 1;
+        const delayMs = 1000 * Math.pow(2, config.__retryCount - 1); // 1s, 2s
+        await new Promise((r) => setTimeout(r, delayMs));
+        return api(config);
+      }
+    }
+
     return Promise.reject(error);
   }
 );

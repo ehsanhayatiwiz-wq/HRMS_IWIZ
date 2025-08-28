@@ -38,6 +38,10 @@ const Header = ({ onSidebarToggle, user, onShowNotifications }) => {
       </div>
 
       <div className="header-right">
+        {/* Brand (uses /logo.png if available) */}
+        <div className="header-item">
+          <img src={process.env.PUBLIC_URL + '/logo.png'} alt="IWIZ" onError={(e) => { e.currentTarget.style.display = 'none'; }} style={{ height: 32 }} />
+        </div>
         {/* Notifications */}
         <div className="header-item">
           <button className="notification-btn" onClick={handleNotificationClick}>

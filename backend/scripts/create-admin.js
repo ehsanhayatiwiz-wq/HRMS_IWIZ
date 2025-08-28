@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const Employee = require('../models/Employee');
 require('dotenv').config();
 
 const Admin = require('../models/Admin');
@@ -76,6 +77,22 @@ async function run() {
     console.log('Email:', email);
     console.log('Password:', password);
     console.log('Admin ID:', admin.adminId);
+    // Seed two employees if they don't exist
+    const employees = [
+      { fullName: 'John Doe', email: 'john@iwiz.com', password: 'Employee@123', department: 'IT', position: 'Developer', employeeId: 'EMP-1001', leaveBalance: 15 },
+      { fullName: 'Jane Smith', email: 'jane@iwiz.com', password: 'Employee@123', department: 'Operation', position: 'Ops Associate', employeeId: 'EMP-1002', leaveBalance: 15 }
+    ];
+
+    for (const e of employees) {
+      let existingEmp = await Employee.findOne({ email: e.email });
+      if (!existingEmp) {
+        const emp = new Employee({ ...e, isActive: true });
+        await emp.save();
+        console.log('👤 Employee created:', e.email);
+      } else {
+        console.log('ℹ️ Employee exists:', e.email);
+      }
+    }
   } catch (err) {
     console.error('❌ Failed to create/update admin:', err.message);
   } finally {

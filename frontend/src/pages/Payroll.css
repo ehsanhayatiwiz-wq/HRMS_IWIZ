@@ -10,13 +10,13 @@
 }
 
 .page-header h2 {
-  color: #2c3e50;
+  color: var(--text-primary);
   margin-bottom: 10px;
   font-size: 2rem;
 }
 
 .page-header p {
-  color: #7f8c8d;
+  color: var(--text-secondary);
   font-size: 1.1rem;
 }
 
@@ -44,13 +44,13 @@
 }
 
 .tab:hover {
-  background-color: #f8f9fa;
-  color: #2c3e50;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .tab.active {
-  background-color: #3498db;
-  color: white;
+  background-color: var(--primary-color);
+  color: #fff;
 }
 
 .tab svg {
@@ -67,7 +67,7 @@
 }
 
 .summary-card {
-  background: white;
+  background: var(--bg-primary);
   padding: 24px;
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -89,26 +89,26 @@
   align-items: center;
   justify-content: center;
   font-size: 24px;
-  color: white;
-  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: #fff;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
 }
 
 .card-content h3 {
   font-size: 1.8rem;
   font-weight: 700;
-  color: #2c3e50;
+  color: var(--text-primary);
   margin: 0 0 4px 0;
 }
 
 .card-content p {
-  color: #7f8c8d;
+  color: var(--text-secondary);
   margin: 0;
   font-size: 0.9rem;
 }
 
 /* Department Breakdown */
 .department-breakdown {
-  background: white;
+  background: var(--bg-primary);
   padding: 24px;
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -116,7 +116,7 @@
 }
 
 .department-breakdown h3 {
-  color: #2c3e50;
+  color: var(--text-primary);
   margin-bottom: 20px;
   font-size: 1.3rem;
 }
@@ -127,28 +127,27 @@
   gap: 16px;
 }
 
-.department-card {
-  background: #f8f9fa;
+  background: var(--bg-secondary);
   padding: 16px;
   border-radius: 8px;
   border-left: 4px solid #3498db;
 }
 
 .department-card h4 {
-  color: #2c3e50;
+  color: var(--text-primary);
   margin: 0 0 8px 0;
   font-size: 1.1rem;
 }
 
 .department-card p {
-  color: #7f8c8d;
+  color: var(--text-secondary);
   margin: 4px 0;
   font-size: 0.9rem;
 }
 
 /* Payroll List */
 .payroll-list {
-  background: white;
+  background: var(--bg-primary);
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   overflow: hidden;
@@ -163,7 +162,7 @@
 }
 
 .list-header h3 {
-  color: #2c3e50;
+  color: var(--text-primary);
   margin: 0;
   font-size: 1.3rem;
 }
@@ -176,9 +175,9 @@
 .month-select,
 .year-select {
   padding: 8px 12px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-light);
   border-radius: 6px;
-  background: white;
+  background: var(--bg-primary);
   font-size: 0.9rem;
 }
 
@@ -192,11 +191,11 @@
 }
 
 .payroll-table th {
-  background: #f8f9fa;
+  background: var(--bg-secondary);
   padding: 16px 12px;
   text-align: left;
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--text-primary);
   border-bottom: 1px solid #ecf0f1;
 }
 
@@ -214,17 +213,17 @@
 
 .employee-name {
   font-weight: 500;
-  color: #2c3e50;
+  color: var(--text-primary);
 }
 
 .employee-id {
   font-size: 0.8rem;
-  color: #7f8c8d;
+  color: var(--text-secondary);
 }
 
 .net-pay {
   font-weight: 600;
-  color: #27ae60;
+  color: var(--success-color);
 }
 
 .status-badge {
@@ -236,18 +235,18 @@
 }
 
 .status-badge.draft {
-  background: #fff3cd;
-  color: #856404;
+  background: rgba(255, 180, 0, 0.15);
+  color: #AA7A00;
 }
 
 .status-badge.generated {
-  background: #d1ecf1;
-  color: #0c5460;
+  background: rgba(108, 99, 255, 0.15);
+  color: var(--primary-dark);
 }
 
 .status-badge.paid {
-  background: #d4edda;
-  color: #155724;
+  background: rgba(0, 201, 167, 0.15);
+  color: #008E79;
 }
 
 .action-buttons {
@@ -273,26 +272,27 @@
 }
 
 .btn-primary {
-  background: #3498db;
-  color: white;
+  background: var(--primary-color);
+  color: #fff;
 }
 
 .btn-primary:hover {
-  background: #2980b9;
+  background: var(--primary-dark);
 }
 
 .btn-secondary {
-  background: #95a5a6;
-  color: white;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-light);
 }
 
 .btn-secondary:hover {
-  background: #7f8c8d;
+  background: var(--border-light);
 }
 
 .btn-info {
-  background: #17a2b8;
-  color: white;
+  background: var(--info-color);
+  color: #fff;
 }
 
 .btn-info:hover {
@@ -300,8 +300,8 @@
 }
 
 .btn-success {
-  background: #28a745;
-  color: white;
+  background: var(--success-color);
+  color: #fff;
 }
 
 .btn-success:hover {
@@ -324,7 +324,7 @@
 }
 
 .page-info {
-  color: #7f8c8d;
+  color: var(--text-secondary);
   font-size: 0.9rem;
 }
 
@@ -335,20 +335,20 @@
 }
 
 .generate-section {
-  background: white;
+  background: var(--bg-primary);
   padding: 30px;
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .generate-section h3 {
-  color: #2c3e50;
+  color: var(--text-primary);
   margin-bottom: 10px;
   font-size: 1.3rem;
 }
 
 .generate-section p {
-  color: #7f8c8d;
+  color: var(--text-secondary);
   margin-bottom: 24px;
 }
 
@@ -396,14 +396,14 @@
 
 /* Recent Payrolls */
 .recent-payrolls {
-  background: white;
+  background: var(--bg-primary);
   padding: 24px;
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .recent-payrolls h3 {
-  color: #2c3e50;
+  color: var(--text-primary);
   margin-bottom: 20px;
   font-size: 1.3rem;
 }
@@ -412,7 +412,7 @@
 .loading {
   text-align: center;
   padding: 40px;
-  color: #7f8c8d;
+  color: var(--text-secondary);
   font-size: 1.1rem;
 }
 

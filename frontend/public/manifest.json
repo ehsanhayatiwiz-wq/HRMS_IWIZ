@@ -3,13 +3,13 @@
   "name": "IWIZ Human Resource Management System",
   "icons": [
     {
-      "src": "favicon.png",
-      "sizes": "192x192 512x512 64x64 32x32 24x24 16x16",
-      "type": "image/png"
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%236C63FF'/%3E%3Cpath d='M18 44 L28 20 L34 20 L24 44 Z' fill='%23FFFFFF' opacity='0.9'/%3E%3Ctext x='41' y='42' font-family='Inter, Arial, sans-serif' font-size='28' font-weight='700' fill='%23FFFFFF'%3EW%3C/text%3E%3C/svg%3E",
+      "sizes": "32x32 64x64 128x128 192x192 512x512",
+      "type": "image/svg+xml"
     }
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#6C63FF",
+  "background_color": "#F5F7FA"
 }

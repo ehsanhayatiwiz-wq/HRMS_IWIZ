@@ -82,7 +82,7 @@ const Sidebar = ({ collapsed, onToggle, user }) => {
       <div className="sidebar-header">
         <div className="brand">
           <div className="brand-logo">
-            <FiUser className="logo-icon" />
+            <img src={process.env.PUBLIC_URL + '/logo.png'} alt="IWIZ" onError={(e) => { e.currentTarget.style.display = 'none'; }} style={{ height: 28 }} />
             {!collapsed && <span className="brand-text">IWIZ</span>}
           </div>
         </div>

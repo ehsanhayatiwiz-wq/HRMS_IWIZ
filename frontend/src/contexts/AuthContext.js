@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('Testing backend connection...');
       const response = await api.get('/auth/test', { 
-        timeout: 5000,
+        timeout: 20000,
         headers: {
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache'
