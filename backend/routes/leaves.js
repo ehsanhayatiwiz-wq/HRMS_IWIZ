@@ -266,10 +266,10 @@ router.get('/all', protect, authorize('admin'), async (req, res) => {
     }
 
     const leaves = await Leave.find(query)
-      .populate('userId', 'fullName employeeId department')
+      .populate('userId', 'fullName employeeId department email')
       .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+      .limit(parseInt(limit))
+      .skip((parseInt(page) - 1) * parseInt(limit));
 
     const total = await Leave.countDocuments(query);
 
@@ -290,12 +290,12 @@ router.get('/all', protect, authorize('admin'), async (req, res) => {
       data: {
         leaves: leaves.map(leave => ({
           id: leave._id,
-          employeeId: leave.userId?.employeeId || 'N/A',
-          employeeName: leave.userId?.fullName || 'Unknown',
+          employeeId: leave.userId?.employeeId || leave.userId?._id || 'N/A',
+          employeeName: leave.userId?.fullName || leave.userId?.email || 'Unknown',
           department: leave.userId?.department || 'N/A',
           leaveType: leave.leaveType,
-          fromDate: leave.fromDate,
-          toDate: leave.toDate,
+          fromDate: leave.fromDateFormatted || leave.fromDate,
+          toDate: leave.toDateFormatted || leave.toDate,
           totalDays: leave.totalDays,
           reason: leave.reason,
           status: leave.status,
