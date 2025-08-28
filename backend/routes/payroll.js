@@ -359,11 +359,17 @@ router.get('/reports/summary', protect, authorize('admin'), async (req, res) => 
     };
 
     payrolls.forEach(payroll => {
-      summary.totalBasicSalary += payroll.basicSalary;
-      summary.totalAllowances += payroll.totalAllowances;
-      summary.totalOvertime += payroll.overtime.amount;
-      summary.totalDeductions += payroll.totalDeductions;
-      summary.totalNetPay += payroll.netPay;
+      const basic = Number(payroll.basicSalary) || 0;
+      const allowances = Number(payroll.totalAllowances) || 0;
+      const overtime = Number(payroll.overtime?.amount) || 0;
+      const deductions = Number(payroll.totalDeductions) || 0;
+      const net = Number(payroll.netPay) || 0;
+
+      summary.totalBasicSalary += basic;
+      summary.totalAllowances += allowances;
+      summary.totalOvertime += overtime;
+      summary.totalDeductions += deductions;
+      summary.totalNetPay += net;
 
       const dept = payroll.employeeId.department;
       if (!summary.byDepartment[dept]) {
@@ -373,7 +379,7 @@ router.get('/reports/summary', protect, authorize('admin'), async (req, res) => 
         };
       }
       summary.byDepartment[dept].count++;
-      summary.byDepartment[dept].totalNetPay += payroll.netPay;
+      summary.byDepartment[dept].totalNetPay += net;
     });
 
     res.json({

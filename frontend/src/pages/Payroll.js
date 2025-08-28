@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FiDollarSign, FiDownload, FiCalendar, FiUsers, FiBarChart2, FiCheck, FiRefreshCw } from 'react-icons/fi';
+import Button from '../components/common/Button';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 import moment from 'moment';
@@ -162,7 +163,7 @@ const Payroll = () => {
       <div className="payroll-list">
         <div className="list-header">
           <h3>Recent Payrolls</h3>
-          <div className="header-actions">
+          <div className="header-actions" style={{ display: 'flex', gap: 12 }}>
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
@@ -228,22 +229,9 @@ const Payroll = () => {
                       </span>
                     </td>
                     <td>
-                      <div className="action-buttons">
-                        <button
-                          className="btn btn-info btn-sm"
-                          onClick={() => downloadSalarySlip(payroll._id)}
-                          title="Download Salary Slip"
-                        >
-                          <FiDownload />
-                        </button>
-                        <button
-                          className="btn btn-success btn-sm"
-                          onClick={() => updatePayrollStatus(payroll._id, 'paid')}
-                          disabled={payroll.status === 'paid'}
-                          title="Mark as Paid"
-                        >
-                          <FiCheck />
-                        </button>
+                      <div className="action-buttons" style={{ display: 'flex', gap: 8 }}>
+                        <Button variant="secondary" onClick={() => downloadSalarySlip(payroll._id)} icon={<FiDownload />} />
+                        <Button variant="primary" onClick={() => updatePayrollStatus(payroll._id, 'paid')} disabled={payroll.status === 'paid'} icon={<FiCheck />} />
                       </div>
                     </td>
                   </tr>
@@ -255,22 +243,22 @@ const Payroll = () => {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="pagination">
-            <button
-              className="btn btn-secondary"
+          <div className="pagination" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <Button
+              variant="secondary"
               disabled={currentPage === 1}
               onClick={() => setCurrentPage(prev => prev - 1)}
             >
               Previous
-            </button>
+            </Button>
             <span>Page {currentPage} of {totalPages}</span>
-            <button
-              className="btn btn-secondary"
+            <Button
+              variant="secondary"
               disabled={currentPage === totalPages}
               onClick={() => setCurrentPage(prev => prev + 1)}
             >
               Next
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -315,23 +303,15 @@ const Payroll = () => {
             </div>
           </div>
           
-          <button
-            className="btn btn-primary generate-btn"
+          <Button
+            className="generate-btn"
             onClick={generatePayroll}
             disabled={generating}
+            variant="primary"
+            icon={generating ? <FiRefreshCw className="spinning" /> : <FiCalendar />}
           >
-            {generating ? (
-              <>
-                <FiRefreshCw className="spinning" />
-                Generating Payroll...
-              </>
-            ) : (
-              <>
-                <FiCalendar />
-                Generate Payroll for {moment(selectedMonth).format('MMMM YYYY')}
-              </>
-            )}
-          </button>
+            {generating ? 'Generating Payroll...' : `Generate Payroll for ${moment(selectedMonth).format('MMMM YYYY')}`}
+          </Button>
         </div>
       </div>
 

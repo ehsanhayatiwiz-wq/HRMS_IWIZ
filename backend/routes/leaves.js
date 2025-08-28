@@ -211,6 +211,9 @@ router.get('/pending', protect, authorize('admin', 'hr'), async (req, res) => {
   try {
     const leaves = await Leave.getPendingLeaves();
 
+    // Prevent any intermediary/proxy/browser caching of admin lists
+    res.set('Cache-Control', 'no-store');
+
     res.json({
       success: true,
       data: {
@@ -278,6 +281,9 @@ router.get('/all', protect, authorize('admin'), async (req, res) => {
       console.log('First record userId:', leaves[0].userId);
       console.log('First record userId.fullName:', leaves[0].userId?.fullName);
     }
+
+    // Prevent any intermediary/proxy/browser caching of admin lists
+    res.set('Cache-Control', 'no-store');
 
     res.json({
       success: true,
