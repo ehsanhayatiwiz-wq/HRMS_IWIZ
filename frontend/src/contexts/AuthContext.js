@@ -157,7 +157,7 @@ export const AuthProvider = ({ children }) => {
         config: error.config
       });
       
-      let message = 'Login failed';
+      let message = error.userMessage || 'Login failed';
       
       if (error.response) {
         // Server responded with error status
@@ -175,10 +175,10 @@ export const AuthProvider = ({ children }) => {
         }
       } else if (error.request) {
         // Network error
-        message = 'Network error. Please check your connection and ensure the backend server is running';
+        message = error.userMessage || 'Unable to connect. Please check your internet or contact admin.';
       } else {
         // Other error
-        message = error.message || 'An unexpected error occurred';
+        message = error.userMessage || error.message || 'An unexpected error occurred';
       }
       
       toast.error(message);

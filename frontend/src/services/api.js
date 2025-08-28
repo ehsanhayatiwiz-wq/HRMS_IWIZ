@@ -61,6 +61,20 @@ api.interceptors.response.use(
       }
     }
 
+    // Friendly error normalization
+    const message = (() => {
+      if (error.code === 'ECONNABORTED' || error.message?.toLowerCase().includes('timeout')) {
+        return 'Server is taking too long to respond.';
+      }
+      if (error.message === 'Network Error') {
+        return 'Unable to connect. Please check your internet or contact admin.';
+      }
+      if (error.response?.status >= 500) {
+        return 'Server error, please try again later.';
+      }
+      return error.message;
+    })();
+    error.userMessage = message;
     return Promise.reject(error);
   }
 );

@@ -195,7 +195,7 @@
 }
 
 .btn-view:hover {
-  background-color: #2563eb;
+  background-color: var(--primary-color);
 }
 
 .btn-edit {
@@ -204,7 +204,7 @@
 }
 
 .btn-edit:hover {
-  background-color: #d97706;
+  background-color: var(--warning-color);
 }
 
 .btn-delete {
@@ -213,7 +213,7 @@
 }
 
 .btn-delete:hover {
-  background-color: #dc2626;
+  background-color: var(--error-color);
 }
 
 .status-select {

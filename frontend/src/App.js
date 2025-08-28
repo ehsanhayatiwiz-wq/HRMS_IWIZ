@@ -16,6 +16,7 @@ import { Layout } from './components/layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 import ChangePassword from './pages/Settings';
+import NotFound from './pages/NotFound';
 
 function AppRoutes() {
   const { user, loading } = useAuth();
@@ -57,6 +58,9 @@ function AppRoutes() {
         <Route path="reports" element={<AdminDashboard />} />
         <Route path="profile" element={<Profile />} />
       </Route>
+
+      {/* 404 */}
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }

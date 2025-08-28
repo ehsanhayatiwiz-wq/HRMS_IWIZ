@@ -4,21 +4,21 @@
 
 /* Global CSS Variables */
 :root {
-  /* Brand Color Palette */
-  --primary-color: #6C63FF;        /* Main Indigo */
-  --primary-dark: #4A47A3;         /* Deep Purple for headers/nav */
-  --primary-light: #8F8AFF;        /* Lighter tint */
-  --secondary-color: #00C9A7;      /* Teal accent (success/active) */
-  --accent-color: #FF6584;         /* Pink-red highlights */
+  /* IWIZ HRMS Brand Palette */
+  --primary-color: #4A90E2;        /* Blue */
+  --primary-dark: #2C6FB5;         /* Darker blue */
+  --primary-light: #74B3F0;        /* Lighter blue */
+  --secondary-color: #50E3C2;      /* Teal/Green */
+  --accent-color: #F5A623;         /* Orange */
   
   /* Background Colors */
   --bg-primary: #FFFFFF;           /* Cards */
-  --bg-secondary: #F5F7FA;         /* Dashboard background */
+  --bg-secondary: #F4F6F8;         /* Dashboard background */
   --bg-dark: #1E1E2F;              /* Sidebar/header dark */
   --bg-darker: #161623;            /* Darker variant */
   
   /* Text Colors */
-  --text-primary: #1E1E2F;         /* Primary text */
+  --text-primary: #2C3E50;         /* Dark text */
   --text-secondary: #9BA3AF;       /* Secondary text/icons */
   --text-light: #C0C7D2;           /* Muted */
   --text-white: #FFFFFF;
@@ -29,10 +29,10 @@
   --border-dark: #94a3b8;
   
   /* Status Colors */
-  --success-color: #00C9A7;
-  --warning-color: #FFB400;
+  --success-color: #50E3C2;
+  --warning-color: #F5A623;
   --error-color: #FF6584;
-  --info-color: #6C63FF;
+  --info-color: #4A90E2;
   
   /* Spacing */
   --spacing-xs: 0.25rem;
