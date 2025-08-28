@@ -37,7 +37,47 @@ const securityConfig = {
 
   // CORS configuration
   cors: {
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin: (origin, callback) => {
+      const envList = (process.env.CORS_ORIGINS || process.env.CORS_ORIGIN || 'http://localhost:3000')
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+
+      // Allow requests without origin (e.g., curl, server-to-server)
+      if (!origin) return callback(null, true);
+
+      try {
+        const url = new URL(origin);
+        const hostname = url.hostname;
+
+        const allowed = envList.some(allowedOrigin => {
+          if (!allowedOrigin) return false;
+          if (allowedOrigin === '*') return true;
+          // Exact match
+          if (allowedOrigin === origin) return true;
+          // Support protocol-agnostic hostname match
+          try {
+            const allowedUrl = new URL(allowedOrigin);
+            if (allowedUrl.hostname === hostname) return true;
+          } catch (_) {
+            // allowedOrigin might be a bare hostname like ".vercel.app" or pattern
+          }
+          // Wildcard support for common cases
+          if (allowedOrigin.startsWith('*.')) {
+            const suffix = allowedOrigin.slice(1); // remove leading '*'
+            return hostname.endsWith(suffix);
+          }
+          if (allowedOrigin === '.vercel.app' || allowedOrigin === '*.vercel.app') {
+            return hostname.endsWith('.vercel.app');
+          }
+          return false;
+        });
+
+        return allowed ? callback(null, true) : callback(new Error('Not allowed by CORS'));
+      } catch (e) {
+        return callback(new Error('Invalid Origin'));
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
