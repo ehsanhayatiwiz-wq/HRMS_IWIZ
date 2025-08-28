@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
-import { FiUser, FiMail, FiPhone, FiMapPin, FiCalendar, FiEdit, FiSave, FiX } from 'react-icons/fi';
+import { FiUser, FiMail, FiPhone, FiMapPin, FiCalendar, FiEdit2, FiSave, FiX, FiKey } from 'react-icons/fi';
+import Button from '../components/common/Button';
 import './Dashboard.css';
 
 const Profile = () => {
@@ -118,31 +119,13 @@ const Profile = () => {
         <div className="section-header">
           <h2>Personal Information</h2>
           {!editing ? (
-            <button 
-              className="btn-primary"
-              onClick={() => setEditing(true)}
-            >
-              <FiEdit className="icon" />
-              Edit Profile
-            </button>
+            <Button variant="secondary" icon={<FiEdit2 />} onClick={() => setEditing(true)}>Edit</Button>
           ) : (
-            <div className="edit-actions">
-              <button 
-                className="btn-secondary"
-                onClick={cancelEdit}
-                disabled={submitting}
-              >
-                <FiX className="icon" />
-                Cancel
-              </button>
-              <button 
-                className="btn-primary"
-                onClick={handleProfileSubmit}
-                disabled={submitting}
-              >
-                <FiSave className="icon" />
-                {submitting ? 'Saving...' : 'Save Changes'}
-              </button>
+            <div className="edit-actions" style={{ display: 'flex', gap: 12 }}>
+              <Button variant="neutral" icon={<FiX />} onClick={cancelEdit} disabled={submitting}>Cancel</Button>
+              <Button variant="primary" icon={<FiSave />} onClick={handleProfileSubmit} disabled={submitting}>
+                {submitting ? 'Saving...' : 'Save'}
+              </Button>
             </div>
           )}
         </div>
@@ -327,12 +310,13 @@ const Profile = () => {
       <div className="content-section">
         <div className="section-header">
           <h2>Security</h2>
-          <button 
-            className="btn-primary"
+          <Button
+            variant={showPasswordForm ? 'neutral' : 'accent'}
+            icon={showPasswordForm ? <FiX /> : <FiKey />}
             onClick={() => setShowPasswordForm(!showPasswordForm)}
           >
             {showPasswordForm ? 'Cancel' : 'Change Password'}
-          </button>
+          </Button>
         </div>
 
         {showPasswordForm && (
@@ -377,22 +361,9 @@ const Profile = () => {
                 </div>
               </div>
 
-              <div className="form-actions">
-                <button 
-                  type="button" 
-                  className="btn-secondary"
-                  onClick={() => setShowPasswordForm(false)}
-                  disabled={submitting}
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit" 
-                  className="btn-primary"
-                  disabled={submitting}
-                >
-                  {submitting ? 'Changing...' : 'Change Password'}
-                </button>
+              <div className="form-actions" style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+                <Button variant="neutral" onClick={() => setShowPasswordForm(false)} disabled={submitting} icon={<FiX />}>Cancel</Button>
+                <Button variant="accent" type="submit" disabled={submitting} icon={<FiKey />}>{submitting ? 'Changing...' : 'Change Password'}</Button>
               </div>
             </form>
           </div>
