@@ -451,7 +451,7 @@ const AdminDashboard = () => {
                     </div>
                     <div className="activity-content">
                       <div className="activity-title">
-                        {leave.userId?.fullName || 'Unknown Employee'} requested {leave.leaveType} leave
+                        {leave.employeeName || 'Unknown Employee'} requested {leave.leaveType} leave
                       </div>
                       <div className="activity-details">
                         {new Date(leave.fromDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit' })} - {new Date(leave.toDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })} • {leave.totalDays} days
