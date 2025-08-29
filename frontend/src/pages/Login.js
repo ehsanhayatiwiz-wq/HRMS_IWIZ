@@ -120,8 +120,10 @@ const Login = () => {
         setGeneralError(result.error || 'Login failed. Please try again.');
       }
     } catch (error) {
-      console.error('Login error:', error);
-      setGeneralError('An unexpected error occurred. Please try again.');
+      // Login error
+      const message = error.response?.data?.message || 'Login failed';
+      setGeneralError(message);
+      setLoading(false);
     } finally {
       setLoading(false);
     }

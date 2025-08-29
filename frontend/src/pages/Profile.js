@@ -81,8 +81,8 @@ const Profile = () => {
         toast.error(result.error);
       }
     } catch (error) {
-      console.error('Error updating profile:', error);
-      toast.error('Failed to update profile. Please try again.');
+      // Error updating profile
+      toast.error(error.response?.data?.message || 'Failed to update profile');
     } finally {
       setSubmitting(false);
     }
@@ -117,7 +117,7 @@ const Profile = () => {
       });
       setShowPasswordForm(false);
     } catch (error) {
-      console.error('Error changing password:', error);
+      // Error changing password
       toast.error(error.response?.data?.message || 'Failed to change password');
     } finally {
       setSubmitting(false);

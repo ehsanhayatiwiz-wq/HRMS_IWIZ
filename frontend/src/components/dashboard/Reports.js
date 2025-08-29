@@ -79,17 +79,8 @@ const Reports = () => {
 
       toast.success(`${reportTypes.find(r => r.id === type)?.title} generated successfully!`);
     } catch (error) {
-      console.error('Error generating report:', error);
-      
-      if (error.code === 'ECONNABORTED') {
-        toast.error('Report generation timed out. Please try again.');
-      } else if (error.response?.status === 500) {
-        toast.error('Server error during report generation. Please try again later.');
-      } else if (error.message.includes('Invalid response format')) {
-        toast.error('Report generation failed. Please try again.');
-      } else {
-        toast.error('Failed to generate report. Please try again.');
-      }
+      // Error generating report
+      toast.error('Failed to generate report');
     } finally {
       setLoading(false);
     }
@@ -131,15 +122,8 @@ const Reports = () => {
 
       toast.success(`${reportTypes.find(r => r.id === type)?.title} exported successfully!`);
     } catch (error) {
-      console.error('Error exporting CSV:', error);
-      
-      if (error.code === 'ECONNABORTED') {
-        toast.error('CSV export timed out. Please try again.');
-      } else if (error.response?.status === 500) {
-        toast.error('Server error during CSV export. Please try again later.');
-      } else {
-        toast.error('Failed to export CSV. Please try again.');
-      }
+      // Error exporting CSV
+      toast.error('Failed to export CSV');
     } finally {
       setLoading(false);
     }

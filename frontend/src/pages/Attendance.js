@@ -42,7 +42,7 @@ const Attendance = () => {
         setAttendanceHistory(historyRes.data.data.attendance);
       }
     } catch (error) {
-      console.error('Error fetching attendance data:', error);
+      // Error fetching attendance data
       toast.error('Failed to load attendance data');
     } finally {
       setLoading(false);
@@ -56,16 +56,8 @@ const Attendance = () => {
       toast.success('Check-in successful!');
       fetchAttendanceData();
     } catch (error) {
-      console.error('Check-in error:', error);
-      
-      // Handle specific "already checked in" error
-      if (error.response?.status === 400 && error.response?.data?.message === 'Already checked in today') {
-        toast.info('Already checked in today');
-        // Refresh data to show current status
-        fetchAttendanceData();
-      } else {
-        toast.error(error.response?.data?.message || 'Check-in failed');
-      }
+      // Check-in error
+      toast.error(error.response?.data?.message || 'Check-in failed');
     } finally {
       setCheckingIn(false);
     }
@@ -78,17 +70,8 @@ const Attendance = () => {
       toast.success('Check-out successful!');
       fetchAttendanceData();
     } catch (error) {
-      console.error('Check-out error:', error);
-      
-      // Handle specific "already checked out" error
-      if (error.response?.status === 400 && error.response?.data?.message === 'Already checked out today') {
-        toast.info('Already checked out today');
-        fetchAttendanceData();
-      } else if (error.response?.status === 400 && error.response?.data?.message === 'No check-in record found for today') {
-        toast.error('Please check in first before checking out');
-      } else {
-        toast.error(error.response?.data?.message || 'Check-out failed');
-      }
+      // Check-out error
+      toast.error(error.response?.data?.message || 'Check-out failed');
     } finally {
       setCheckingOut(false);
     }
@@ -101,24 +84,8 @@ const Attendance = () => {
       toast.success('Re-check-in successful!');
       fetchAttendanceData();
     } catch (error) {
-      console.error('Re-check-in error:', error);
-      
-      // Handle specific re-check-in errors
-      if (error.response?.status === 400) {
-        const message = error.response?.data?.message;
-        if (message === 'Already re-checked in today') {
-          toast.info('Already re-checked in today');
-          fetchAttendanceData();
-        } else if (message === 'No initial check-in found for today') {
-          toast.error('Please check in first before re-checking in');
-        } else if (message === 'Please check out from your first session before re-checking in') {
-          toast.error('Please check out from your first session before re-checking in');
-        } else {
-          toast.error(message || 'Re-check-in failed');
-        }
-      } else {
-        toast.error(error.response?.data?.message || 'Re-check-in failed');
-      }
+      // Re-check-in error
+      toast.error(error.response?.data?.message || 'Re-check-in failed');
     } finally {
       setReCheckingIn(false);
     }
@@ -131,22 +98,8 @@ const Attendance = () => {
       toast.success('Re-check-out successful!');
       fetchAttendanceData();
     } catch (error) {
-      console.error('Re-check-out error:', error);
-      
-      // Handle specific re-check-out errors
-      if (error.response?.status === 400) {
-        const message = error.response?.data?.message;
-        if (message === 'Already re-checked out today') {
-          toast.info('Already re-checked out today');
-          fetchAttendanceData();
-        } else if (message === 'No re-check-in record found for today') {
-          toast.error('Please re-check in first before re-checking out');
-        } else {
-          toast.error(message || 'Re-check-out failed');
-        }
-      } else {
-        toast.error(error.response?.data?.message || 'Re-check-out failed');
-      }
+      // Re-check-out error
+      toast.error(error.response?.data?.message || 'Re-check-out failed');
     } finally {
       setReCheckingOut(false);
     }

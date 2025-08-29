@@ -173,9 +173,9 @@ const Register = () => {
         setGeneralError(result.error || 'Registration failed. Please try again.');
       }
     } catch (error) {
-      console.error('Registration error:', error);
-      setGeneralError('An unexpected error occurred. Please try again.');
-    } finally {
+      // Registration error
+      const message = error.response?.data?.message || 'Registration failed';
+      setGeneralError(message);
       setLoading(false);
     }
   };

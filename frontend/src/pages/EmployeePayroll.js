@@ -27,7 +27,7 @@ const EmployeePayroll = () => {
       setPayrolls(response.data.data.payrolls);
       setTotalPages(response.data.data.pagination.totalPages);
     } catch (error) {
-      console.error('Error fetching payroll data:', error);
+      // Error fetching payroll data
       toast.error('Failed to load payroll data');
     } finally {
       setLoading(false);
@@ -54,7 +54,7 @@ const EmployeePayroll = () => {
       
       toast.success('Salary slip downloaded successfully');
     } catch (error) {
-      console.error('Error downloading salary slip:', error);
+      // Error downloading salary slip
       toast.error('Failed to download salary slip');
     }
   };

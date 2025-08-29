@@ -40,9 +40,8 @@ const Leaves = () => {
         setLeaveHistory(response.data.data.leaves || []);
       }
     } catch (error) {
-      console.error('Error fetching leave history:', error);
+      // Error fetching leave history
       toast.error('Failed to load leave history');
-      setLeaveHistory([]);
     } finally {
       setLoading(false);
       setFetchInProgress(false);
@@ -91,15 +90,9 @@ const Leaves = () => {
         });
       }
     } catch (error) {
-      console.error('Leave submission error:', error);
-      
-      if (error.response?.status === 400) {
-        toast.error(error.response.data.message || 'Invalid leave request');
-      } else if (error.response?.status === 409) {
-        toast.error('Leave request overlaps with existing leaves');
-      } else {
-        toast.error('Failed to submit leave request. Please try again.');
-      }
+      // Leave submission error
+      const message = error.response?.data?.message || 'Failed to submit leave request';
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }

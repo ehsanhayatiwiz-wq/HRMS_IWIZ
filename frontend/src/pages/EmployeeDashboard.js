@@ -59,7 +59,7 @@ const EmployeeDashboard = () => {
         }
       });
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      // Error fetching dashboard data
       toast.error('Failed to load dashboard data');
     } finally {
       setLoading(false);

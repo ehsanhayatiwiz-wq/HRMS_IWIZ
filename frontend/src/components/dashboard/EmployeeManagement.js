@@ -65,7 +65,7 @@ const EmployeeManagement = () => {
       setTotalPages(response.data?.data?.pagination?.totalPages || 1);
       // setTotalEmployees(response.data?.data?.pagination?.totalEmployees || 0); // This line was not in the new_code, so it's removed.
     } catch (error) {
-      console.error('Error fetching employees:', error);
+      // Error fetching employees
       toast.error('Failed to load employees');
       setEmployees([]);
     } finally {

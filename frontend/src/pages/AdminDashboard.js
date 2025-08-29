@@ -70,7 +70,7 @@ const AdminDashboard = () => {
           setEmployees(response.data?.data?.employees || []);
           setTotalPages(response.data?.data?.pagination?.totalPages || 1);
         } catch (error) {
-          console.error('Error fetching employees:', error);
+          // Error fetching employees
           toast.error('Failed to load employee data');
           setEmployees([]);
           setTotalPages(1);
@@ -81,7 +81,7 @@ const AdminDashboard = () => {
           setAttendanceRecords(response.data?.data?.attendance || []);
           setTotalPages(response.data?.data?.pagination?.totalPages || 1);
         } catch (error) {
-          console.error('Error fetching attendance:', error);
+          // Error fetching attendance
           toast.error('Failed to load attendance data');
           setAttendanceRecords([]);
           setTotalPages(1);
@@ -93,14 +93,14 @@ const AdminDashboard = () => {
           setLeaveRequests(response.data?.data?.leaves || []);
           setTotalPages(response.data?.data?.pagination?.totalPages || 1);
         } catch (error) {
-          console.error('Error fetching leaves:', error);
+          // Error fetching leaves
           toast.error('Failed to load leave data');
           setLeaveRequests([]);
           setTotalPages(1);
         }
       }
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      // Error fetching dashboard data
       const now = Date.now();
       // Avoid spamming toasts on transient network issues
       const shouldToast = now - lastErrorAt > 10000; // 10s
@@ -219,9 +219,8 @@ const AdminDashboard = () => {
       }
       fetchDashboardData();
     } catch (error) {
-      // Rollback on failure
+      // Approve leave error
       setLeaveRequests(previousLeaves);
-      console.error('Approve leave error:', error);
       toast.error(error.response?.data?.message || 'Failed to approve leave request');
     }
   };
@@ -247,9 +246,8 @@ const AdminDashboard = () => {
       }
       fetchDashboardData();
     } catch (error) {
-      // Rollback on failure
+      // Reject leave error
       setLeaveRequests(previousLeaves);
-      console.error('Reject leave error:', error);
       toast.error(error.response?.data?.message || 'Failed to reject leave request');
     }
   };
@@ -333,6 +331,7 @@ const AdminDashboard = () => {
       setEditingEmployee(null);
       fetchDashboardData();
     } catch (error) {
+      // Error saving employee
       toast.error(error.response?.data?.message || 'Failed to save employee');
     }
   };
@@ -1097,7 +1096,7 @@ const EmployeeModal = ({ employee, onSave, onClose }) => {
     try {
       await onSave(formData);
     } catch (error) {
-      console.error('Error saving employee:', error);
+      // Error saving employee
     } finally {
       setIsSubmitting(false);
     }

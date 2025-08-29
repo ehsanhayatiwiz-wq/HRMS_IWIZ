@@ -25,21 +25,21 @@ const Payroll = () => {
       const month = parseInt(monthStr.split('-')[1]); // Extract month from YYYY-MM format
       const year = parseInt(yearStr);
       
-      if (isNaN(month) || month < 1 || month > 12) {
-        console.warn('Invalid month:', monthStr, 'using current month');
+              if (isNaN(month) || month < 1 || month > 12) {
+          toast.info('Invalid month, using current month');
+          return { month: moment().month() + 1, year: moment().year() };
+        }
+        
+        if (isNaN(year) || year < 2020 || year > 2030) {
+          toast.info('Invalid year, using current year');
+          return { month, year: moment().year() };
+        }
+        
+        return { month, year };
+      } catch (error) {
+        // Error parsing month/year
         return { month: moment().month() + 1, year: moment().year() };
       }
-      
-      if (isNaN(year) || year < 2020 || year > 2030) {
-        console.warn('Invalid year:', yearStr, 'using current year');
-        return { month, year: moment().year() };
-      }
-      
-      return { month, year };
-    } catch (error) {
-      console.error('Error parsing month/year:', error);
-      return { month: moment().month() + 1, year: moment().year() };
-    }
   };
 
   const fetchPayrollData = async () => {
@@ -68,7 +68,7 @@ const Payroll = () => {
       setSummary(summaryRes.data?.data?.summary || {});
       setTotalPages(payrollsRes.data?.data?.pagination?.totalPages || 1);
     } catch (error) {
-      console.error('Error fetching payroll data:', error);
+      // Error fetching payroll data
       toast.error('Failed to load payroll data');
       setPayrolls([]);
       setSummary({});
@@ -98,7 +98,7 @@ const Payroll = () => {
       toast.success('Payroll generated successfully');
       fetchPayrollData();
     } catch (error) {
-      console.error('Error generating payroll:', error);
+      // Error generating payroll
       toast.error(error.response?.data?.message || 'Failed to generate payroll');
     } finally {
       setGenerating(false);
@@ -122,7 +122,7 @@ const Payroll = () => {
 
       toast.success('Salary slip downloaded successfully');
     } catch (error) {
-      console.error('Error downloading salary slip:', error);
+      // Error downloading salary slip
       toast.error('Failed to download salary slip');
     }
   };
@@ -133,7 +133,7 @@ const Payroll = () => {
       toast.success('Payroll status updated successfully');
       fetchPayrollData();
     } catch (error) {
-      console.error('Error updating payroll status:', error);
+      // Error updating payroll status
       toast.error('Failed to update payroll status');
     }
   };
