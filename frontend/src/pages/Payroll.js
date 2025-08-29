@@ -170,7 +170,10 @@ const Payroll = () => {
               alert('Check console for debug info');
             } catch (error) {
               console.error('Debug error:', error);
-              alert('Debug failed - check console');
+              console.error('Debug error response:', error.response?.data);
+              console.error('Debug error status:', error.response?.status);
+              console.error('Debug error headers:', error.response?.headers);
+              alert(`Debug failed (${error.response?.status || 'unknown'}) - check console`);
             }
           }}
         >
@@ -251,7 +254,6 @@ const Payroll = () => {
                     <td>
                       <div className="employee-info">
                         <div className="employee-name">{payroll.employeeId?.fullName}</div>
-                        <div className="employee-id">{payroll.employeeId?.employeeId}</div>
                       </div>
                     </td>
                     <td>{payroll.month}/{payroll.year}</td>

@@ -222,7 +222,7 @@ const AdminDashboard = () => {
           type: 'leave_approved',
           title: 'Leave Request Approved',
           message: `Your ${leave.leaveType} leave has been approved`,
-          employeeId: leave.userId?.id || leave.userId
+          employeeId: leave.employeeId
         });
       }
       fetchDashboardData();
@@ -250,7 +250,7 @@ const AdminDashboard = () => {
           type: 'leave_rejected',
           title: 'Leave Request Rejected',
           message: `Your ${leave.leaveType} leave has been rejected: ${reason}`,
-          employeeId: leave.userId?.id || leave.userId
+          employeeId: leave.employeeId
         });
       }
       fetchDashboardData();
@@ -696,7 +696,6 @@ const AdminDashboard = () => {
                             </div>
                             <div>
                               <div className="employee-name">{record.employeeName || 'Unknown'}</div>
-                              <div className="employee-email">{record.employeeId || ''}</div>
                             </div>
                           </div>
                         </td>
@@ -803,7 +802,6 @@ const AdminDashboard = () => {
                           </div>
                           <div>
                             <div className="employee-name">{leave.employeeName || 'Unknown'}</div>
-                            <div className="employee-email">{leave.employeeId || ''}</div>
                           </div>
                         </div>
                       </td>
