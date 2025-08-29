@@ -20,16 +20,7 @@ router.post('/checkin', protect, async (req, res) => {
     const { startUtc, endUtc } = Attendance.getKarachiDayRangeUtc(new Date());
     const today = startUtc;
 
-    console.log('Check-in timezone debug:', {
-      userId,
-      userType,
-      currentTime: new Date().toISOString(),
-      karachiTime: new Date(new Date().getTime() + 5 * 60 * 60 * 1000).toISOString(),
-      startUtc: startUtc.toISOString(),
-      endUtc: endUtc.toISOString(),
-      karachiDayStart: new Date(startUtc.getTime() + 5 * 60 * 60 * 1000).toISOString(),
-      karachiDayEnd: new Date(endUtc.getTime() + 5 * 60 * 60 * 1000).toISOString()
-    });
+
 
     // Check if already checked in today
     const existingAttendance = await Attendance.findOne({
@@ -38,19 +29,7 @@ router.post('/checkin', protect, async (req, res) => {
       date: { $gte: startUtc, $lt: endUtc }
     });
 
-    console.log('Existing attendance check:', {
-      userId,
-      userType,
-      today: today.toISOString(),
-      startUtc: startUtc.toISOString(),
-      endUtc: endUtc.toISOString(),
-      existingAttendance: existingAttendance ? {
-        id: existingAttendance._id,
-        date: existingAttendance.date,
-        hasCheckIn: !!existingAttendance.checkIn?.time,
-        checkInTime: existingAttendance.checkInTimeFormatted
-      } : null
-    });
+
 
     if (existingAttendance && existingAttendance.checkIn.time) {
       return res.status(400).json({ 
@@ -74,13 +53,7 @@ router.post('/checkin', protect, async (req, res) => {
 
     const currentTime = new Date();
     
-    console.log('Check-in time storage:', {
-      currentTime: currentTime.toISOString(),
-      karachiTime: new Date(currentTime.getTime() + 5 * 60 * 60 * 1000).toISOString(),
-      karachiHours: new Date(currentTime.getTime() + 5 * 60 * 60 * 1000).getUTCHours(),
-      karachiMinutes: new Date(currentTime.getTime() + 5 * 60 * 60 * 1000).getUTCMinutes(),
-      expectedFormat: `${new Date(currentTime.getTime() + 5 * 60 * 60 * 1000).getUTCHours().toString().padStart(2, '0')}:${new Date(currentTime.getTime() + 5 * 60 * 60 * 1000).getUTCMinutes().toString().padStart(2, '0')}`
-    });
+
     
     attendance.checkIn = {
       time: currentTime,
@@ -91,7 +64,7 @@ router.post('/checkin', protect, async (req, res) => {
 
     await attendance.save();
 
-    console.log('Check-in successful for user:', userId);
+
 
     res.json({
       success: true,
@@ -157,13 +130,7 @@ router.post('/checkout', protect, async (req, res) => {
     const timeDifference = currentTime - attendance.checkIn.time;
     const minimumTimeMs = 1 * 60 * 1000; // 1 minute minimum
     
-    console.log('Check-out time validation:', {
-      checkInTime: attendance.checkIn.time.toISOString(),
-      checkOutTime: currentTime.toISOString(),
-      timeDifferenceMs: timeDifference,
-      minimumTimeMs: minimumTimeMs,
-      isValid: timeDifference >= minimumTimeMs
-    });
+
     
     if (timeDifference < minimumTimeMs) {
       return res.status(400).json({ 
@@ -172,11 +139,7 @@ router.post('/checkout', protect, async (req, res) => {
       });
     }
     
-    console.log('Check-out time storage:', {
-      currentTime: currentTime.toISOString(),
-      karachiTime: new Date(currentTime.getTime() + 5 * 60 * 60 * 1000).toISOString(),
-      karachiFormatted: new Date(currentTime.getTime() + 5 * 60 * 60 * 1000).toLocaleString('en-PK', { timeZone: 'Asia/Karachi' })
-    });
+
     
     attendance.checkOut = {
       time: currentTime,
@@ -187,7 +150,7 @@ router.post('/checkout', protect, async (req, res) => {
 
     await attendance.save();
 
-    console.log('Check-out successful for user:', userId);
+
 
     res.json({
       success: true,
@@ -213,18 +176,18 @@ router.post('/checkout', protect, async (req, res) => {
 // @access  Private
 router.post('/re-checkin', protect, async (req, res) => {
   try {
-    console.log('Re-check-in request from user:', req.user.id);
+
     
     const userId = req.user.id;
     const userType = req.userRole;
     const today = new Date();
 
-    console.log('Re-check-in validation for user:', userId, 'date:', today.toISOString());
+
     
     // Check if user can re-check-in
     const canReCheckInResult = await Attendance.canReCheckIn(userId, userType, today);
     
-    console.log('Re-check-in validation result:', canReCheckInResult);
+
     
     if (!canReCheckInResult.canReCheckIn) {
       return res.status(400).json({ 
@@ -364,26 +327,14 @@ router.post('/re-checkout', protect, async (req, res) => {
 // @access  Private
 router.get('/today', protect, async (req, res) => {
   try {
-    console.log('Get today attendance for user:', req.user.id);
+
     
     const userId = req.user.id;
     const userType = req.userRole;
 
     const attendance = await Attendance.getTodayAttendance(userId, userType);
 
-    console.log('Today attendance lookup:', {
-      userId,
-      userType,
-      attendanceFound: !!attendance,
-      attendance: attendance ? {
-        id: attendance._id,
-        date: attendance.date,
-        hasCheckIn: !!attendance.checkIn?.time,
-        hasCheckOut: !!attendance.checkOut?.time,
-        checkInTime: attendance.checkInTimeFormatted,
-        checkOutTime: attendance.checkOutTimeFormatted
-      } : null
-    });
+
 
     if (!attendance) {
       return res.json({
@@ -404,14 +355,7 @@ router.get('/today', protect, async (req, res) => {
     const canReCheckIn = attendance.checkOut && attendance.checkOut.time && !attendance.reCheckIn.time;
     const canReCheckOut = attendance.reCheckIn && attendance.reCheckIn.time && !attendance.reCheckOut.time;
 
-    console.log('Today attendance found for user:', userId, {
-      canCheckIn,
-      canCheckOut,
-      canReCheckIn,
-      canReCheckOut,
-      checkInTime: attendance.checkInTimeFormatted,
-      checkOutTime: attendance.checkOutTimeFormatted
-    });
+
 
     res.json({
       success: true,
@@ -448,7 +392,7 @@ router.get('/today', protect, async (req, res) => {
 // @access  Private
 router.get('/history', protect, async (req, res) => {
   try {
-    console.log('Get attendance history for user:', req.user.id);
+
     
     const userId = req.user.id;
     const userType = req.userRole;
@@ -471,23 +415,9 @@ router.get('/history', protect, async (req, res) => {
 
     const total = await Attendance.countDocuments(query);
 
-    console.log(`Found ${attendance.length} attendance records for user:`, userId);
 
-    // Debug the first record to see what's happening
-    if (attendance.length > 0) {
-      const firstRecord = attendance[0];
-      console.log('First attendance record debug:', {
-        id: firstRecord._id,
-        date: firstRecord.date,
-        checkInTime: firstRecord.checkIn?.time?.toISOString(),
-        checkOutTime: firstRecord.checkOut?.time?.toISOString(),
-        checkInTimeFormatted: firstRecord.checkInTimeFormatted,
-        checkOutTimeFormatted: firstRecord.checkOutTimeFormatted,
-        totalHours: firstRecord.totalHours,
-        firstSessionHours: firstRecord.firstSessionHours,
-        secondSessionHours: firstRecord.secondSessionHours
-      });
-    }
+
+
 
     res.json({
       success: true,
@@ -528,7 +458,7 @@ router.get('/history', protect, async (req, res) => {
 // @access  Private (Admin)
 router.get('/all', protect, authorize('admin'), async (req, res) => {
   try {
-    console.log('Get all attendance records request from admin:', req.user.id);
+
     
     const { page = 1, limit = 20, date, employeeId, status } = req.query;
     
@@ -717,146 +647,8 @@ router.get('/stats', protect, authorize('admin'), async (req, res) => {
   }
 });
 
-// @route   GET /api/attendance/timezone-test
-// @desc    Test timezone calculations
-// @access  Private
-router.get('/timezone-test', protect, async (req, res) => {
-  try {
-    const now = new Date();
-    const { startUtc, endUtc } = Attendance.getKarachiDayRangeUtc(now);
-    
-    // Test time formatting
-    const testTime = new Date('2024-01-15T12:35:00.000Z'); // 12:35 PM UTC
-    const karachiTime = new Date(testTime.getTime() + 5 * 60 * 60 * 1000); // 5:35 PM Karachi
-    
-    // Test the formatKarachiTime function
-    const Attendance = require('../models/Attendance');
-    const testFormattedTime = Attendance.schema.virtuals.checkInTimeFormatted.get.call({
-      checkIn: { time: testTime }
-    });
-    
-    res.json({
-      success: true,
-      data: {
-        currentTime: {
-          utc: now.toISOString(),
-          karachi: new Date(now.getTime() + 5 * 60 * 60 * 1000).toISOString(),
-          karachiFormatted: new Date(now.getTime() + 5 * 60 * 60 * 1000).toLocaleString('en-PK', { timeZone: 'Asia/Karachi' })
-        },
-        timeFormattingTest: {
-          testTimeUTC: testTime.toISOString(),
-          testTimeKarachi: karachiTime.toISOString(),
-          testFormattedTime: testFormattedTime,
-          manualConversion: {
-            originalHours: testTime.getUTCHours(),
-            originalMinutes: testTime.getUTCMinutes(),
-            karachiHours: karachiTime.getUTCHours(),
-            karachiMinutes: karachiTime.getUTCMinutes(),
-            result: `${karachiTime.getUTCHours().toString().padStart(2, '0')}:${karachiTime.getUTCMinutes().toString().padStart(2, '0')}`
-          },
-          // Test with current time
-          currentTimeUTC: new Date().toISOString(),
-          currentTimeKarachi: new Date(new Date().getTime() + 5 * 60 * 60 * 1000).toISOString(),
-          currentTimeFormatted: `${new Date(new Date().getTime() + 5 * 60 * 60 * 1000).getUTCHours().toString().padStart(2, '0')}:${new Date(new Date().getTime() + 5 * 60 * 60 * 1000).getUTCMinutes().toString().padStart(2, '0')}`
-        },
-        dayBoundaries: {
-          startUtc: startUtc.toISOString(),
-          endUtc: endUtc.toISOString(),
-          karachiDayStart: new Date(startUtc.getTime() + 5 * 60 * 60 * 1000).toISOString(),
-          karachiDayEnd: new Date(endUtc.getTime() + 5 * 60 * 60 * 1000).toISOString(),
-          karachiDayStartFormatted: new Date(startUtc.getTime() + 5 * 60 * 60 * 1000).toLocaleString('en-PK', { timeZone: 'Asia/Karachi' }),
-          karachiDayEndFormatted: new Date(endUtc.getTime() + 5 * 60 * 60 * 1000).toLocaleString('en-PK', { timeZone: 'Asia/Karachi' })
-        },
-        explanation: {
-          karachiOffset: 'UTC+5 (5 hours ahead of UTC)',
-          dayStart: '00:00:00 Karachi time',
-          dayEnd: '23:59:59 Karachi time',
-          example: 'If UTC time is 7:00 PM, Karachi time is 12:00 AM (next day)'
-        }
-      }
-    });
-  } catch (error) {
-    console.error('Timezone test error:', error);
-    res.status(500).json({ message: 'Server error during timezone test' });
-  }
-});
 
-// @route   POST /api/attendance/recalculate-hours
-// @desc    Recalculate hours for existing attendance records
-// @access  Private
-router.post('/recalculate-hours', protect, async (req, res) => {
-  try {
-    console.log('Recalculating hours for user:', req.user.id);
-    
-    const userId = req.user.id;
-    const userType = req.userRole;
 
-    // Get all attendance records for this user
-    const attendanceRecords = await Attendance.find({ userId, userType });
-    
-    console.log(`Found ${attendanceRecords.length} attendance records to recalculate`);
 
-    let updatedCount = 0;
-    
-    for (const record of attendanceRecords) {
-      let needsUpdate = false;
-      
-      // Recalculate first session hours
-      if (record.checkIn?.time && record.checkOut?.time) {
-        const firstSessionMs = record.checkOut.time - record.checkIn.time;
-        const newFirstSessionHours = Math.round((firstSessionMs / (1000 * 60 * 60)) * 100) / 100;
-        
-        if (record.firstSessionHours !== newFirstSessionHours) {
-          record.firstSessionHours = newFirstSessionHours;
-          needsUpdate = true;
-        }
-      }
-
-      // Recalculate second session hours
-      if (record.reCheckIn?.time && record.reCheckOut?.time) {
-        const secondSessionMs = record.reCheckOut.time - record.reCheckIn.time;
-        const newSecondSessionHours = Math.round((secondSessionMs / (1000 * 60 * 60)) * 100) / 100;
-        
-        if (record.secondSessionHours !== newSecondSessionHours) {
-          record.secondSessionHours = newSecondSessionHours;
-          needsUpdate = true;
-        }
-      }
-
-      // Recalculate total hours
-      const newTotalHours = (record.firstSessionHours || 0) + (record.secondSessionHours || 0);
-      if (record.totalHours !== newTotalHours) {
-        record.totalHours = newTotalHours;
-        needsUpdate = true;
-      }
-
-      if (needsUpdate) {
-        await record.save();
-        updatedCount++;
-        
-        console.log('Updated attendance record:', {
-          id: record._id,
-          date: record.date,
-          firstSessionHours: record.firstSessionHours,
-          secondSessionHours: record.secondSessionHours,
-          totalHours: record.totalHours
-        });
-      }
-    }
-
-    res.json({
-      success: true,
-      message: `Recalculated hours for ${updatedCount} attendance records`,
-      data: {
-        totalRecords: attendanceRecords.length,
-        updatedRecords: updatedCount
-      }
-    });
-
-  } catch (error) {
-    console.error('Recalculate hours error:', error);
-    res.status(500).json({ message: 'Server error during hours recalculation' });
-  }
-});
 
 module.exports = router; 

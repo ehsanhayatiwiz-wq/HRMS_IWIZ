@@ -138,15 +138,6 @@ function formatKarachiTime(date) {
   
   const formattedTime = `${hours}:${minutes}`;
   
-  console.log('formatKarachiTime debug:', {
-    originalDate: date.toISOString(),
-    karachiTime: karachiTime.toISOString(),
-    karachiUTCHours: karachiTime.getUTCHours(),
-    karachiUTCMinutes: karachiTime.getUTCMinutes(),
-    formattedResult: formattedTime,
-    explanation: 'UTC+5 conversion: original time + 5 hours = Karachi time'
-  });
-  
   return formattedTime;
 }
 
@@ -156,12 +147,6 @@ attendanceSchema.virtual('checkInTimeFormatted').get(function() {
   
   const formattedTime = formatKarachiTime(this.checkIn.time);
   
-  console.log('Check-in time formatting:', {
-    originalTime: this.checkIn.time.toISOString(),
-    formattedTime: formattedTime,
-    karachiTime: new Date(this.checkIn.time.getTime() + 5 * 60 * 60 * 1000).toISOString()
-  });
-  
   return formattedTime;
 });
 
@@ -169,12 +154,6 @@ attendanceSchema.virtual('checkOutTimeFormatted').get(function() {
   if (!this.checkOut || !this.checkOut.time) return null;
   
   const formattedTime = formatKarachiTime(this.checkOut.time);
-  
-  console.log('Check-out time formatting:', {
-    originalTime: this.checkOut.time.toISOString(),
-    formattedTime: formattedTime,
-    karachiTime: new Date(this.checkOut.time.getTime() + 5 * 60 * 60 * 1000).toISOString()
-  });
   
   return formattedTime;
 });
@@ -184,12 +163,6 @@ attendanceSchema.virtual('reCheckInTimeFormatted').get(function() {
   
   const formattedTime = formatKarachiTime(this.reCheckIn.time);
   
-  console.log('Re-check-in time formatting:', {
-    originalTime: this.reCheckIn.time.toISOString(),
-    formattedTime: formattedTime,
-    karachiTime: new Date(this.reCheckIn.time.getTime() + 5 * 60 * 60 * 1000).toISOString()
-  });
-  
   return formattedTime;
 });
 
@@ -197,12 +170,6 @@ attendanceSchema.virtual('reCheckOutTimeFormatted').get(function() {
   if (!this.reCheckOut || !this.reCheckOut.time) return null;
   
   const formattedTime = formatKarachiTime(this.reCheckOut.time);
-  
-  console.log('Re-check-out time formatting:', {
-    originalTime: this.reCheckOut.time.toISOString(),
-    formattedTime: formattedTime,
-    karachiTime: new Date(this.reCheckOut.time.getTime() + 5 * 60 * 60 * 1000).toISOString()
-  });
   
   return formattedTime;
 });
@@ -240,19 +207,14 @@ attendanceSchema.virtual('totalHoursFormatted').get(function() {
 
 // Calculate hours before saving
 attendanceSchema.pre('save', function(next) {
-  console.log('Calculating hours for attendance:', this._id);
+
   
   // Calculate first session hours
   if (this.checkIn && this.checkIn.time && this.checkOut && this.checkOut.time) {
     const firstSessionMs = this.checkOut.time - this.checkIn.time;
     this.firstSessionHours = Math.round((firstSessionMs / (1000 * 60 * 60)) * 100) / 100;
     
-    console.log('First session calculation:', {
-      checkInTime: this.checkIn.time.toISOString(),
-      checkOutTime: this.checkOut.time.toISOString(),
-      differenceMs: firstSessionMs,
-      hours: this.firstSessionHours
-    });
+
   }
 
   // Calculate second session hours
@@ -260,22 +222,13 @@ attendanceSchema.pre('save', function(next) {
     const secondSessionMs = this.reCheckOut.time - this.reCheckIn.time;
     this.secondSessionHours = Math.round((secondSessionMs / (1000 * 60 * 60)) * 100) / 100;
     
-    console.log('Second session calculation:', {
-      reCheckInTime: this.reCheckIn.time.toISOString(),
-      reCheckOutTime: this.reCheckOut.time.toISOString(),
-      differenceMs: secondSessionMs,
-      hours: this.secondSessionHours
-    });
+
   }
 
   // Calculate total hours
   this.totalHours = (this.firstSessionHours || 0) + (this.secondSessionHours || 0);
   
-  console.log('Total hours calculation:', {
-    firstSessionHours: this.firstSessionHours,
-    secondSessionHours: this.secondSessionHours,
-    totalHours: this.totalHours
-  });
+
 
   // Update status based on check-ins
   if (this.reCheckIn && this.reCheckIn.time) {
@@ -296,16 +249,7 @@ attendanceSchema.statics.getKarachiDayRangeUtc = function(baseDate = new Date())
   const startUtc = new Date(startKarachiUTC - KARACHI_OFFSET_MS);
   const endUtc = new Date(startUtc.getTime() + 24 * 60 * 60 * 1000);
   
-  // Debug logging for timezone calculations
-  console.log('Karachi timezone calculation:', {
-    baseDate: baseDate.toISOString(),
-    karachiClock: karachiClock.toISOString(),
-    startKarachiUTC: new Date(startKarachiUTC).toISOString(),
-    startUtc: startUtc.toISOString(),
-    endUtc: endUtc.toISOString(),
-    karachiDayStart: new Date(startUtc.getTime() + KARACHI_OFFSET_MS).toISOString(),
-    karachiDayEnd: new Date(endUtc.getTime() + KARACHI_OFFSET_MS).toISOString()
-  });
+
   
   return { startUtc, endUtc };
 };

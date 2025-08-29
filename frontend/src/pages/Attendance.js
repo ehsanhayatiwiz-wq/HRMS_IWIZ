@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 // moment.js removed - using native Date methods
-import { FiClock, FiCheckCircle, FiXCircle, FiCalendar, FiTrendingUp, FiRefreshCw } from 'react-icons/fi';
+import { FiCheckCircle, FiXCircle, FiCalendar, FiTrendingUp, FiRefreshCw } from 'react-icons/fi';
 import Button from '../components/common/Button';
 import './Dashboard.css';
 
@@ -28,21 +28,14 @@ const Attendance = () => {
       setLoading(true);
       console.log('Fetching attendance data...');
       
-      // Log current time for debugging
-      const now = new Date();
-      console.log('Current time debug:', {
-        utc: now.toISOString(),
-        local: now.toString(),
-        karachiTime: new Date(now.getTime() + 5 * 60 * 60 * 1000).toISOString()
-      });
+
       
       const [todayRes, historyRes] = await Promise.all([
         api.get('/attendance/today'),
         api.get('/attendance/history?page=1&limit=10')
       ]);
 
-      console.log('Today attendance response:', todayRes.data);
-      console.log('History response:', historyRes.data);
+
 
       const todayData = todayRes.data.data;
       setTodayAttendance(todayData.attendance);
@@ -52,11 +45,7 @@ const Attendance = () => {
       setCanReCheckOut(todayData.canReCheckOut);
       setAttendanceHistory(historyRes.data.data.attendance);
       
-      console.log('Attendance state updated:', {
-        todayAttendance: todayData.attendance,
-        canCheckIn: todayData.canCheckIn,
-        canCheckOut: todayData.canCheckOut
-      });
+
     } catch (error) {
       console.error('Error fetching attendance data:', error);
       toast.error('Failed to load attendance data');
@@ -168,30 +157,7 @@ const Attendance = () => {
     }
   };
 
-  const handleRecalculateHours = async () => {
-    try {
-      setLoading(true);
-      const response = await api.post('/attendance/recalculate-hours');
-      toast.success(response.data.message);
-      fetchAttendanceData();
-    } catch (error) {
-      console.error('Recalculate hours error:', error);
-      toast.error(error.response?.data?.message || 'Failed to recalculate hours');
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const handleTestTimezone = async () => {
-    try {
-      const response = await api.get('/attendance/timezone-test');
-      console.log('Timezone test result:', response.data);
-      toast.info('Check console for timezone test results');
-    } catch (error) {
-      console.error('Timezone test error:', error);
-      toast.error('Failed to test timezone');
-    }
-  };
 
   const getStatusBadge = (status) => {
     if (!status) {
@@ -236,7 +202,7 @@ const Attendance = () => {
           <h1 className="page-title">Attendance Management</h1>
           <p className="page-subtitle">Track your daily attendance and view history</p>
           <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-            Timezone: Pakistan (UTC+5) • Current time: {new Date().toLocaleString('en-PK', { timeZone: 'Asia/Karachi' })} • 
+            Timezone: Pakistan (UTC+5) • Current time: {new Date(new Date().getTime() + 5 * 60 * 60 * 1000).toLocaleString('en-PK')} • 
             Day boundaries: 00:00 - 23:59 Pakistan time
           </div>
         </div>
@@ -248,22 +214,6 @@ const Attendance = () => {
             icon={<FiRefreshCw />}
           >
             {loading ? 'Refreshing...' : 'Refresh'}
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={handleRecalculateHours}
-            disabled={loading}
-            icon={<FiRefreshCw />}
-          >
-            Recalculate Hours
-          </Button>
-          <Button
-            variant="neutral"
-            onClick={handleTestTimezone}
-            disabled={loading}
-            icon={<FiClock />}
-          >
-            Test Timezone
           </Button>
         </div>
       </div>
