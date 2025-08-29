@@ -119,44 +119,33 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password, role = 'employee') => {
     try {
-      console.log('Login attempt:', { email, role });
+      const payload = {
+        email: email.trim(),
+        password,
+        role
+      };
+
+      const response = await api.post('/auth/login', payload);
       
-      // Only send role if it is supported by backend
-      const payload = role && (role === 'admin' || role === 'employee')
-        ? { email, password, role }
-        : { email, password };
-      
-      console.log('Sending payload:', { ...payload, password: '[HIDDEN]' });
-      
-      const response = await throttleRequest(async () => {
-        return await retryWithBackoff(async () => {
-          return await api.post('/auth/login', payload);
-        });
-      });
-      
-      console.log('Login response:', response.data);
-      
-      const { user: userData, token: authToken } = response.data.data;
-      
-      if (!userData || !authToken) {
-        console.error('Invalid response structure:', response.data);
-        throw new Error('Invalid response from server');
+      if (response.data.success) {
+        const { user, token } = response.data.data;
+        
+        // Store token
+        localStorage.setItem('token', token);
+        
+        // Update user state
+        setUser(user);
+        
+        // Update auth state
+        // setIsAuthenticated(true); // This state was not defined in the original file
+        // setUserRole(user.role); // This state was not defined in the original file
+        
+        toast.success('Login successful!');
+        return { success: true };
+      } else {
+        return { success: false, error: response.data.message || 'Login failed' };
       }
-      
-      setUser(userData);
-      setToken(authToken);
-      localStorage.setItem('token', authToken);
-      
-      toast.success('Login successful!');
-      return { success: true };
     } catch (error) {
-      console.error('Login error details:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        config: error.config
-      });
-      
       let message = error.userMessage || 'Login failed';
       
       if (error.response) {
@@ -188,71 +177,40 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      console.log('Registration attempt:', { ...userData, password: '[HIDDEN]' });
-      
-      // Ensure role is valid
       const payload = {
-        ...userData,
-        role: userData.role === 'admin' ? 'admin' : 'employee'
+        fullName: userData.fullName.trim(),
+        email: userData.email.trim(),
+        password: userData.password,
+        role: userData.role,
+        department: userData.department?.trim(),
+        position: userData.position?.trim()
       };
+
+      const response = await api.post('/auth/register', payload);
       
-      console.log('Sending registration payload:', { ...payload, password: '[HIDDEN]' });
-      
-      const response = await throttleRequest(async () => {
-        return await retryWithBackoff(async () => {
-          return await api.post('/auth/register', payload);
-        });
-      });
-      
-      console.log('Registration response:', response.data);
-      
-      const { user: newUser, token: authToken } = response.data.data;
-      
-      if (!newUser || !authToken) {
-        console.error('Invalid registration response structure:', response.data);
-        throw new Error('Invalid response from server');
+      if (response.data.success) {
+        toast.success('Registration successful! Please login.');
+        return { success: true };
+      } else {
+        return { success: false, error: response.data.message || 'Registration failed' };
       }
-      
-      setUser(newUser);
-      setToken(authToken);
-      localStorage.setItem('token', authToken);
-      
-      toast.success('Registration successful!');
-      return { success: true };
     } catch (error) {
-      console.error('Registration error details:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        config: error.config
-      });
-      
-      let message = 'Registration failed';
+      let message = error.userMessage || 'Registration failed';
       
       if (error.response) {
-        // Server responded with error status
         const serverMessage = error.response.data?.message;
         if (serverMessage) {
           message = serverMessage;
         } else if (error.response.status === 400) {
-          const validationErrors = error.response.data?.errors;
-          if (validationErrors && Array.isArray(validationErrors)) {
-            message = validationErrors.map(err => err.msg || err.message).join(', ');
-          } else {
-            message = 'Please check your input and try again';
-          }
+          message = 'Please check your input and try again';
         } else if (error.response.status === 409) {
           message = 'User with this email already exists';
-        } else if (error.response.status === 429) {
-          message = 'Too many requests. Please wait a moment and try again.';
         } else if (error.response.status === 500) {
           message = 'Server error. Please try again later';
         }
       } else if (error.request) {
-        // Network error
-        message = 'Network error. Please check your connection and ensure the backend server is running';
+        message = 'Unable to connect. Please check your internet or contact admin.';
       } else {
-        // Other error
         message = error.message || 'An unexpected error occurred';
       }
       
@@ -271,27 +229,34 @@ export const AuthProvider = ({ children }) => {
 
   const updateProfile = async (profileData) => {
     try {
-      console.log('AuthContext: Updating profile with data:', profileData);
-      const response = await api.put('/auth/profile', profileData);
-      console.log('AuthContext: Profile update response:', response.data);
-      setUser(response.data.data.user);
+      const response = await api.put('/users/profile', profileData);
       
-      // Also refresh user data from server to ensure consistency
-      try {
-        console.log('AuthContext: Refreshing user data from server...');
-        const refreshResponse = await api.get('/auth/me');
-        console.log('AuthContext: Refresh response:', refreshResponse.data);
-        setUser(refreshResponse.data.data.user);
-      } catch (refreshError) {
-        console.warn('Failed to refresh user data:', refreshError);
-        // Continue with the response data if refresh fails
+      if (response.data.success) {
+        const updatedUser = response.data.data.user;
+        setUser(updatedUser);
+        toast.success('Profile updated successfully');
+        return { success: true };
+      } else {
+        return { success: false, error: response.data.message || 'Profile update failed' };
+      }
+    } catch (error) {
+      let message = error.userMessage || 'Profile update failed';
+      
+      if (error.response) {
+        const serverMessage = error.response.data?.message;
+        if (serverMessage) {
+          message = serverMessage;
+        } else if (error.response.status === 400) {
+          message = 'Please check your input and try again';
+        } else if (error.response.status === 500) {
+          message = 'Server error. Please try again later';
+        }
+      } else if (error.request) {
+        message = 'Unable to connect. Please check your internet or contact admin.';
+      } else {
+        message = error.message || 'An unexpected error occurred';
       }
       
-      toast.success('Profile updated successfully!');
-      return { success: true };
-    } catch (error) {
-      console.error('AuthContext: Profile update error:', error);
-      const message = error.response?.data?.message || 'Profile update failed';
       toast.error(message);
       return { success: false, error: message };
     }

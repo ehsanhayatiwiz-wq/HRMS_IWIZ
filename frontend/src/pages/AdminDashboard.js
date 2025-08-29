@@ -59,65 +59,25 @@ const AdminDashboard = () => {
 
   const fetchDashboardData = React.useCallback(async () => {
     try {
-      if (inFlightRef.current) return; // prevent overlapping fetches
+      if (inFlightRef.current) return;
+
       inFlightRef.current = true;
       setLoading(true);
-      
-      if (activeSection === 'dashboard') {
-        const timestamp = new Date().getTime();
-        const [adminRes, employeesRes, leavesRes] = await Promise.all([
-          api.get('/dashboard/admin'),
-          api.get('/employees?page=1&limit=10'),
-          api.get(`/leaves/all?page=1&limit=20&status=pending&_t=${timestamp}`)
-        ]);
 
-        const s = adminRes.data?.data?.employeeStats || {};
-        setStats({
-          totalEmployees: s.totalEmployees || 0,
-          presentToday: s.presentToday || 0,
-          pendingLeaves: s.pendingLeaves || 0,
-          totalLeaves: s.totalLeaves || 0,
-          attendanceRate: s.attendanceRate || 0,
-          onLeaveToday: s.onLeaveEmployees || 0
-        });
-
-        // Success → normalize poll interval
-        if (pollIntervalMs !== 60000) setPollIntervalMs(60000);
-        setEmployees(employeesRes.data?.data?.employees || []);
-        
-        // Debug: Log the leave requests data for dashboard (normalized to employeeId)
-        console.log('Dashboard leaves API response:', leavesRes.data);
-        console.log('Dashboard leave records:', leavesRes.data?.data?.leaves);
-        if (leavesRes.data?.data?.leaves?.length > 0) {
-          const first = leavesRes.data.data.leaves[0];
-          console.log('First dashboard leave record:', first);
-          console.log('First record employeeName:', first.employeeName);
-          console.log('First record employeeId:', first.employeeId);
-        }
-        
-        setLeaveRequests(leavesRes.data?.data?.leaves || []);
-      } else if (activeSection === 'employees') {
+      if (activeSection === 'employees') {
         try {
-          const response = await api.get(`/employees?page=${currentPage}&limit=20&search=${searchTerm}&department=${filterDepartment}`);
+          const response = await api.get(`/employees?page=${currentPage}&limit=20&search=${searchTerm}&department=${filterDepartment}&_t=${Date.now()}`);
           setEmployees(response.data?.data?.employees || []);
           setTotalPages(response.data?.data?.pagination?.totalPages || 1);
         } catch (error) {
           console.error('Error fetching employees:', error);
-          toast.error('Failed to load employees data');
+          toast.error('Failed to load employee data');
           setEmployees([]);
           setTotalPages(1);
         }
       } else if (activeSection === 'attendance') {
         try {
-          const response = await api.get(`/attendance/all?page=${currentPage}&limit=20&date=${selectedDate}`);
-          console.log('Attendance API response:', response.data);
-          console.log('Attendance records:', response.data?.data?.attendance);
-          if (response.data?.data?.attendance?.length > 0) {
-            console.log('First attendance record:', response.data.data.attendance[0]);
-            console.log('First record userId:', response.data.data.attendance[0].userId);
-            console.log('First record employee name:', response.data.data.attendance[0].userId?.fullName);
-            console.log('First record employee email:', response.data.data.attendance[0].userId?.email);
-          }
+          const response = await api.get(`/attendance/all?page=${currentPage}&limit=20&date=${selectedDate}&_t=${Date.now()}`);
           setAttendanceRecords(response.data?.data?.attendance || []);
           setTotalPages(response.data?.data?.pagination?.totalPages || 1);
         } catch (error) {
@@ -128,14 +88,8 @@ const AdminDashboard = () => {
         }
       } else if (activeSection === 'leaves') {
         try {
-          // Add cache-busting parameter to ensure fresh data
           const timestamp = new Date().getTime();
           const response = await api.get(`/leaves/all?page=${currentPage}&limit=20&status=${filterStatus}&_t=${timestamp}`);
-          console.log('Leaves API response:', response.data);
-          console.log('Leave records:', response.data?.data?.leaves);
-          if (response.data?.data?.leaves?.length > 0) {
-            console.log('First leave record:', response.data.data.leaves[0]);
-          }
           setLeaveRequests(response.data?.data?.leaves || []);
           setTotalPages(response.data?.data?.pagination?.totalPages || 1);
         } catch (error) {
@@ -301,10 +255,6 @@ const AdminDashboard = () => {
   };
 
   const openAttendanceDetails = (record) => {
-    console.log('Opening attendance details for record:', record);
-    console.log('Record userId:', record.userId);
-    console.log('Record employee name:', record.userId?.fullName);
-    console.log('Record employee email:', record.userId?.email);
     setSelectedAttendanceRecord(record);
     setAttendanceDetailsOpen(true);
   };
@@ -360,9 +310,6 @@ const AdminDashboard = () => {
           return;
         }
         
-        console.log('Sending update payload:', updatePayload);
-        console.log('Original employeeData:', employeeData);
-        console.log('Payload keys:', Object.keys(updatePayload));
         await api.put(`/employees/${editingEmployee.id}`, updatePayload);
         toast.success('Employee updated successfully');
       } else {
@@ -757,7 +704,6 @@ const AdminDashboard = () => {
                 </thead>
                 <tbody>
                   {attendanceRecords.map((record) => {
-                    console.log('Rendering attendance record:', record);
                     return (
                       <tr key={record._id}>
                         <td>
@@ -864,7 +810,6 @@ const AdminDashboard = () => {
                 </thead>
                 <tbody>
                   {leaveRequests.map((leave) => {
-                    console.log('Rendering leave record:', leave);
                     return (
                       <tr key={leave.id}>
                       <td>
@@ -1000,7 +945,6 @@ const AdminDashboard = () => {
 
       {attendanceDetailsOpen && selectedAttendanceRecord && (
         <>
-          {console.log('Rendering attendance modal with record:', selectedAttendanceRecord)}
           <div className="modal-overlay" onClick={closeAttendanceDetails}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">

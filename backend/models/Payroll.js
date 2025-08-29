@@ -135,113 +135,117 @@ payrollSchema.methods.calculateOvertime = function(hourlyRate) {
 };
 
 // Static method to generate payroll for all employees
-payrollSchema.statics.generateMonthlyPayroll = async function(month, year, adminId) {
-  const Employee = require('./Employee');
-  const Attendance = require('./Attendance');
-  
-  console.log(`Generating payroll for month: ${month}, year: ${year}`);
-  
-  // Look for employees that are active (either status: 'active' or isActive: true)
-  const employees = await Employee.find({ 
-    $or: [
-      { status: 'active' },
-      { isActive: true }
-    ]
-  });
-  
-  console.log(`Found ${employees.length} active employees`);
-  
-  const savedPayrolls = [];
-  
-  for (const employee of employees) {
-    console.log(`Processing employee: ${employee.fullName} (${employee.employeeId})`);
-    
-    // Check if payroll already exists for this month
-    const existingPayroll = await this.findOne({ 
-      employeeId: employee._id, 
-      month, 
-      year 
-    });
-    
-    if (existingPayroll) {
-      console.log(`Payroll already exists for ${employee.fullName} in ${month}/${year}`);
-      continue; // Skip if already generated
+payrollSchema.statics.generatePayroll = async function(month, year) {
+  try {
+    // Check if payroll already exists for this month/year
+    const existingPayrolls = await this.find({ month, year });
+    if (existingPayrolls.length > 0) {
+      throw new Error(`Payroll for ${month}/${year} already exists`);
     }
-    
-    // Get attendance data for the month
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0);
-    
-    const attendanceRecords = await Attendance.find({
-      userId: employee._id,
-      userType: 'employee',
-      date: { $gte: startDate, $lte: endDate }
-    });
-    
-    console.log(`Found ${attendanceRecords.length} attendance records for ${employee.fullName}`);
-    
-    // Calculate attendance statistics
-    const totalDays = endDate.getDate();
-    const presentDays = attendanceRecords.filter(record => 
-      record.status === 'present' || record.status === 'late' || record.status === 're-checked-in'
-    ).length;
-    const halfDays = attendanceRecords.filter(record => record.status === 'half-day').length;
-    const absentDays = totalDays - presentDays - halfDays;
-    const overtimeHours = attendanceRecords.reduce((total, record) => {
-      const hours = record.totalHours || 0;
-      return total + (hours > 8 ? hours - 8 : 0);
-    }, 0);
-    
-    // Calculate daily rate (monthly salary / working days in month)
-    const workingDays = totalDays - (absentDays + halfDays);
-    const monthlySalary = employee.salary / 12; // Convert annual to monthly
-    const dailyRate = workingDays > 0 ? monthlySalary / workingDays : 0;
-    const hourlyRate = dailyRate / 8; // Assuming 8-hour workday
-    
-    // Create payroll record
-    const payroll = new this({
-      employeeId: employee._id,
-      month,
-      year,
-      basicSalary: monthlySalary, // Monthly basic salary
-      allowances: {
-        housing: monthlySalary * 0.1, // 10% housing allowance
-        transport: 500, // Fixed transport allowance
-        meal: 300, // Fixed meal allowance
-        medical: monthlySalary * 0.05, // 5% medical allowance
-        other: 0
-      },
-      overtime: {
-        hours: overtimeHours,
-        rate: hourlyRate,
-        amount: overtimeHours * hourlyRate
-      },
-      deductions: {
-        absent: absentDays * dailyRate,
-        halfDay: halfDays * (dailyRate / 2),
-        tax: monthlySalary * 0.1, // 10% tax
-        insurance: monthlySalary * 0.05, // 5% insurance
-        other: 0
-      },
-      attendanceData: {
-        totalDays,
-        presentDays,
-        absentDays,
-        halfDays,
-        overtimeHours
-      },
-      generatedBy: adminId,
-      status: 'generated'
-    });
-    
-    // Use save() to trigger pre-save middleware that calculates totals/netPay
-    const saved = await payroll.save();
-    console.log(`Generated payroll for ${employee.fullName}: Net Pay Rs ${saved.netPay}`);
-    savedPayrolls.push(saved);
+
+    // Get all active employees
+    const Employee = mongoose.model('Employee');
+    const employees = await Employee.find({ isActive: true, status: 'active' });
+
+    if (employees.length === 0) {
+      throw new Error('No active employees found');
+    }
+
+    const savedPayrolls = [];
+
+    for (const employee of employees) {
+      try {
+        // Check if payroll already exists for this employee
+        const existingPayroll = await this.findOne({
+          employeeId: employee._id,
+          month,
+          year
+        });
+
+        if (existingPayroll) {
+          continue; // Skip if payroll already exists
+        }
+
+        // Get attendance records for the month
+        const Attendance = mongoose.model('Attendance');
+        const startDate = new Date(year, month - 1, 1);
+        const endDate = new Date(year, month, 0);
+
+        const attendanceRecords = await Attendance.find({
+          userId: employee._id,
+          userType: 'employee',
+          date: {
+            $gte: startDate,
+            $lte: endDate
+          }
+        });
+
+        // Calculate working days and hours
+        const workingDays = attendanceRecords.filter(att => 
+          att.status === 'present' || att.status === 'late'
+        ).length;
+
+        const totalHours = attendanceRecords.reduce((sum, att) => 
+          sum + (att.totalHours || 0), 0
+        );
+
+        // Calculate basic salary components
+        const basicSalary = employee.salary || 0;
+        const workingDaysInMonth = new Date(year, month, 0).getDate();
+        const dailyRate = basicSalary / workingDaysInMonth;
+        const earnedSalary = dailyRate * workingDays;
+
+        // Calculate allowances
+        const houseRentAllowance = basicSalary * 0.4; // 40% of basic
+        const medicalAllowance = basicSalary * 0.1; // 10% of basic
+        const conveyanceAllowance = 1500; // Fixed amount
+
+        // Calculate deductions
+        const providentFund = basicSalary * 0.12; // 12% of basic
+        const tax = Math.max(0, (earnedSalary - 500000) * 0.05); // 5% tax above 5L
+        const insurance = basicSalary * 0.05; // 5% of basic
+
+        // Calculate net pay
+        const grossSalary = earnedSalary + houseRentAllowance + medicalAllowance + conveyanceAllowance;
+        const totalDeductions = providentFund + tax + insurance;
+        const netPay = grossSalary - totalDeductions;
+
+        // Create payroll record
+        const payroll = new this({
+          employeeId: employee._id,
+          month,
+          year,
+          basicSalary: earnedSalary,
+          allowances: {
+            houseRent: houseRentAllowance,
+            medical: medicalAllowance,
+            conveyance: conveyanceAllowance
+          },
+          deductions: {
+            providentFund,
+            tax,
+            insurance
+          },
+          workingDays,
+          totalHours,
+          grossSalary,
+          netPay,
+          status: 'pending'
+        });
+
+        const saved = await payroll.save();
+        savedPayrolls.push(saved);
+      } catch (error) {
+        // Log error but continue with other employees
+        console.error(`Error processing payroll for employee ${employee.fullName}:`, error);
+      }
+    }
+
+    return savedPayrolls;
+  } catch (error) {
+    console.error('Error generating payroll:', error);
+    throw error;
   }
-  
-  console.log(`Successfully generated ${savedPayrolls.length} payroll records`);
-  return savedPayrolls;
 };
 
 module.exports = mongoose.model('Payroll', payrollSchema);

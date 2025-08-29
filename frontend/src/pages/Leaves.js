@@ -28,7 +28,6 @@ const Leaves = () => {
   
   const safeFetchLeaveHistory = async () => {
     if (fetchInProgress) {
-      console.log('Fetch already in progress, skipping...');
       return;
     }
     
@@ -41,17 +40,14 @@ const Leaves = () => {
   };
 
   useEffect(() => {
-    console.log('Leaves component mounted, fetching initial data...');
     safeFetchLeaveHistory();
     
     // Set up auto-refresh every 30 seconds to ensure data is fresh
     const interval = setInterval(() => {
-      console.log('Auto-refreshing leave history...');
       safeFetchLeaveHistory();
     }, 30000);
     
     return () => {
-      console.log('Clearing auto-refresh interval...');
       clearInterval(interval);
     };
   }, []);
@@ -138,26 +134,26 @@ const Leaves = () => {
   };
 
   const fetchLeaveHistory = async () => {
+    if (fetchInProgress) {
+      return;
+    }
+
     try {
+      fetchInProgress = true;
       setLoading(true);
-      // Use a very high limit to ensure all records are fetched, add cache-busting parameter
-      const timestamp = new Date().getTime();
-      const response = await api.get(`/leaves/my-leaves?page=1&limit=9999&_t=${timestamp}`);
+
+      const response = await api.get('/leaves/my-leaves');
       
-      // Ensure we get the actual leaves array and handle any potential data structure issues
-      const leaves = response.data?.data?.leaves || [];
-      console.log('Fetched leave history:', leaves.length, 'records');
-      console.log('Leave history data:', leaves);
-      
-      // Check data consistency
-      checkDataConsistency(leaves);
-      
-      setLeaveHistory(leaves);
+      if (response.data.success) {
+        setLeaveHistory(response.data.data.leaves || []);
+      }
     } catch (error) {
       console.error('Error fetching leave history:', error);
       toast.error('Failed to load leave history');
+      setLeaveHistory([]);
     } finally {
       setLoading(false);
+      fetchInProgress = false;
     }
   };
 

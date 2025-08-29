@@ -27,19 +27,20 @@ const Profile = () => {
 
   // Update profileData when user data changes
   useEffect(() => {
-    console.log('Profile component: User data updated:', user);
-    setProfileData({
-      fullName: user?.fullName || '',
-      phone: user?.phone || '',
-      address: user?.address || {
-        street: '',
-        city: '',
-        state: '',
-        zipCode: '',
-        country: ''
-      },
-      dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().slice(0, 10) : ''
-    });
+    if (user) {
+      setProfileData({
+        fullName: user.fullName || '',
+        phone: user.phone || '',
+        address: user.address || {
+          street: '',
+          city: '',
+          state: '',
+          zipCode: '',
+          country: ''
+        },
+        dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().slice(0, 10) : ''
+      });
+    }
   }, [user]);
 
   // Password form state

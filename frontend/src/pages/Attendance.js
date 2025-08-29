@@ -26,20 +26,21 @@ const Attendance = () => {
   const fetchAttendanceData = async () => {
     try {
       setLoading(true);
-      console.log('Fetching attendance data...');
       
       const [todayRes, historyRes] = await Promise.all([
         api.get('/attendance/today'),
-        api.get('/attendance/history?page=1&limit=10')
+        api.get('/attendance/history')
       ]);
 
-      const todayData = todayRes.data.data;
-      setTodayAttendance(todayData.attendance);
-      setCanCheckIn(todayData.canCheckIn);
-      setCanCheckOut(todayData.canCheckOut);
-      setCanReCheckIn(todayData.canReCheckIn);
-      setCanReCheckOut(todayData.canReCheckOut);
-      setAttendanceHistory(historyRes.data.data.attendance);
+      if (todayRes.data.success) {
+        setTodayAttendance(todayRes.data.data.attendance);
+        setCanCheckIn(todayRes.data.data.canCheckIn);
+        setCanCheckOut(todayRes.data.data.canCheckOut);
+      }
+
+      if (historyRes.data.success) {
+        setAttendanceHistory(historyRes.data.data.attendance);
+      }
     } catch (error) {
       console.error('Error fetching attendance data:', error);
       toast.error('Failed to load attendance data');

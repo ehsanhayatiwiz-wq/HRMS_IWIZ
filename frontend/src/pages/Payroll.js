@@ -43,48 +43,38 @@ const Payroll = () => {
   };
 
   const fetchPayrollData = async () => {
-    if (fetchInProgress) {
-      console.log('Fetch already in progress, skipping...');
+    if (fetchInProgress.current) {
       return;
     }
 
     try {
-      setFetchInProgress(true);
+      fetchInProgress.current = true;
       setLoading(true);
-      
-      if (activeTab === 'overview') {
-        // Fix month/year handling - ensure we get the correct month (1-12) and year
-        const { month, year } = parseMonthYear(selectedMonth, selectedYear);
-        
-        console.log('Fetching payroll data for month:', month, 'year:', year);
-        
-        // Add cache-busting to ensure fresh data
-        const timestamp = new Date().getTime();
-        const [payrollsRes, summaryRes] = await Promise.all([
-          api.get(`/payroll/all?page=${currentPage}&limit=10&month=${month}&year=${year}&_t=${timestamp}`),
-          api.get(`/payroll/reports/summary?month=${month}&year=${year}&_t=${timestamp}`)
-        ]);
-        
-        console.log('Payrolls response:', payrollsRes.data);
-        console.log('Summary response:', summaryRes.data);
-        
-        setPayrolls(payrollsRes.data?.data?.payrolls || []);
-        setTotalPages(payrollsRes.data?.data?.pagination?.totalPages || 1);
-        setSummary(summaryRes.data?.data?.summary || {});
-        
-        console.log('Summary data set:', summaryRes.data?.data?.summary);
-      } else if (activeTab === 'generate') {
-        // Fetch recent payrolls for reference
-        const response = await api.get('/payroll/all?page=1&limit=5');
-        setPayrolls(response.data?.data?.payrolls || []);
+
+      const month = selectedMonth;
+      const year = selectedYear;
+
+      if (!month || !year) {
+        toast.error('Please select both month and year');
+        return;
       }
+
+      const [payrollsRes, summaryRes] = await Promise.all([
+        api.get(`/payroll?month=${month}&year=${year}`),
+        api.get(`/payroll/summary?month=${month}&year=${year}`)
+      ]);
+
+      setPayrolls(payrollsRes.data?.data?.payrolls || []);
+      setSummary(summaryRes.data?.data?.summary || {});
+      setTotalPages(payrollsRes.data?.data?.pagination?.totalPages || 1);
     } catch (error) {
       console.error('Error fetching payroll data:', error);
-      console.error('Error details:', error.response?.data);
       toast.error('Failed to load payroll data');
+      setPayrolls([]);
+      setSummary({});
     } finally {
       setLoading(false);
-      setFetchInProgress(false);
+      fetchInProgress.current = false;
     }
   };
 
@@ -92,53 +82,44 @@ const Payroll = () => {
     fetchPayrollData();
   }, [activeTab, selectedMonth, selectedYear, currentPage]);
 
-  const generatePayroll = async () => {
+  const handleGeneratePayroll = async () => {
     try {
       setGenerating(true);
-      const { month, year } = parseMonthYear(selectedMonth, selectedYear);
       
-      console.log('Generating payroll for month:', month, 'year:', year);
-      
-      const response = await api.post('/payroll/generate', { month, year });
-      
-      toast.success(response.data.message || 'Payroll generated successfully!');
-      
-      // Refresh data after generation
-      setTimeout(() => {
-        fetchPayrollData();
-      }, 1000);
-      
+      const month = selectedMonth;
+      const year = selectedYear;
+
+      if (!month || !year) {
+        toast.error('Please select both month and year');
+        return;
+      }
+
+      await api.post('/payroll/generate', { month, year });
+      toast.success('Payroll generated successfully');
+      fetchPayrollData();
     } catch (error) {
       console.error('Error generating payroll:', error);
-      
-      if (error.response?.status === 400) {
-        toast.error(error.response.data.message || 'Invalid payroll generation request');
-      } else if (error.response?.status === 409) {
-        toast.error('Payroll for this month/year already exists');
-      } else if (error.response?.status === 500) {
-        toast.error('Server error during payroll generation. Please try again later.');
-      } else {
-        toast.error('Failed to generate payroll. Please try again.');
-      }
+      toast.error(error.response?.data?.message || 'Failed to generate payroll');
     } finally {
       setGenerating(false);
     }
   };
 
-  const downloadSalarySlip = async (payrollId) => {
+  const handleDownloadSalarySlip = async (payrollId) => {
     try {
       const response = await api.get(`/payroll/${payrollId}/download`, {
         responseType: 'blob'
       });
-      
+
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `salary_slip_${payrollId}.pdf`);
+      link.setAttribute('download', `salary-slip-${payrollId}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
-      
+      window.URL.revokeObjectURL(url);
+
       toast.success('Salary slip downloaded successfully');
     } catch (error) {
       console.error('Error downloading salary slip:', error);
@@ -146,14 +127,13 @@ const Payroll = () => {
     }
   };
 
-  const updatePayrollStatus = async (payrollId, status) => {
+  const handleUpdateStatus = async (payrollId, status) => {
     try {
       await api.put(`/payroll/${payrollId}/status`, { status });
       toast.success('Payroll status updated successfully');
       fetchPayrollData();
     } catch (error) {
       console.error('Error updating payroll status:', error);
-      console.error('Error response:', error.response?.data);
       toast.error('Failed to update payroll status');
     }
   };
@@ -286,8 +266,8 @@ const Payroll = () => {
                     </td>
                     <td>
                       <div className="action-buttons" style={{ display: 'flex', gap: 8 }}>
-                        <Button variant="secondary" onClick={() => downloadSalarySlip(payroll.id || payroll._id)} icon={<FiDownload />} />
-                        <Button variant="primary" onClick={() => updatePayrollStatus(payroll.id || payroll._id, 'paid')} disabled={payroll.status === 'paid'} icon={<FiCheck />} />
+                        <Button variant="secondary" onClick={() => handleDownloadSalarySlip(payroll.id || payroll._id)} icon={<FiDownload />} />
+                        <Button variant="primary" onClick={() => handleUpdateStatus(payroll.id || payroll._id, 'paid')} disabled={payroll.status === 'paid'} icon={<FiCheck />} />
                       </div>
                     </td>
                   </tr>
@@ -361,7 +341,7 @@ const Payroll = () => {
           
           <Button
             className="generate-btn"
-            onClick={generatePayroll}
+            onClick={handleGeneratePayroll}
             disabled={generating}
             variant="primary"
             icon={generating ? <FiRefreshCw className="spinning" /> : <FiCalendar />}

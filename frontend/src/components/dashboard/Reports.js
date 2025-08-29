@@ -50,50 +50,22 @@ const Reports = () => {
       return;
     }
 
-    // Validate date range
-    if (new Date(dateRange.endDate) < new Date(dateRange.startDate)) {
-      toast.error('End date cannot be before start date');
-      return;
-    }
-
     setLoading(true);
+    
     try {
-      let endpoint = '';
-      let filename = '';
-
-      const ts = Date.now();
-      switch (type) {
-        case 'attendance':
-          endpoint = `/reports/attendance?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}&_t=${ts}`;
-          filename = `attendance-report-${dateRange.startDate}-to-${dateRange.endDate}.pdf`;
-          break;
-        case 'leave':
-          endpoint = `/reports/leaves?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}&_t=${ts}`;
-          filename = `leave-report-${dateRange.startDate}-to-${dateRange.endDate}.pdf`;
-          break;
-        case 'employee':
-          endpoint = `/reports/employees?_t=${ts}`;
-          filename = `employee-report-${new Date().toISOString().split('T')[0]}.pdf`;
-          break;
-        case 'performance':
-          endpoint = `/reports/performance?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}&_t=${ts}`;
-          filename = `performance-report-${dateRange.startDate}-to-${dateRange.endDate}.pdf`;
-          break;
-        default:
-          throw new Error('Invalid report type');
+      const endpoint = reportTypes.find(r => r.id === type)?.endpoint;
+      if (!endpoint) {
+        toast.error('Invalid report type');
+        return;
       }
-
-      console.log('Generating report:', type, 'from endpoint:', endpoint);
 
       const response = await api.get(endpoint, {
-        responseType: 'blob',
-        timeout: 30000 // 30 second timeout for PDF generation
+        params: {
+          startDate: dateRange.startDate,
+          endDate: dateRange.endDate
+        },
+        responseType: 'blob'
       });
-
-      // Check if response is actually a PDF
-      if (response.data.type && response.data.type !== 'application/pdf') {
-        throw new Error('Invalid response format - expected PDF');
-      }
 
       // Create download link
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -124,61 +96,40 @@ const Reports = () => {
   };
 
   const handleExportCSV = async (type) => {
-    if (type !== 'employee' && (!dateRange.startDate || !dateRange.endDate)) {
+    if (!dateRange.startDate || !dateRange.endDate) {
       toast.error('Please select both start and end dates');
       return;
     }
 
-    // Validate date range for date-dependent reports
-    if (type !== 'employee' && new Date(dateRange.endDate) < new Date(dateRange.startDate)) {
-      toast.error('End date cannot be before start date');
-      return;
-    }
-
     setLoading(true);
+    
     try {
-      let endpoint = '';
-      let filename = '';
-
-      switch (type) {
-        case 'attendance':
-          endpoint = `/reports/attendance/csv?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
-          filename = `attendance-report-${dateRange.startDate}-to-${dateRange.endDate}.csv`;
-          break;
-        case 'leave':
-          endpoint = `/reports/leaves/csv?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
-          filename = `leave-report-${dateRange.startDate}-to-${dateRange.endDate}.csv`;
-          break;
-        case 'employee':
-          endpoint = `/reports/employees/csv`;
-          filename = `employee-report-${new Date().toISOString().split('T')[0]}.csv`;
-          break;
-        case 'performance':
-          endpoint = `/reports/performance/csv?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
-          filename = `performance-report-${dateRange.startDate}-to-${dateRange.endDate}.csv`;
-          break;
-        default:
-          throw new Error('Invalid report type');
+      const endpoint = reportTypes.find(r => r.id === type)?.csvEndpoint;
+      if (!endpoint) {
+        toast.error('Invalid report type');
+        return;
       }
 
-      console.log('Exporting CSV:', type, 'from endpoint:', endpoint);
-
       const response = await api.get(endpoint, {
-        responseType: 'blob',
-        timeout: 15000 // 15 second timeout for CSV export
+        params: {
+          startDate: dateRange.startDate,
+          endDate: dateRange.endDate,
+          format: 'csv'
+        },
+        responseType: 'blob'
       });
 
       // Create download link
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', filename);
+      link.setAttribute('download', `${type}_report.csv`);
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
 
-      toast.success(`${reportTypes.find(r => r.id === type)?.title} exported as CSV successfully!`);
+      toast.success(`${reportTypes.find(r => r.id === type)?.title} exported successfully!`);
     } catch (error) {
       console.error('Error exporting CSV:', error);
       

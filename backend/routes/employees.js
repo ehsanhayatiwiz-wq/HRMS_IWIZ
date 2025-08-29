@@ -13,18 +13,16 @@ const router = express.Router();
 // @access  Private (Admin)
 router.get('/', protect, authorize('admin'), async (req, res) => {
   try {
-    console.log('Get all employees request from admin:', req.user.id);
+    const { page = 1, limit = 20, search, department, status } = req.query;
     
-    const { page = 1, limit = 10, search, department, status } = req.query;
-    
-    // Build query
-    const query = { isActive: true };
+    const query = {};
     
     if (search) {
       query.$or = [
         { fullName: { $regex: search, $options: 'i' } },
+        { employeeId: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } },
-        { employeeId: { $regex: search, $options: 'i' } }
+        { department: { $regex: search, $options: 'i' } }
       ];
     }
     
@@ -36,36 +34,24 @@ router.get('/', protect, authorize('admin'), async (req, res) => {
       query.status = status;
     }
 
+    const skip = (page - 1) * limit;
+    
     const employees = await Employee.find(query)
       .select('-password')
       .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+      .skip(skip)
+      .limit(parseInt(limit));
 
     const total = await Employee.countDocuments(query);
-
-    console.log(`Found ${employees.length} employees`);
 
     res.json({
       success: true,
       data: {
-        employees: employees.map(emp => ({
-          id: emp._id,
-          employeeId: emp.employeeId,
-          fullName: emp.fullName,
-          email: emp.email,
-          department: emp.department,
-          position: emp.position,
-          status: emp.status,
-          leaveBalance: emp.leaveBalance,
-          dateOfJoining: emp.dateOfJoining,
-          phone: emp.phone,
-          isActive: emp.isActive
-        })),
+        employees,
         pagination: {
           currentPage: parseInt(page),
           totalPages: Math.ceil(total / limit),
-          totalRecords: total,
+          totalEmployees: total,
           hasNextPage: page * limit < total,
           hasPrevPage: page > 1
         }
@@ -83,15 +69,11 @@ router.get('/', protect, authorize('admin'), async (req, res) => {
 // @access  Private (Admin)
 router.get('/:id', protect, authorize('admin'), async (req, res) => {
   try {
-    console.log('Get employee by ID request:', req.params.id);
-    
     const employee = await Employee.findById(req.params.id).select('-password');
     
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found' });
     }
-
-    console.log('Employee found:', employee.fullName);
 
     res.json({
       success: true,
@@ -103,15 +85,13 @@ router.get('/:id', protect, authorize('admin'), async (req, res) => {
           email: employee.email,
           department: employee.department,
           position: employee.position,
-          status: employee.status,
-          leaveBalance: employee.leaveBalance,
-          dateOfJoining: employee.dateOfJoining,
           phone: employee.phone,
+          dateOfBirth: employee.dateOfBirth,
           address: employee.address,
-          emergencyContact: employee.emergencyContact,
-          skills: employee.skills,
-          certifications: employee.certifications,
-          isActive: employee.isActive
+          joiningDate: employee.joiningDate,
+          salary: employee.salary,
+          status: employee.status,
+          leaveBalance: employee.leaveBalance
         }
       }
     });
@@ -138,8 +118,6 @@ router.post('/', protect, authorize('admin'), [
   body('salary').optional().isNumeric().withMessage('Salary must be a number')
 ], async (req, res) => {
   try {
-    console.log('Create employee request:', req.body);
-    
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -196,8 +174,6 @@ router.post('/', protect, authorize('admin'), [
 
     await employee.save();
 
-    console.log('Employee created successfully:', employee.fullName);
-
     res.status(201).json({
       success: true,
       message: 'Employee created successfully',
@@ -247,10 +223,6 @@ router.put('/:id', protect, authorize('admin'), [
   body('joiningDate').optional().isISO8601().withMessage('Invalid date format')
 ], async (req, res) => {
   try {
-    console.log('Update employee request:', req.params.id, req.body);
-    console.log('Request body type:', typeof req.body);
-    console.log('Request body keys:', Object.keys(req.body));
-    
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -289,12 +261,6 @@ router.put('/:id', protect, authorize('admin'), [
       updateData.password = req.body.password;
     }
 
-    console.log('Update data:', updateData);
-    console.log('Address field:', req.body.address);
-    console.log('Address type:', typeof req.body.address);
-
-    console.log('About to update with data:', updateData);
-    
     const updatedEmployee = await Employee.findByIdAndUpdate(
       req.params.id,
       updateData,
@@ -305,13 +271,6 @@ router.put('/:id', protect, authorize('admin'), [
       return res.status(404).json({ message: 'Employee not found or could not be updated' });
     }
     
-    console.log('Employee updated successfully:', updatedEmployee.fullName);
-    console.log('Updated employee data:', {
-      id: updatedEmployee._id,
-      fullName: updatedEmployee.fullName,
-      email: updatedEmployee.email
-    });
-
     res.json({
       success: true,
       message: 'Employee updated successfully',
@@ -354,8 +313,6 @@ router.patch('/:id/status', protect, authorize('admin'), [
     .withMessage('Invalid status')
 ], async (req, res) => {
   try {
-    console.log('Update employee status request:', req.params.id, req.body);
-    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ 
@@ -373,8 +330,6 @@ router.patch('/:id/status', protect, authorize('admin'), [
 
     employee.status = status;
     await employee.save();
-
-    console.log('Employee status updated successfully:', employee.fullName, '->', status);
 
     res.json({
       success: true,
@@ -399,8 +354,6 @@ router.patch('/:id/status', protect, authorize('admin'), [
 // @access  Private (Admin)
 router.delete('/:id', protect, authorize('admin'), async (req, res) => {
   try {
-    console.log('Delete employee request:', req.params.id);
-    
     const employee = await Employee.findById(req.params.id);
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found' });
@@ -408,33 +361,27 @@ router.delete('/:id', protect, authorize('admin'), async (req, res) => {
 
     // Hard delete - remove employee completely
     // First, clean up related records
-    console.log('Cleaning up related records for employee:', employee.fullName);
     
     // Delete attendance records
     const attendanceDeleted = await Attendance.deleteMany({ 
       userId: employee._id, 
       userType: 'employee' 
     });
-    console.log(`Deleted ${attendanceDeleted.deletedCount} attendance records`);
     
     // Delete leave records
     const leavesDeleted = await Leave.deleteMany({ 
       userId: employee._id, 
       userType: 'employee' 
     });
-    console.log(`Deleted ${leavesDeleted.deletedCount} leave records`);
     
     // Delete payroll records
     const Payroll = require('../models/Payroll');
     const payrollDeleted = await Payroll.deleteMany({ 
       employeeId: employee._id 
     });
-    console.log(`Deleted ${payrollDeleted.deletedCount} payroll records`);
     
     // Finally, delete the employee
     await Employee.findByIdAndDelete(employee._id);
-
-    console.log('Employee completely deleted:', employee.fullName);
 
     res.json({
       success: true,
@@ -460,8 +407,6 @@ router.delete('/:id', protect, authorize('admin'), async (req, res) => {
 // @access  Private (Admin)
 router.get('/stats/overview', protect, authorize('admin'), async (req, res) => {
   try {
-    console.log('Get employee stats request from admin:', req.user.id);
-    
     const totalEmployees = await Employee.countDocuments({ isActive: true });
     const activeEmployees = await Employee.countDocuments({ isActive: true, status: 'active' });
     const onLeaveEmployees = await Employee.countDocuments({ isActive: true, status: 'on_leave' });
@@ -490,8 +435,6 @@ router.get('/stats/overview', protect, authorize('admin'), async (req, res) => {
       userType: 'employee',
       status: 'pending'
     });
-
-    console.log('Employee stats retrieved successfully');
 
     res.json({
       success: true,

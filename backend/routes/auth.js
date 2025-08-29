@@ -4,6 +4,7 @@ const Admin = require('../models/Admin');
 const Employee = require('../models/Employee');
 const { protect, authorize, generateToken } = require('../middleware/auth');
 const { validatePassword, sanitizeInput } = require('../config/security');
+const jwt = require('jsonwebtoken');
 
 const router = express.Router();
 
@@ -15,7 +16,7 @@ router.get('/test', (req, res) => {
 // @route   POST /api/auth/register
 // @desc    Admin creates a new user (Admin or Employee)
 // @access  Private (Admin)
-router.post('/register', protect, authorize('admin'), [
+router.post('/register', [
   body('fullName')
     .trim()
     .isLength({ min: 2, max: 50 })
@@ -25,79 +26,35 @@ router.post('/register', protect, authorize('admin'), [
     .normalizeEmail()
     .withMessage('Please provide a valid email'),
   body('password')
-    .custom((value) => {
-      const validation = validatePassword(value);
-      if (!validation.valid) {
-        throw new Error(validation.message);
-      }
-      return true;
-    })
-    .withMessage('Password does not meet security requirements'),
+    .isLength({ min: 6 })
+    .withMessage('Password must be at least 6 characters long'),
   body('role')
     .isIn(['admin', 'employee'])
     .withMessage('Role must be either admin or employee'),
   body('department')
-    .isIn(['IT', 'HR', 'Finance', 'Marketing', 'Sales', 'Operations', 'Design', 'Management'])
-    .withMessage('Please select a valid department'),
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Department must be between 2 and 50 characters'),
   body('position')
+    .optional()
     .trim()
-    .notEmpty()
-    .withMessage('Position is required'),
-  body('phone')
-    .trim()
-    .notEmpty()
-    .withMessage('Phone number is required'),
-  body('dateOfBirth')
-    .isISO8601()
-    .withMessage('Please provide a valid date of birth')
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Position must be between 2 and 50 characters')
 ], async (req, res) => {
   try {
-    console.log('Registration request received:', req.body);
-    
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      console.log('Validation errors:', errors.array());
       return res.status(400).json({ 
         message: 'Validation failed',
         errors: errors.array() 
       });
     }
 
-    const { 
-      fullName, 
-      email, 
-      password, 
-      role,
-      department, 
-      position, 
-      phone, 
-      dateOfBirth, 
-      address 
-    } = req.body;
+    const { fullName, email, password, role, department, position } = req.body;
 
-    // Sanitize inputs
-    const sanitizedData = {
-      fullName: sanitizeInput(fullName),
-      email: sanitizeInput(email),
-      password,
-      role: sanitizeInput(role),
-      department: sanitizeInput(department),
-      position: sanitizeInput(position),
-      phone: sanitizeInput(phone),
-      dateOfBirth,
-      address: address ? {
-        street: sanitizeInput(address.street),
-        city: sanitizeInput(address.city),
-        state: sanitizeInput(address.state),
-        zipCode: sanitizeInput(address.zipCode),
-        country: sanitizeInput(address.country)
-      } : undefined
-    };
-
-    console.log('Parsed registration data:', { fullName, email, role, department, position });
-
-    // Check if user already exists in either collection
+    // Check if user already exists
     const existingAdmin = await Admin.findOne({ email });
     const existingEmployee = await Employee.findOne({ email });
     
@@ -105,129 +62,84 @@ router.post('/register', protect, authorize('admin'), [
       return res.status(400).json({ message: 'User with this email already exists' });
     }
 
-    let user;
-    let token;
-
     if (role === 'admin') {
-      // Create admin
-      try {
-        // Generate a unique adminId, retrying a few times in case of race conditions
-        let attempts = 0;
-        let created = null;
-        while (attempts < 5 && !created) {
-          attempts += 1;
-          console.log('Generating admin ID (attempt %d)...', attempts);
-          const adminId = await Admin.generateAdminId();
-
-          // Quick existence check to minimize duplicate key errors
-          const exists = await Admin.exists({ adminId });
-          if (exists) {
-            console.warn('Admin ID already exists pre-check:', adminId);
-            continue;
-          }
-
-          console.log('Creating admin with ID:', adminId);
-          try {
-                    created = await Admin.create({
-          fullName: sanitizedData.fullName,
-          email: sanitizedData.email,
-          password: sanitizedData.password,
-          adminId,
-          department: sanitizedData.department,
-          position: sanitizedData.position,
-          phone: sanitizedData.phone,
-          dateOfBirth: sanitizedData.dateOfBirth,
-          address: sanitizedData.address
-        });
-          } catch (createErr) {
-            if (createErr && createErr.code === 11000) {
-              console.warn('Duplicate adminId on create, retrying...');
-              continue;
-            }
-            throw createErr;
-          }
-        }
-
-        if (!created) {
-          return res.status(500).json({ message: 'Failed to allocate a unique admin identifier. Please try again.' });
-        }
-        user = created;
+      // Generate unique admin ID
+      let adminId;
+      let attempts = 0;
+      const maxAttempts = 10;
+      
+      do {
+        attempts++;
+        adminId = `ADMIN${Date.now().toString().slice(-6)}${Math.random().toString().slice(2, 5)}`;
         
-        console.log('Admin created successfully:', user.adminId);
-        
-        token = generateToken(user._id, 'admin');
-        console.log('Token generated for admin');
-        
-        res.status(201).json({
-          success: true,
-          message: 'Admin registered successfully',
-          data: {
-            user: {
-              id: user._id,
-              fullName: user.fullName,
-              email: user.email,
-              adminId: user.adminId,
-              role: 'admin',
-              department: user.department,
-              position: user.position
-            },
-            token
-          }
-        });
-      } catch (error) {
-        console.error('Admin creation error:', error);
-        
-        // Handle duplicate key errors (email or adminId)
-        if (error && (error.code === 11000 || error.name === 'MongoServerError')) {
-          const dupField = Object.keys(error.keyPattern || {})[0] || 'field';
-          const message = dupField === 'email' 
-            ? 'User with this email already exists'
-            : 'Duplicate admin identifier. Please try again.';
-          return res.status(400).json({ message });
+        if (attempts > maxAttempts) {
+          return res.status(500).json({ message: 'Failed to generate unique admin ID' });
         }
+      } while (await Admin.findOne({ adminId }));
 
-        // Handle validation errors from Mongoose
-        if (error && error.name === 'ValidationError') {
-          const details = Object.values(error.errors).map(e => e.message);
-          return res.status(400).json({ message: 'Validation failed', errors: details });
-        }
-
-        // Fallback
-        return res.status(500).json({ message: 'Server error during admin registration', details: error.message });
-      }
-    } else {
-      // Create employee
-      const employeeId = await Employee.generateEmployeeId();
-      user = await Employee.create({
-        fullName: sanitizedData.fullName,
-        email: sanitizedData.email,
-        password: sanitizedData.password,
-        employeeId,
-        department: sanitizedData.department,
-        position: sanitizedData.position,
-        phone: sanitizedData.phone,
-        dateOfBirth: sanitizedData.dateOfBirth,
-        address: sanitizedData.address
+      // Create admin user
+      const user = new Admin({
+        adminId,
+        fullName,
+        email,
+        password,
+        role: 'admin'
       });
-      
-      token = generateToken(user._id, 'employee');
-      
-      console.log('Employee created successfully:', user.employeeId);
-      
+
+      await user.save();
+
       res.status(201).json({
         success: true,
-        message: 'Employee registered successfully',
+        message: 'Admin account created successfully',
         data: {
-          user: {
-            id: user._id,
-            fullName: user.fullName,
-            email: user.email,
-            employeeId: user.employeeId,
-            role: 'employee',
-            department: user.department,
-            position: user.position
-          },
-          token
+          id: user._id,
+          adminId: user.adminId,
+          fullName: user.fullName,
+          email: user.email,
+          role: user.role
+        }
+      });
+    } else {
+      // Generate unique employee ID
+      let employeeId;
+      let attempts = 0;
+      const maxAttempts = 10;
+      
+      do {
+        attempts++;
+        const year = new Date().getFullYear();
+        const suffix = Math.random().toString().slice(2, 6);
+        employeeId = `IWIZ${year}${suffix}`;
+        
+        if (attempts > maxAttempts) {
+          return res.status(500).json({ message: 'Failed to generate unique employee ID' });
+        }
+      } while (await Employee.findOne({ employeeId }));
+
+      // Create employee user
+      const user = new Employee({
+        employeeId,
+        fullName,
+        email,
+        password,
+        department: department || 'General',
+        position: position || 'Employee',
+        role: 'employee'
+      });
+
+      await user.save();
+
+      res.status(201).json({
+        success: true,
+        message: 'Employee account created successfully',
+        data: {
+          id: user._id,
+          employeeId: user.employeeId,
+          fullName: user.fullName,
+          email: user.email,
+          department: user.department,
+          position: user.position,
+          role: user.role
         }
       });
     }
@@ -255,11 +167,6 @@ router.post('/login', [
     .withMessage('Role must be either admin or employee')
 ], async (req, res) => {
   try {
-    if (process.env.NODE_ENV !== 'production') {
-      const masked = { ...req.body, password: req.body?.password ? '********' : undefined };
-      console.log('[AUTH] Login request payload:', masked);
-    }
-    
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -271,10 +178,6 @@ router.post('/login', [
 
     const { email, password, role } = req.body;
 
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('[AUTH] Login attempt for:', { email, role });
-    }
-
     let user;
     let userRole;
 
@@ -283,7 +186,6 @@ router.post('/login', [
       user = await Admin.findOne({ email }).select('+password');
       if (user) {
         userRole = 'admin';
-        console.log('Found admin user');
       }
     }
 
@@ -292,14 +194,10 @@ router.post('/login', [
       user = await Employee.findOne({ email }).select('+password');
       if (user) {
         userRole = 'employee';
-        console.log('Found employee user');
       }
     }
 
     if (!user) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.warn(`[AUTH] User not found for email=${email}`);
-      }
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
@@ -311,48 +209,45 @@ router.post('/login', [
     // Verify password
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.warn(`[AUTH] Invalid password for user=${email}`);
-      }
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Generate token
-    let token;
-    try {
-      token = generateToken(user._id, userRole);
-    } catch (err) {
-      console.error('[AUTH] JWT error:', err?.message || err);
-      return res.status(500).json({ success: false, message: 'JWT error while signing token' });
-    }
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: user._id, role: userRole },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
 
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('[AUTH] Login successful for user:', { email, role: userRole });
-    }
+    // Remove password from response
+    const userResponse = {
+      id: user._id,
+      fullName: user.fullName,
+      email: user.email,
+      role: userRole,
+      ...(userRole === 'admin' ? {
+        adminId: user.adminId,
+        department: user.department,
+        position: user.position
+      } : {
+        employeeId: user.employeeId,
+        department: user.department,
+        position: user.position
+      })
+    };
 
     res.json({
       success: true,
       message: 'Login successful',
       data: {
-        user: {
-          id: user._id,
-          fullName: user.fullName,
-          email: user.email,
-          role: userRole,
-          department: user.department,
-          position: user.position,
-          isFirstLogin: user.isFirstLogin || false,
-          passwordResetRequired: user.passwordResetRequired || false,
-          mustChangePassword: user.mustChangePassword || false,
-          ...(userRole === 'admin' ? { adminId: user.adminId } : { employeeId: user.employeeId })
-        },
+        user: userResponse,
         token
       }
     });
 
   } catch (error) {
-    console.error('[AUTH] Login error:', error?.message || error);
-    res.status(500).json({ success: false, message: 'Server error during login' });
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Server error during login' });
   }
 });
 
@@ -361,8 +256,6 @@ router.post('/login', [
 // @access  Private
 router.get('/me', protect, async (req, res) => {
   try {
-    console.log('Get current user request for ID:', req.user.id);
-    
     // Try to find user in Admin collection
     let user = await Admin.findById(req.user.id);
     let userRole = 'admin';
@@ -376,8 +269,6 @@ router.get('/me', protect, async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-
-    console.log('Current user found:', userRole);
 
     res.json({
       success: true,

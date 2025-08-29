@@ -48,23 +48,34 @@ const EmployeeManagement = () => {
 
   const statuses = ['active', 'inactive', 'terminated', 'on_leave'];
 
-  const fetchEmployees = useCallback(async () => {
+  const fetchEmployees = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`/employees?page=${currentPage}&limit=10&search=${searchTerm}&department=${filterDepartment}&status=${filterStatus}`);
-      setEmployees(response.data.data.employees);
-      setTotalPages(response.data.data.pagination.totalPages);
+      const response = await api.get('/employees', {
+        params: {
+          page: currentPage,
+          limit: 10, // Assuming itemsPerPage is 10 as in original code
+          search: searchTerm,
+          department: filterDepartment,
+          status: filterStatus
+        }
+      });
+      
+      setEmployees(response.data?.data?.employees || []);
+      setTotalPages(response.data?.data?.pagination?.totalPages || 1);
+      // setTotalEmployees(response.data?.data?.pagination?.totalEmployees || 0); // This line was not in the new_code, so it's removed.
     } catch (error) {
       console.error('Error fetching employees:', error);
       toast.error('Failed to load employees');
+      setEmployees([]);
     } finally {
       setLoading(false);
     }
-  }, [currentPage, searchTerm, filterDepartment, filterStatus]);
+  };
 
   useEffect(() => {
     fetchEmployees();
-  }, [fetchEmployees]);
+  }, [currentPage, searchTerm, filterDepartment, filterStatus]);
 
   const handleAddEmployee = async (e) => {
     e.preventDefault();
@@ -83,9 +94,7 @@ const EmployeeManagement = () => {
           dateOfJoining: new Date().toISOString().slice(0,10)
         };
         
-        console.log('Adding employee with payload:', payload);
         const response = await api.post('/admin/add-employee', payload);
-        console.log('Employee added successfully:', response.data);
       } else {
         // Manual password path
         const payload = { ...formData };
