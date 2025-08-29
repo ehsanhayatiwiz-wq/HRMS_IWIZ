@@ -38,7 +38,7 @@ const adminSchema = new mongoose.Schema({
   },
   phone: {
     type: String,
-    required: [true, 'Phone number is required'],
+    required: false,
     match: [/^[\+]?[1-9][\d]{0,15}$/, 'Please enter a valid phone number']
   },
   address: {
@@ -50,7 +50,7 @@ const adminSchema = new mongoose.Schema({
   },
   dateOfBirth: {
     type: Date,
-    required: [true, 'Date of birth is required']
+    required: false
   },
   dateOfJoining: {
     type: Date,

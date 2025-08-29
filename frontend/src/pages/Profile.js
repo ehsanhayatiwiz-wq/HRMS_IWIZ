@@ -15,7 +15,13 @@ const Profile = () => {
   const [profileData, setProfileData] = useState({
     fullName: user?.fullName || '',
     phone: user?.phone || '',
-    address: user?.address || '',
+    address: user?.address || {
+      street: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      country: ''
+    },
     dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().slice(0, 10) : ''
   });
 
@@ -104,7 +110,13 @@ const Profile = () => {
     setProfileData({
       fullName: user?.fullName || '',
       phone: user?.phone || '',
-      address: user?.address || '',
+      address: user?.address || {
+        street: '',
+        city: '',
+        state: '',
+        zipCode: '',
+        country: ''
+      },
       dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().slice(0, 10) : ''
     });
     setEditing(false);
@@ -194,9 +206,13 @@ const Profile = () => {
                   <textarea
                     id="address"
                     name="address"
-                    value={profileData.address}
+                    value={typeof profileData.address === 'string' ? profileData.address : 
+                      [profileData.address?.street, profileData.address?.city, profileData.address?.state, profileData.address?.zipCode, profileData.address?.country]
+                        .filter(Boolean)
+                        .join(', ')}
                     onChange={handleProfileInputChange}
                     rows="3"
+                    placeholder="Enter your full address"
                   />
                 </div>
               </form>

@@ -43,6 +43,7 @@ router.post('/checkin', protect, async (req, res) => {
       attendance = new Attendance({ 
         userId, 
         userType,
+        userModel: userType === 'admin' ? 'Admin' : 'Employee',
         date: today 
       });
     }

@@ -114,6 +114,7 @@ router.post('/request', protect, [
     const leaveRequest = new Leave({
       userId,
       userType,
+      userModel: userType === 'admin' ? 'Admin' : 'Employee',
       leaveType,
       fromDate: fromDateObj,
       toDate: toDateObj,

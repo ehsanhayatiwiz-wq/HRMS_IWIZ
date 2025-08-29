@@ -3,8 +3,13 @@ const mongoose = require('mongoose');
 const leaveSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Employee',
+    refPath: 'userModel',
     required: [true, 'User ID is required']
+  },
+  userModel: {
+    type: String,
+    required: true,
+    enum: ['Admin', 'Employee']
   },
   userType: {
     type: String,
