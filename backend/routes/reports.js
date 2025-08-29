@@ -101,7 +101,7 @@ router.get('/attendance', async (req, res) => {
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Pragma', 'no-cache');
     
-    // Pipe PDF to response
+    // Pipe PDF to response BEFORE writing content
     doc.pipe(res);
     
     // Handle PDF errors
@@ -183,7 +183,7 @@ router.get('/attendance', async (req, res) => {
       y += 26;
     });
 
-    // Finalize PDF
+    // Finalize PDF after all writes
     doc.end();
     
     // Ensure response is properly closed

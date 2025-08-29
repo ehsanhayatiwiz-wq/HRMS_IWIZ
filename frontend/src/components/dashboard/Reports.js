@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import { toast } from 'react-toastify';
 import { FiDownload, FiFileText, FiBarChart2, FiUsers, FiCalendar } from 'react-icons/fi';
 import './Reports.css';
@@ -55,28 +55,29 @@ const Reports = () => {
       let endpoint = '';
       let filename = '';
 
+      const ts = Date.now();
       switch (type) {
         case 'attendance':
-          endpoint = `/api/reports/attendance?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
+          endpoint = `/api/reports/attendance?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}&_t=${ts}`;
           filename = `attendance-report-${dateRange.startDate}-to-${dateRange.endDate}.pdf`;
           break;
         case 'leave':
-          endpoint = `/api/reports/leaves?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
+          endpoint = `/api/reports/leaves?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}&_t=${ts}`;
           filename = `leave-report-${dateRange.startDate}-to-${dateRange.endDate}.pdf`;
           break;
         case 'employee':
-          endpoint = `/api/reports/employees`;
+          endpoint = `/api/reports/employees?_t=${ts}`;
           filename = `employee-report-${new Date().toISOString().split('T')[0]}.pdf`;
           break;
         case 'performance':
-          endpoint = `/api/reports/performance?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
+          endpoint = `/api/reports/performance?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}&_t=${ts}`;
           filename = `performance-report-${dateRange.startDate}-to-${dateRange.endDate}.pdf`;
           break;
         default:
           throw new Error('Invalid report type');
       }
 
-      const response = await axios.get(endpoint, {
+      const response = await api.get(endpoint, {
         responseType: 'blob'
       });
 
@@ -131,7 +132,7 @@ const Reports = () => {
           throw new Error('Invalid report type');
       }
 
-      const response = await axios.get(endpoint, {
+      const response = await api.get(endpoint, {
         responseType: 'blob'
       });
 
