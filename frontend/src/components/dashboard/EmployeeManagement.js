@@ -26,6 +26,7 @@ const EmployeeManagement = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [payrollInfo, setPayrollInfo] = useState({ loading: false, hasCurrentMonth: false, lastPayroll: null, count: 0 });
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -155,6 +156,22 @@ const EmployeeManagement = () => {
   const handleViewEmployee = (employee) => {
     setSelectedEmployee(employee);
     setShowViewModal(true);
+    // Load payroll summary for the employee
+    (async () => {
+      try {
+        setPayrollInfo(prev => ({ ...prev, loading: true }));
+        const resp = await axios.get(`/api/payroll/${employee.id}?page=1&limit=12`);
+        const payrolls = resp?.data?.data?.payrolls || [];
+        const now = new Date();
+        const currentMonth = now.getMonth() + 1;
+        const currentYear = now.getFullYear();
+        const hasCurrentMonth = payrolls.some(p => Number(p.month) === currentMonth && Number(p.year) === currentYear);
+        const lastPayroll = payrolls[0] || null; // API already sorts year desc, month desc
+        setPayrollInfo({ loading: false, hasCurrentMonth, lastPayroll, count: payrolls.length });
+      } catch (e) {
+        setPayrollInfo({ loading: false, hasCurrentMonth: false, lastPayroll: null, count: 0 });
+      }
+    })();
   };
 
   const handleEditClick = (employee) => {
@@ -311,6 +328,7 @@ const EmployeeManagement = () => {
                       variant="secondary"
                       onClick={() => handleViewEmployee(employee)}
                       icon={<FiEye />}
+                      title="View"
                     />
                     <Button
                       variant="secondary"
@@ -658,6 +676,26 @@ const EmployeeManagement = () => {
                     <span className={`badge badge-${selectedEmployee.status === 'active' ? 'success' : selectedEmployee.status === 'inactive' ? 'warning' : 'danger'}`}>
                       {selectedEmployee.status}
                     </span>
+                  </div>
+                  <div className="detail-item" style={{ gridColumn: '1 / -1' }}>
+                    <label>Payroll Summary:</label>
+                    {payrollInfo.loading ? (
+                      <span>Loading...</span>
+                    ) : (
+                      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                        <span>
+                          Current Month Generated: <strong>{payrollInfo.hasCurrentMonth ? 'Yes' : 'No'}</strong>
+                        </span>
+                        <span>
+                          Total Payroll Records: <strong>{payrollInfo.count}</strong>
+                        </span>
+                        {payrollInfo.lastPayroll && (
+                          <span>
+                            Last Payroll: <strong>{payrollInfo.lastPayroll.month}/{payrollInfo.lastPayroll.year}</strong> • Net Pay: <strong>{formatCurrency(payrollInfo.lastPayroll.netPay)}</strong> • Status: <span className={`status-badge ${payrollInfo.lastPayroll.status}`}>{payrollInfo.lastPayroll.status}</span>
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

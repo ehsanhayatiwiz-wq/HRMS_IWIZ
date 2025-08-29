@@ -43,7 +43,7 @@ const stylesByVariant = {
   }
 };
 
-const Button = ({ variant = 'primary', icon, children, onClick, disabled, type = 'button', style }) => {
+const Button = ({ variant = 'primary', icon, children, onClick, disabled, type = 'button', style, title, ariaLabel }) => {
   const v = stylesByVariant[variant] || stylesByVariant.primary;
   const baseStyle = {
     fontFamily: 'Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, "Apple Color Emoji", "Segoe UI Emoji"',
@@ -78,6 +78,8 @@ const Button = ({ variant = 'primary', icon, children, onClick, disabled, type =
       onClick={onClick}
       disabled={disabled}
       style={computedStyle}
+      title={title}
+      aria-label={ariaLabel || (typeof children === 'string' ? children : undefined)}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       onFocus={() => setHover(true)}
