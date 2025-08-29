@@ -114,6 +114,9 @@ const AdminDashboard = () => {
           console.log('Attendance records:', response.data?.data?.attendance);
           if (response.data?.data?.attendance?.length > 0) {
             console.log('First attendance record:', response.data.data.attendance[0]);
+            console.log('First record userId:', response.data.data.attendance[0].userId);
+            console.log('First record employee name:', response.data.data.attendance[0].userId?.fullName);
+            console.log('First record employee email:', response.data.data.attendance[0].userId?.email);
           }
           setAttendanceRecords(response.data?.data?.attendance || []);
           setTotalPages(response.data?.data?.pagination?.totalPages || 1);
@@ -298,6 +301,10 @@ const AdminDashboard = () => {
   };
 
   const openAttendanceDetails = (record) => {
+    console.log('Opening attendance details for record:', record);
+    console.log('Record userId:', record.userId);
+    console.log('Record employee name:', record.userId?.fullName);
+    console.log('Record employee email:', record.userId?.email);
     setSelectedAttendanceRecord(record);
     setAttendanceDetailsOpen(true);
   };
@@ -759,16 +766,17 @@ const AdminDashboard = () => {
                               <FiUser />
                             </div>
                             <div>
-                              <div className="employee-name">{record.employeeName || 'Unknown'}</div>
+                              <div className="employee-name">{record.userId?.fullName || 'Unknown'}</div>
+                              <div className="employee-email">{record.userId?.email || 'Unknown'}</div>
                             </div>
                           </div>
                         </td>
                         <td>{new Date(record.date).toLocaleDateString('en-PK', { month: 'short', day: '2-digit', year: 'numeric', timeZone: 'Asia/Karachi' })}</td>
                         <td>
-                          {record.checkInTime || '-'}
+                          {record.checkIn?.time ? new Date(record.checkIn.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
                         </td>
                         <td>
-                          {record.checkOutTime || '-'}
+                          {record.checkOut?.time ? new Date(record.checkOut.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
                         </td>
                         <td>
                           <span className="hours-display">
@@ -991,7 +999,9 @@ const AdminDashboard = () => {
       </main>
 
       {attendanceDetailsOpen && selectedAttendanceRecord && (
-        <div className="modal-overlay" onClick={closeAttendanceDetails}>
+        <>
+          {console.log('Rendering attendance modal with record:', selectedAttendanceRecord)}
+          <div className="modal-overlay" onClick={closeAttendanceDetails}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Attendance Details</h3>
@@ -1000,6 +1010,8 @@ const AdminDashboard = () => {
             <div className="modal-body">
               <p><strong>Employee:</strong> {selectedAttendanceRecord.userId?.fullName || 'Unknown'}</p>
               <p><strong>Email:</strong> {selectedAttendanceRecord.userId?.email || 'Unknown'}</p>
+              <p><strong>Employee ID:</strong> {selectedAttendanceRecord.userId?.employeeId || 'N/A'}</p>
+              <p><strong>Department:</strong> {selectedAttendanceRecord.userId?.department || 'N/A'}</p>
               <p><strong>Date:</strong> {new Date(selectedAttendanceRecord.date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</p>
               <p><strong>Check-in:</strong> {selectedAttendanceRecord.checkIn?.time ? new Date(selectedAttendanceRecord.checkIn.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}</p>
               <p><strong>Check-out:</strong> {selectedAttendanceRecord.checkOut?.time ? new Date(selectedAttendanceRecord.checkOut.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}</p>
@@ -1013,6 +1025,7 @@ const AdminDashboard = () => {
             </div>
           </div>
         </div>
+        </>
       )}
 
       {leaveDetailsOpen && selectedLeaveRecord && (

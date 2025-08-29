@@ -400,6 +400,12 @@
   font-size: 0.875rem;
 }
 
+.employee-email {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
 .employee-id {
   font-size: 0.75rem;
   color: var(--text-secondary);

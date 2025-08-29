@@ -400,10 +400,19 @@ router.get('/all', protect, authorize('admin'), async (req, res) => {
     }
 
     const attendance = await Attendance.find(query)
-      .populate('userId', 'fullName employeeId department')
+      .populate('userId', 'fullName email employeeId department')
       .sort({ date: -1, 'checkIn.time': -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
+    
+    console.log('Raw attendance records from database:', attendance.length);
+    if (attendance.length > 0) {
+      console.log('First record userId:', attendance[0].userId);
+      console.log('First record userId.fullName:', attendance[0].userId?.fullName);
+      console.log('First record userId.email:', attendance[0].userId?.email);
+      console.log('First record checkIn:', attendance[0].checkIn);
+      console.log('First record checkOut:', attendance[0].checkOut);
+    }
 
     const total = await Attendance.countDocuments(query);
 
@@ -414,6 +423,13 @@ router.get('/all', protect, authorize('admin'), async (req, res) => {
       console.log('First attendance record structure:', JSON.stringify(attendance[0], null, 2));
       console.log('First record userId:', attendance[0].userId);
       console.log('First record userId.fullName:', attendance[0].userId?.fullName);
+      console.log('First record transformed userId:', {
+        _id: attendance[0].userId?._id,
+        fullName: attendance[0].userId?.fullName || 'Unknown',
+        email: attendance[0].userId?.email || 'Unknown',
+        employeeId: attendance[0].userId?.employeeId || 'N/A',
+        department: attendance[0].userId?.department || 'N/A'
+      });
     }
 
     res.json({
@@ -421,14 +437,18 @@ router.get('/all', protect, authorize('admin'), async (req, res) => {
       data: {
         attendance: attendance.map(record => ({
           id: record._id,
-          employeeId: record.userId?.employeeId || 'N/A',
-          employeeName: record.userId?.fullName || 'Unknown',
-          department: record.userId?.department || 'N/A',
+          userId: {
+            _id: record.userId?._id,
+            fullName: record.userId?.fullName || 'Unknown',
+            email: record.userId?.email || 'Unknown',
+            employeeId: record.userId?.employeeId || 'N/A',
+            department: record.userId?.department || 'N/A'
+          },
           date: record.date,
-          checkInTime: record.checkInTimeFormatted,
-          checkOutTime: record.checkOutTimeFormatted,
-          reCheckInTime: record.reCheckInTimeFormatted,
-          reCheckOutTime: record.reCheckOutTimeFormatted,
+          checkIn: record.checkIn,
+          checkOut: record.checkOut,
+          reCheckIn: record.reCheckIn,
+          reCheckOut: record.reCheckOut,
           totalHours: record.totalHours,
           firstSessionHours: record.firstSessionHours,
           secondSessionHours: record.secondSessionHours,

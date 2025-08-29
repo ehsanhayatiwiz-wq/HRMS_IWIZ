@@ -3,7 +3,7 @@ import { useAuth } from '../contexts';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 import moment from 'moment';
-import { FiCalendar, FiFileText, FiPlusCircle, FiSend, FiX } from 'react-icons/fi';
+import { FiCalendar, FiFileText, FiPlusCircle, FiSend, FiX, FiRefreshCw } from 'react-icons/fi';
 import Button from '../components/common/Button';
 import './Dashboard.css';
 
@@ -23,24 +23,136 @@ const Leaves = () => {
     halfDayType: 'morning'
   });
 
+  // Handle race conditions and ensure data consistency
+  const [fetchInProgress, setFetchInProgress] = useState(false);
+  
+  const safeFetchLeaveHistory = async () => {
+    if (fetchInProgress) {
+      console.log('Fetch already in progress, skipping...');
+      return;
+    }
+    
+    setFetchInProgress(true);
+    try {
+      await fetchLeaveHistory();
+    } finally {
+      setFetchInProgress(false);
+    }
+  };
+
   useEffect(() => {
-    fetchLeaveHistory();
+    console.log('Leaves component mounted, fetching initial data...');
+    safeFetchLeaveHistory();
     
     // Set up auto-refresh every 30 seconds to ensure data is fresh
     const interval = setInterval(() => {
-      fetchLeaveHistory();
+      console.log('Auto-refreshing leave history...');
+      safeFetchLeaveHistory();
     }, 30000);
     
-    return () => clearInterval(interval);
+    return () => {
+      console.log('Clearing auto-refresh interval...');
+      clearInterval(interval);
+    };
   }, []);
+
+  // Handle data synchronization between employee and admin views
+  const syncWithAdminView = async () => {
+    try {
+      console.log('Syncing with admin view...');
+      
+      // Fetch data with different cache-busting strategies
+      const strategies = [
+        `_t=${Date.now()}`,
+        `_t=${Date.now() + 1000}`,
+        `_t=${Date.now() + 2000}`
+      ];
+      
+      for (const strategy of strategies) {
+        try {
+          const response = await api.get(`/leaves/my-leaves?page=1&limit=9999&${strategy}`);
+          const leaves = response.data?.data?.leaves || [];
+          
+          if (leaves.length > 0) {
+            console.log(`Sync successful with strategy ${strategy}:`, leaves.length, 'records');
+            setLeaveHistory(leaves);
+            checkDataConsistency(leaves);
+            break;
+          }
+        } catch (error) {
+          console.warn(`Sync strategy ${strategy} failed:`, error);
+        }
+      }
+    } catch (error) {
+      console.error('Data synchronization failed:', error);
+    }
+  };
+
+  // Check data consistency and log any issues
+  const checkDataConsistency = (leaves) => {
+    console.log('Checking data consistency for', leaves.length, 'leaves...');
+    
+    leaves.forEach((leave, index) => {
+      if (!leave.id || !leave.leaveType || !leave.status) {
+        console.warn('Incomplete leave record at index', index, ':', leave);
+      }
+    });
+    
+    // Check for duplicate IDs
+    const ids = leaves.map(leave => leave.id);
+    const uniqueIds = new Set(ids);
+    if (ids.length !== uniqueIds.size) {
+      console.warn('Duplicate IDs detected in leave history');
+    }
+    
+    console.log('Data consistency check completed');
+  };
+
+  // Force refresh leave history to ensure data consistency
+  const forceRefreshLeaveHistory = async () => {
+    try {
+      console.log('Force refreshing leave history...');
+      setLoading(true);
+      
+      // Clear current data first
+      setLeaveHistory([]);
+      
+      // Fetch fresh data with cache busting
+      const timestamp = new Date().getTime();
+      const response = await api.get(`/leaves/my-leaves?page=1&limit=9999&_t=${timestamp}`);
+      
+      const leaves = response.data?.data?.leaves || [];
+      console.log('Force refreshed leave history:', leaves.length, 'records');
+      
+      // Check data consistency
+      checkDataConsistency(leaves);
+      
+      setLeaveHistory(leaves);
+      toast.success('Leave history refreshed successfully');
+    } catch (error) {
+      console.error('Error force refreshing leave history:', error);
+      toast.error('Failed to refresh leave history');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchLeaveHistory = async () => {
     try {
       setLoading(true);
-      // Add cache-busting parameter to ensure fresh data
+      // Use a very high limit to ensure all records are fetched, add cache-busting parameter
       const timestamp = new Date().getTime();
-      const response = await api.get(`/leaves/my-leaves?page=1&limit=500&_t=${timestamp}`);
-      setLeaveHistory(response.data?.data?.leaves || []);
+      const response = await api.get(`/leaves/my-leaves?page=1&limit=9999&_t=${timestamp}`);
+      
+      // Ensure we get the actual leaves array and handle any potential data structure issues
+      const leaves = response.data?.data?.leaves || [];
+      console.log('Fetched leave history:', leaves.length, 'records');
+      console.log('Leave history data:', leaves);
+      
+      // Check data consistency
+      checkDataConsistency(leaves);
+      
+      setLeaveHistory(leaves);
     } catch (error) {
       console.error('Error fetching leave history:', error);
       toast.error('Failed to load leave history');
@@ -109,11 +221,50 @@ const Leaves = () => {
       console.log('Submitting leave request:', requestData);
       console.log('API endpoint:', '/leaves/request');
 
+      // Create optimistic leave record for immediate UI update
+      const optimisticLeave = {
+        id: `temp-${Date.now()}`, // Temporary ID
+        leaveType: formData.leaveType,
+        fromDate: formData.fromDate,
+        toDate: formData.toDate,
+        totalDays: formData.isHalfDay ? 0.5 : 
+          Math.ceil((new Date(formData.toDate) - new Date(formData.fromDate)) / (1000 * 60 * 60 * 24)) + 1,
+        reason: formData.reason,
+        status: 'pending',
+        isHalfDay: formData.isHalfDay,
+        halfDayType: formData.isHalfDay ? formData.halfDayType : undefined,
+        createdAt: new Date().toISOString()
+      };
+
+      // Add optimistic leave to the list immediately
+      setLeaveHistory(prev => [optimisticLeave, ...prev]);
+
       const response = await api.post('/leaves/request', requestData);
       
       console.log('Leave submission response:', response.data);
       
+      // Replace optimistic leave with real data from server
+      const realLeave = {
+        id: response.data.data.id,
+        leaveType: response.data.data.leaveType,
+        fromDate: response.data.data.fromDate,
+        toDate: response.data.data.toDate,
+        totalDays: response.data.data.totalDays,
+        reason: response.data.data.reason,
+        status: response.data.data.status,
+        isHalfDay: formData.isHalfDay,
+        halfDayType: formData.isHalfDay ? formData.halfDayType : undefined,
+        createdAt: new Date().toISOString()
+      };
+
+      // Update the list with real data
+      setLeaveHistory(prev => prev.map(leave => 
+        leave.id === optimisticLeave.id ? realLeave : leave
+      ));
+      
       toast.success('Leave request submitted successfully!');
+      
+      // Reset form
       setFormData({
         leaveType: 'casual',
         fromDate: '',
@@ -123,13 +274,25 @@ const Leaves = () => {
         halfDayType: 'morning'
       });
       setShowForm(false);
-      fetchLeaveHistory(); // Refresh the list
+      
+      // Force a server refresh to ensure data consistency
+      setTimeout(() => {
+        safeFetchLeaveHistory();
+      }, 1000);
+      
+      // Also force a refresh after 3 seconds to ensure admin dashboard sync
+      setTimeout(() => {
+        forceRefreshLeaveHistory();
+      }, 3000);
       
     } catch (error) {
       console.error('Leave submission error:', error);
       console.error('Error response:', error.response);
       console.error('Error status:', error.response?.status);
       console.error('Error data:', error.response?.data);
+      
+      // Remove optimistic leave on error
+      setLeaveHistory(prev => prev.filter(leave => !leave.id.startsWith('temp-')));
       
       const message = error.response?.data?.message || 'Failed to submit leave request';
       toast.error(message);
@@ -342,7 +505,25 @@ const Leaves = () => {
       <div className="content-section">
         <div className="section-header">
           <h2>Leave History</h2>
-          <FiFileText className="section-icon" />
+          <div className="header-actions" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <Button 
+              variant="secondary" 
+              onClick={forceRefreshLeaveHistory}
+              icon={<FiRefreshCw />}
+              disabled={loading}
+            >
+              {loading ? 'Refreshing...' : 'Force Refresh'}
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={syncWithAdminView}
+              icon={<FiRefreshCw />}
+              disabled={loading}
+            >
+              Sync Data
+            </Button>
+            <FiFileText className="section-icon" />
+          </div>
         </div>
         
         {leaveHistory.length > 0 ? (
