@@ -11,7 +11,7 @@ const router = express.Router();
 // @access  Private
 router.post('/checkin', protect, async (req, res) => {
   try {
-    console.log('Check-in request from user:', req.user.id);
+
     
     const userId = req.user.id;
     const userType = req.userRole;
@@ -87,7 +87,7 @@ router.post('/checkin', protect, async (req, res) => {
 // @access  Private
 router.post('/checkout', protect, async (req, res) => {
   try {
-    console.log('Check-out request from user:', req.user.id);
+
     
     const userId = req.user.id;
     const userType = req.userRole;
@@ -102,17 +102,7 @@ router.post('/checkout', protect, async (req, res) => {
       date: { $gte: startUtc, $lt: endUtc }
     });
 
-    console.log('Check-out validation:', {
-      userId,
-      userType,
-      startUtc: startUtc.toISOString(),
-      endUtc: endUtc.toISOString(),
-      hasAttendance: !!attendance,
-      hasCheckIn: attendance?.checkIn?.time,
-      hasCheckOut: attendance?.checkOut?.time,
-      checkInTime: attendance?.checkInTimeFormatted,
-      checkOutTime: attendance?.checkOutTimeFormatted
-    });
+
 
     if (!attendance || !attendance.checkIn.time) {
       return res.status(400).json({ message: 'No check-in record found for today' });
@@ -208,7 +198,7 @@ router.post('/re-checkin', protect, async (req, res) => {
 
     await attendance.save();
 
-    console.log('Re-check-in successful for user:', userId);
+
 
     res.json({
       success: true,
@@ -233,7 +223,7 @@ router.post('/re-checkin', protect, async (req, res) => {
 // @access  Private
 router.post('/re-checkout', protect, async (req, res) => {
   try {
-    console.log('Re-check-out request from user:', req.user.id);
+
     
     const userId = req.user.id;
     const userType = req.userRole;
@@ -248,17 +238,7 @@ router.post('/re-checkout', protect, async (req, res) => {
       date: { $gte: startUtc, $lt: endUtc }
     });
 
-    console.log('Re-check-out validation:', {
-      userId,
-      userType,
-      startUtc: startUtc.toISOString(),
-      endUtc: endUtc.toISOString(),
-      hasAttendance: !!attendance,
-      hasReCheckIn: attendance?.reCheckIn?.time,
-      hasReCheckOut: attendance?.reCheckOut?.time,
-      reCheckInTime: attendance?.reCheckInTimeFormatted,
-      reCheckOutTime: attendance?.reCheckOutTimeFormatted
-    });
+
 
     if (!attendance || !attendance.reCheckIn || !attendance.reCheckIn.time) {
       return res.status(400).json({ message: 'No re-check-in record found for today' });
@@ -276,13 +256,7 @@ router.post('/re-checkout', protect, async (req, res) => {
     const timeDifference = currentTime - attendance.reCheckIn.time;
     const minimumTimeMs = 1 * 60 * 1000; // 1 minute minimum
     
-    console.log('Re-check-out time validation:', {
-      reCheckInTime: attendance.reCheckIn.time.toISOString(),
-      reCheckOutTime: currentTime.toISOString(),
-      timeDifferenceMs: timeDifference,
-      minimumTimeMs: minimumTimeMs,
-      isValid: timeDifference >= minimumTimeMs
-    });
+
     
     if (timeDifference < minimumTimeMs) {
       return res.status(400).json({ 
@@ -300,7 +274,7 @@ router.post('/re-checkout', protect, async (req, res) => {
 
     await attendance.save();
 
-    console.log('Re-check-out successful for user:', userId);
+
 
     res.json({
       success: true,
@@ -487,31 +461,13 @@ router.get('/all', protect, authorize('admin'), async (req, res) => {
       .limit(limit * 1)
       .skip((page - 1) * limit);
     
-    console.log('Raw attendance records from database:', attendance.length);
-    if (attendance.length > 0) {
-      console.log('First record userId:', attendance[0].userId);
-      console.log('First record userId.fullName:', attendance[0].userId?.fullName);
-      console.log('First record userId.email:', attendance[0].userId?.email);
-      console.log('First record checkIn:', attendance[0].checkIn);
-      console.log('First record checkOut:', attendance[0].checkOut);
-    }
+
 
     const total = await Attendance.countDocuments(query);
 
-    console.log(`Found ${attendance.length} attendance records`);
-    
-    // Debug: Log the first record to see the structure
-    if (attendance.length > 0) {
-      console.log('First attendance record structure:', JSON.stringify(attendance[0], null, 2));
-      console.log('First record userId:', attendance[0].userId);
-      console.log('First record userId.fullName:', attendance[0].userId?.fullName);
-      console.log('First record transformed userId:', {
-        _id: attendance[0].userId?._id,
-        fullName: attendance[0].userId?.fullName || 'Unknown',
-        email: attendance[0].userId?.email || 'Unknown',
-        employeeId: attendance[0].userId?.employeeId || 'N/A',
-        department: attendance[0].userId?.department || 'N/A'
-      });
+
+      
+
     }
 
     res.json({
@@ -560,7 +516,7 @@ router.get('/all', protect, authorize('admin'), async (req, res) => {
 // @access  Private (Admin)
 router.get('/stats', protect, authorize('admin'), async (req, res) => {
   try {
-    console.log('Get attendance stats request from admin:', req.user.id);
+
     
     const { date } = req.query;
     
@@ -622,7 +578,7 @@ router.get('/stats', protect, authorize('admin'), async (req, res) => {
       { $sort: { total: -1 } }
     ]);
 
-    console.log('Attendance stats retrieved successfully');
+
 
     res.json({
       success: true,

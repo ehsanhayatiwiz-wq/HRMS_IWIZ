@@ -194,7 +194,14 @@ const Attendance = () => {
           <h1 className="page-title">Attendance Management</h1>
           <p className="page-subtitle">Track your daily attendance and view history</p>
           <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-            Timezone: Pakistan (UTC+5) • Current time: {new Date(new Date().getTime() + 5 * 60 * 60 * 1000).toLocaleString('en-PK')} • 
+            Timezone: Pakistan (UTC+5) • Current time: {new Date(new Date().getTime() + 5 * 60 * 60 * 1000).toLocaleString('en-PK', { 
+              year: 'numeric', 
+              month: '2-digit', 
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit'
+            })} • 
             Day boundaries: 00:00 - 23:59 Pakistan time
           </div>
         </div>
@@ -355,8 +362,11 @@ const Attendance = () => {
             {attendanceHistory.filter(att => {
               const attDate = new Date(att.date);
               const now = new Date();
-              return attDate.getMonth() === now.getMonth() && 
-                     attDate.getFullYear() === now.getFullYear() && 
+              // Convert both dates to Karachi timezone for comparison
+              const attKarachiDate = new Date(attDate.getTime() + 5 * 60 * 60 * 1000);
+              const nowKarachiDate = new Date(now.getTime() + 5 * 60 * 60 * 1000);
+              return attKarachiDate.getMonth() === nowKarachiDate.getMonth() && 
+                     attKarachiDate.getFullYear() === nowKarachiDate.getFullYear() && 
                      (att.status === 'present' || att.status === 'late');
             }).length}
           </div>
@@ -386,7 +396,12 @@ const Attendance = () => {
               <tbody>
                 {attendanceHistory.map((attendance, index) => (
                   <tr key={attendance.id || attendance._id || `attendance-${index}`}>
-                    <td>{new Date(attendance.date).toLocaleDateString('en-PK', { month: 'short', day: '2-digit', year: 'numeric' })}</td>
+                    <td>{new Date(attendance.date).toLocaleDateString('en-PK', { 
+                      weekday: 'long',
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: '2-digit' 
+                    })}</td>
                     <td>{attendance.checkInTime || '-'}</td>
                     <td>{attendance.checkOutTime || '-'}</td>
                     <td>

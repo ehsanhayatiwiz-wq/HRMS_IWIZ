@@ -132,9 +132,9 @@ function formatKarachiTime(date) {
   // Manual conversion to Karachi time (UTC+5)
   const karachiTime = new Date(date.getTime() + 5 * 60 * 60 * 1000);
   
-  // Get the UTC hours and minutes (which will be Karachi local time)
-  const hours = karachiTime.getUTCHours().toString().padStart(2, '0');
-  const minutes = karachiTime.getUTCMinutes().toString().padStart(2, '0');
+  // Get the local hours and minutes (which will be Karachi local time)
+  const hours = karachiTime.getHours().toString().padStart(2, '0');
+  const minutes = karachiTime.getMinutes().toString().padStart(2, '0');
   
   const formattedTime = `${hours}:${minutes}`;
   
