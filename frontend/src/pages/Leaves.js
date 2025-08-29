@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts';
+import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 import moment from 'moment';
-import { FiCalendar, FiFileText, FiPlusCircle, FiSend, FiX, FiRefreshCw } from 'react-icons/fi';
+import { FiPlus, FiCalendar, FiClock, FiFileText, FiCheckCircle, FiXCircle, FiClock as FiClockIcon } from 'react-icons/fi';
 import Button from '../components/common/Button';
 import './Dashboard.css';
 
@@ -156,7 +156,7 @@ const Leaves = () => {
         <Button
           onClick={() => setShowForm(!showForm)}
           variant="primary"
-          icon={<FiPlusCircle />}
+          icon={<FiPlus />}
         >
           {showForm ? 'Cancel' : 'Request Leave'}
         </Button>
@@ -261,7 +261,7 @@ const Leaves = () => {
                 type="submit"
                 variant="primary"
                 disabled={submitting}
-                icon={<FiSend />}
+                icon={<FiClock />}
               >
                 {submitting ? 'Submitting...' : 'Submit Request'}
               </Button>
@@ -269,7 +269,7 @@ const Leaves = () => {
                 type="button"
                 variant="secondary"
                 onClick={() => setShowForm(false)}
-                icon={<FiX />}
+                icon={<FiXCircle />}
               >
                 Cancel
               </Button>
@@ -284,7 +284,7 @@ const Leaves = () => {
           <Button
             onClick={fetchLeaveHistory}
             variant="secondary"
-            icon={<FiRefreshCw />}
+            icon={<FiClockIcon />}
             disabled={fetchInProgress}
           >
             Refresh
