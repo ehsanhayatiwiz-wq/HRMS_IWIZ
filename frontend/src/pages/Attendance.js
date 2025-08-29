@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 // moment.js removed - using native Date methods
-import { FiCheckCircle, FiXCircle, FiCalendar, FiTrendingUp, FiRefreshCw } from 'react-icons/fi';
+import { FiCheckCircle, FiXCircle, FiCalendar, FiTrendingUp, FiRefreshCw, FiClock } from 'react-icons/fi';
 import Button from '../components/common/Button';
 import './Dashboard.css';
 
@@ -28,14 +28,10 @@ const Attendance = () => {
       setLoading(true);
       console.log('Fetching attendance data...');
       
-
-      
       const [todayRes, historyRes] = await Promise.all([
         api.get('/attendance/today'),
         api.get('/attendance/history?page=1&limit=10')
       ]);
-
-
 
       const todayData = todayRes.data.data;
       setTodayAttendance(todayData.attendance);
@@ -44,8 +40,6 @@ const Attendance = () => {
       setCanReCheckIn(todayData.canReCheckIn);
       setCanReCheckOut(todayData.canReCheckOut);
       setAttendanceHistory(historyRes.data.data.attendance);
-      
-
     } catch (error) {
       console.error('Error fetching attendance data:', error);
       toast.error('Failed to load attendance data');
@@ -156,8 +150,6 @@ const Attendance = () => {
       setReCheckingOut(false);
     }
   };
-
-
 
   const getStatusBadge = (status) => {
     if (!status) {
@@ -394,7 +386,7 @@ const Attendance = () => {
               <tbody>
                 {attendanceHistory.map((attendance, index) => (
                   <tr key={attendance.id || attendance._id || `attendance-${index}`}>
-                    <td>{new Date(attendance.date).toLocaleDateString('en-PK', { month: 'short', day: '2-digit', year: 'numeric', timeZone: 'Asia/Karachi' })}</td>
+                    <td>{new Date(attendance.date).toLocaleDateString('en-PK', { month: 'short', day: '2-digit', year: 'numeric' })}</td>
                     <td>{attendance.checkInTime || '-'}</td>
                     <td>{attendance.checkOutTime || '-'}</td>
                     <td>

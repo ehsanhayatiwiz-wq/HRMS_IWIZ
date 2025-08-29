@@ -728,6 +728,16 @@
   color: #6b7280;
 }
 
+.status-badge.info {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.status-badge.warning {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
 /* Completed Message */
 .completed-message {
   display: flex;
