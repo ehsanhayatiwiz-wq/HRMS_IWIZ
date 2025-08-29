@@ -79,16 +79,16 @@ const Leaves = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+  
     const errors = validateForm();
     if (Object.keys(errors).length > 0) {
       Object.values(errors).forEach(error => toast.error(error));
       return;
     }
-
+  
     try {
       setSubmitting(true);
-      
+  
       const requestData = {
         leaveType: formData.leaveType,
         fromDate: formData.fromDate,
@@ -97,15 +97,19 @@ const Leaves = () => {
         isHalfDay: formData.isHalfDay,
         halfDayType: formData.isHalfDay ? formData.halfDayType : undefined
       };
-
+  
       console.log('Submitting leave request:', requestData);
-      console.log('API endpoint:', '/leaves/request');
-
+  
       const response = await api.post('/leaves/request', requestData);
-      
-      console.log('Leave submission response:', response.data);
-      
+  
+      // ✅ Optimistic update (add new leave instantly to UI)
+      if (response.data?.leave) {
+        setLeaveHistory(prev => [response.data.leave, ...prev]);
+      }
+  
       toast.success('Leave request submitted successfully!');
+  
+      // Reset form
       setFormData({
         leaveType: 'casual',
         fromDate: '',
@@ -115,20 +119,16 @@ const Leaves = () => {
         halfDayType: 'morning'
       });
       setShowForm(false);
-      fetchLeaveHistory(); // Refresh the list
-      
+  
     } catch (error) {
       console.error('Leave submission error:', error);
-      console.error('Error response:', error.response);
-      console.error('Error status:', error.response?.status);
-      console.error('Error data:', error.response?.data);
-      
       const message = error.response?.data?.message || 'Failed to submit leave request';
       toast.error(message);
     } finally {
       setSubmitting(false);
     }
   };
+  
 
   const getLeaveTypeLabel = (type) => {
     switch (type) {
