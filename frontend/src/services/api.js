@@ -40,7 +40,10 @@ api.interceptors.response.use(
     // Redirect to login on unauthorized
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
-      window.location.href = '/login';
+      // Only redirect if not already on login page
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
       return Promise.reject(error);
     }
 
@@ -72,7 +75,16 @@ api.interceptors.response.use(
       if (error.response?.status >= 500) {
         return 'Server error, please try again later.';
       }
-      return error.message;
+      if (error.response?.status === 404) {
+        return 'The requested resource was not found.';
+      }
+      if (error.response?.status === 403) {
+        return 'You do not have permission to access this resource.';
+      }
+      if (error.response?.status === 400) {
+        return error.response?.data?.message || 'Invalid request. Please check your input.';
+      }
+      return error.response?.data?.message || error.message || 'An unexpected error occurred.';
     })();
     error.userMessage = message;
     return Promise.reject(error);

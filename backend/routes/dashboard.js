@@ -159,7 +159,7 @@ router.get('/admin', protect, authorize('admin'), async (req, res) => {
       status: { $in: ['present', 'late', 're-checked-in'] }
     });
 
-    // Get recent leaves
+    // Get recent leaves with cache-busting
     const recentLeaves = await Leave.find({})
       .populate('userId', 'fullName employeeId department')
       .sort({ createdAt: -1 })
@@ -169,6 +169,11 @@ router.get('/admin', protect, authorize('admin'), async (req, res) => {
     const pendingLeaves = await Leave.countDocuments({ status: 'pending' });
 
     console.log('Admin dashboard data retrieved successfully');
+
+    // Add cache control headers to prevent caching
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
 
     res.json({
       success: true,

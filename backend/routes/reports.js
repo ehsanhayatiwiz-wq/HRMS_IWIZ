@@ -73,7 +73,10 @@ router.get('/employees', async (req, res) => {
     });
   } catch (error) {
     console.error('Error generating employee report:', error);
-    res.status(500).json({ message: 'Failed to generate employee report' });
+    res.status(500).json({ 
+      message: 'Failed to generate employee report',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
   }
 });
 
@@ -198,7 +201,10 @@ router.get('/attendance', async (req, res) => {
     });
   } catch (error) {
     console.error('Error generating attendance report:', error);
-    res.status(500).json({ message: 'Failed to generate attendance report' });
+    res.status(500).json({ 
+      message: 'Failed to generate attendance report',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
   }
 });
 
@@ -254,7 +260,10 @@ router.get('/leaves', async (req, res) => {
     doc.end();
   } catch (error) {
     console.error('Error generating leave report:', error);
-    res.status(500).json({ message: 'Failed to generate leave report' });
+    res.status(500).json({ 
+      message: 'Failed to generate leave report',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
   }
 });
 
@@ -320,7 +329,10 @@ router.get('/performance', async (req, res) => {
     doc.end();
   } catch (error) {
     console.error('Error generating performance report:', error);
-    res.status(500).json({ message: 'Failed to generate performance report' });
+    res.status(500).json({ 
+      message: 'Failed to generate performance report',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
   }
 });
 
@@ -339,7 +351,10 @@ router.get('/employees/csv', async (req, res) => {
     res.send(csv);
   } catch (error) {
     console.error('Error exporting employee CSV:', error);
-    res.status(500).json({ message: 'Failed to export employee CSV' });
+    res.status(500).json({ 
+      message: 'Failed to export employee CSV',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
   }
 });
 
@@ -364,7 +379,10 @@ router.get('/attendance/csv', async (req, res) => {
     res.send(csv);
   } catch (error) {
     console.error('Error exporting attendance CSV:', error);
-    res.status(500).json({ message: 'Failed to export attendance CSV' });
+    res.status(500).json({ 
+      message: 'Failed to export attendance CSV',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
   }
 });
 
@@ -389,7 +407,10 @@ router.get('/leaves/csv', async (req, res) => {
     res.send(csv);
   } catch (error) {
     console.error('Error exporting leave CSV:', error);
-    res.status(500).json({ message: 'Failed to export leave CSV' });
+    res.status(500).json({ 
+      message: 'Failed to export leave CSV',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
   }
 });
 
@@ -431,7 +452,10 @@ router.get('/performance/csv', async (req, res) => {
     res.send(csv);
   } catch (error) {
     console.error('Error exporting performance CSV:', error);
-    res.status(500).json({ message: 'Failed to export performance CSV' });
+    res.status(500).json({ 
+      message: 'Failed to export performance CSV',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
   }
 });
 

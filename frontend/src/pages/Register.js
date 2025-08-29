@@ -161,9 +161,12 @@ const Register = () => {
     setGeneralError('');
     
     try {
-      const result = await register(formData);
+      // Add cache-busting to ensure fresh data
+      const timestamp = new Date().getTime();
+      const result = await register({ ...formData, _t: timestamp });
       
       if (result.success) {
+        toast.success('Registration successful! Welcome to IWIZ HRMS.');
         // Navigation will be handled by useEffect when user state updates
         return;
       } else {

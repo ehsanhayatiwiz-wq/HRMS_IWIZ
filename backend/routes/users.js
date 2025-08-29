@@ -208,13 +208,22 @@ router.get('/all', protect, authorize('admin', 'hr'), async (req, res) => {
 
     const skip = (page - 1) * limit;
     
-    const users = await User.find(query)
-      .select('-password')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
+    // Get users from both Admin and Employee collections
+    const [adminUsers, employeeUsers] = await Promise.all([
+      Admin.find(query).select('-password').sort({ createdAt: -1 }).skip(skip).limit(parseInt(limit)),
+      Employee.find(query).select('-password').sort({ createdAt: -1 }).skip(skip).limit(parseInt(limit))
+    ]);
 
-    const total = await User.countDocuments(query);
+    const users = [
+      ...adminUsers.map(user => ({ ...user.toObject(), role: 'admin' })),
+      ...employeeUsers.map(user => ({ ...user.toObject(), role: 'employee' }))
+    ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    const [adminTotal, employeeTotal] = await Promise.all([
+      Admin.countDocuments(query),
+      Employee.countDocuments(query)
+    ]);
+    const total = adminTotal + employeeTotal;
 
     res.json({
       success: true,
@@ -223,14 +232,14 @@ router.get('/all', protect, authorize('admin', 'hr'), async (req, res) => {
           id: user._id,
           fullName: user.fullName,
           email: user.email,
-          employeeId: user.employeeId,
+          employeeId: user.employeeId || user.adminId,
           role: user.role,
           department: user.department,
           position: user.position,
           phone: user.phone,
           dateOfJoining: user.dateOfJoining,
           salary: user.salary,
-          leaveBalance: user.leaveBalance,
+          leaveBalance: user.leaveBalance || 0,
           isActive: user.isActive,
           profilePicture: user.profilePicture
         })),
@@ -255,7 +264,11 @@ router.get('/all', protect, authorize('admin', 'hr'), async (req, res) => {
 // @access  Private (Admin)
 router.get('/:id', protect, authorize('admin', 'hr'), async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-password');
+    // Try to find user in Admin collection first, then Employee
+    let user = await Admin.findById(req.params.id).select('-password');
+    if (!user) {
+      user = await Employee.findById(req.params.id).select('-password');
+    }
     
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -322,7 +335,14 @@ router.put('/:id', protect, authorize('admin', 'hr'), [
       isActive
     } = req.body;
 
-    const user = await User.findById(req.params.id);
+    // Try to find user in Admin collection first, then Employee
+    let user = await Admin.findById(req.params.id);
+    let userType = 'admin';
+    if (!user) {
+      user = await Employee.findById(req.params.id);
+      userType = 'employee';
+    }
+    
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -332,7 +352,7 @@ router.put('/:id', protect, authorize('admin', 'hr'), [
     if (department) user.department = department;
     if (position) user.position = position;
     if (salary !== undefined) user.salary = salary;
-    if (leaveBalance !== undefined) user.leaveBalance = leaveBalance;
+    if (leaveBalance !== undefined && userType === 'employee') user.leaveBalance = leaveBalance;
     if (isActive !== undefined) user.isActive = isActive;
 
     await user.save();
@@ -345,7 +365,7 @@ router.put('/:id', protect, authorize('admin', 'hr'), [
           id: user._id,
           fullName: user.fullName,
           email: user.email,
-          employeeId: user.employeeId,
+          employeeId: user.employeeId || user.adminId,
           role: user.role,
           department: user.department,
           position: user.position,
@@ -369,39 +389,52 @@ router.put('/:id', protect, authorize('admin', 'hr'), [
 // @access  Private (Admin)
 router.get('/stats', protect, authorize('admin', 'hr'), async (req, res) => {
   try {
-    const totalUsers = await User.countDocuments();
-    const activeUsers = await User.countDocuments({ isActive: true });
+    const [adminTotal, employeeTotal] = await Promise.all([
+      Admin.countDocuments(),
+      Employee.countDocuments()
+    ]);
+    const totalUsers = adminTotal + employeeTotal;
+    
+    const [adminActive, employeeActive] = await Promise.all([
+      Admin.countDocuments({ isActive: true }),
+      Employee.countDocuments({ isActive: true })
+    ]);
+    const activeUsers = adminActive + employeeActive;
     const inactiveUsers = totalUsers - activeUsers;
 
     // Department-wise user count
-    const departmentStats = await User.aggregate([
-      {
-        $group: {
-          _id: '$department',
-          count: { $sum: 1 }
-        }
-      },
-      { $sort: { count: -1 } }
+    const [adminDeptStats, employeeDeptStats] = await Promise.all([
+      Admin.aggregate([
+        { $group: { _id: '$department', count: { $sum: 1 } } },
+        { $sort: { count: -1 } }
+      ]),
+      Employee.aggregate([
+        { $group: { _id: '$department', count: { $sum: 1 } } },
+        { $sort: { count: -1 } }
+      ])
     ]);
 
+    // Combine department stats
+    const departmentStats = {};
+    [...adminDeptStats, ...employeeDeptStats].forEach(stat => {
+      departmentStats[stat._id] = (departmentStats[stat._id] || 0) + stat.count;
+    });
+
     // Role-wise user count
-    const roleStats = await User.aggregate([
-      {
-        $group: {
-          _id: '$role',
-          count: { $sum: 1 }
-        }
-      },
-      { $sort: { count: -1 } }
-    ]);
+    const roleStats = [
+      { _id: 'admin', count: adminTotal },
+      { _id: 'employee', count: employeeTotal }
+    ];
 
     // Recent hires (last 30 days)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const recentHires = await User.countDocuments({
-      dateOfJoining: { $gte: thirtyDaysAgo }
-    });
+    const [adminRecent, employeeRecent] = await Promise.all([
+      Admin.countDocuments({ dateOfJoining: { $gte: thirtyDaysAgo } }),
+      Employee.countDocuments({ dateOfJoining: { $gte: thirtyDaysAgo } })
+    ]);
+    const recentHires = adminRecent + employeeRecent;
 
     res.json({
       success: true,
@@ -409,7 +442,7 @@ router.get('/stats', protect, authorize('admin', 'hr'), async (req, res) => {
         totalUsers,
         activeUsers,
         inactiveUsers,
-        departmentStats,
+        departmentStats: Object.entries(departmentStats).map(([dept, count]) => ({ _id: dept, count })),
         roleStats,
         recentHires
       }

@@ -47,15 +47,18 @@ const Profile = () => {
     
     try {
       setSubmitting(true);
-      const result = await updateProfile(profileData);
+      // Add cache-busting to ensure fresh data
+      const timestamp = new Date().getTime();
+      const result = await updateProfile({ ...profileData, _t: timestamp });
       if (result && result.success) {
         setEditing(false);
+        toast.success('Profile updated successfully!');
       } else if (result && result.error) {
         toast.error(result.error);
       }
     } catch (error) {
       console.error('Error updating profile:', error);
-      // updateProfile already surfaces error; keep a single toast path
+      toast.error('Failed to update profile. Please try again.');
     } finally {
       setSubmitting(false);
     }

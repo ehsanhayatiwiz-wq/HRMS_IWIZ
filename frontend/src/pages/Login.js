@@ -138,7 +138,7 @@ const Login = () => {
       <div className="login-card">
         <div className="login-header">
           <div className="brand-logo">
-            <img src={process.env.PUBLIC_URL + '/logo.png'} alt="IWIZ" onError={(e) => { e.currentTarget.style.display = 'none'; }} style={{ height: 36 }} />
+            <img src={process.env.PUBLIC_URL + '/logo.svg'} alt="IWIZ" onError={(e) => { e.currentTarget.style.display = 'none'; }} style={{ height: 36 }} />
             <h1>IWIZ</h1>
           </div>
           <p className="login-subtitle">Sign in to your account</p>

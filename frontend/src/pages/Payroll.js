@@ -29,9 +29,11 @@ const Payroll = () => {
         
         console.log('Fetching payroll data for month:', month, 'year:', year);
         
+        // Add cache-busting to ensure fresh data
+        const timestamp = new Date().getTime();
         const [payrollsRes, summaryRes] = await Promise.all([
-          api.get(`/payroll/all?page=${currentPage}&limit=10&month=${month}&year=${year}`),
-          api.get(`/payroll/reports/summary?month=${month}&year=${year}`)
+          api.get(`/payroll/all?page=${currentPage}&limit=10&month=${month}&year=${year}&_t=${timestamp}`),
+          api.get(`/payroll/reports/summary?month=${month}&year=${year}&_t=${timestamp}`)
         ]);
         
         console.log('Payrolls response:', payrollsRes.data);
@@ -152,30 +154,7 @@ const Payroll = () => {
         </div>
       </div>
 
-      {/* Debug Section */}
-      <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
-        <h4>Debug Info</h4>
-        <p>Summary Data: {JSON.stringify(summary, null, 2)}</p>
-        <Button 
-          variant="secondary" 
-          icon={<FiRefreshCw />}
-          onClick={async () => {
-            try {
-              const response = await api.get('/payroll/debug');
-              console.log('Debug response:', response.data);
-              alert('Check console for debug info');
-            } catch (error) {
-              console.error('Debug error:', error);
-              console.error('Debug error response:', error.response?.data);
-              console.error('Debug error status:', error.response?.status);
-              console.error('Debug error headers:', error.response?.headers);
-              alert(`Debug failed (${error.response?.status || 'unknown'}) - check console`);
-            }
-          }}
-        >
-          Debug Payroll Data
-        </Button>
-      </div>
+
 
       {/* Department Breakdown */}
       {summary.byDepartment && Object.keys(summary.byDepartment).length > 0 && (

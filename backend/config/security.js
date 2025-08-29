@@ -38,7 +38,14 @@ const securityConfig = {
   // CORS configuration
   cors: {
     origin: (origin, callback) => {
-      const envList = (process.env.CORS_ORIGINS || process.env.CORS_ORIGIN || 'http://localhost:3000')
+      // Default allowed origins for development and production
+      const defaultOrigins = [
+        'http://localhost:3000',  // Local development
+        'http://localhost:3001',  // Alternative local port
+        'https://hrms-iwiz-frontend.vercel.app'  // Production frontend
+      ];
+      
+      const envList = (process.env.CORS_ORIGINS || process.env.CORS_ORIGIN || defaultOrigins.join(','))
         .split(',')
         .map(s => s.trim())
         .filter(Boolean);

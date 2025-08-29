@@ -21,7 +21,9 @@ const EmployeePayroll = () => {
   const fetchPayrollData = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`/payroll/${user.id}?page=${currentPage}&limit=12`);
+      // Add cache-busting to ensure fresh data
+      const timestamp = new Date().getTime();
+      const response = await api.get(`/payroll/${user.id}?page=${currentPage}&limit=12&_t=${timestamp}`);
       setPayrolls(response.data.data.payrolls);
       setTotalPages(response.data.data.pagination.totalPages);
     } catch (error) {

@@ -47,8 +47,9 @@ router.post('/checkin', protect, async (req, res) => {
       });
     }
 
+    const currentTime = new Date();
     attendance.checkIn = {
-      time: new Date(),
+      time: currentTime,
       location: req.body.location || 'Office',
       ipAddress: req.ip,
       deviceInfo: req.headers['user-agent']
@@ -108,8 +109,9 @@ router.post('/checkout', protect, async (req, res) => {
     }
 
     // Update check-out
+    const currentTime = new Date();
     attendance.checkOut = {
-      time: new Date(),
+      time: currentTime,
       location: req.body.location || 'Office',
       ipAddress: req.ip,
       deviceInfo: req.headers['user-agent']
@@ -158,8 +160,9 @@ router.post('/re-checkin', protect, async (req, res) => {
     const attendance = canReCheckInResult.attendance;
 
     // Update re-check-in
+    const currentTime = new Date();
     attendance.reCheckIn = {
-      time: new Date(),
+      time: currentTime,
       location: req.body.location || 'Office',
       ipAddress: req.ip,
       deviceInfo: req.headers['user-agent']
@@ -219,8 +222,9 @@ router.post('/re-checkout', protect, async (req, res) => {
     }
 
     // Update re-check-out
+    const currentTime = new Date();
     attendance.reCheckOut = {
-      time: new Date(),
+      time: currentTime,
       location: req.body.location || 'Office',
       ipAddress: req.ip,
       deviceInfo: req.headers['user-agent']

@@ -126,7 +126,7 @@ attendanceSchema.virtual('checkInTimeFormatted').get(function() {
   return new Date(this.checkIn.time).toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit',
-    hour12: true
+    hour12: false
   });
 });
 
@@ -135,7 +135,7 @@ attendanceSchema.virtual('checkOutTimeFormatted').get(function() {
   return new Date(this.checkOut.time).toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit',
-    hour12: true
+    hour12: false
   });
 });
 
@@ -144,7 +144,7 @@ attendanceSchema.virtual('reCheckInTimeFormatted').get(function() {
   return new Date(this.reCheckIn.time).toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit',
-    hour12: true
+    hour12: false
   });
 });
 
@@ -153,7 +153,7 @@ attendanceSchema.virtual('reCheckOutTimeFormatted').get(function() {
   return new Date(this.reCheckOut.time).toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit',
-    hour12: true
+    hour12: false
   });
 });
 

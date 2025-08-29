@@ -56,7 +56,7 @@ router.post('/generate', protect, authorize('admin'), [
     console.error('Payroll generation error:', error);
     res.status(500).json({
       message: 'Server error during payroll generation',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
     });
   }
 });
@@ -87,7 +87,7 @@ router.get('/all', protect, authorize('admin'), async (req, res) => {
     const normalized = payrolls.map(p => ({
       ...p.toObject(),
       id: p._id,
-      employeeName: p.employeeId?.fullName || null
+      employeeName: p.employeeId?.fullName || 'Unknown Employee'
     }));
 
     res.json({

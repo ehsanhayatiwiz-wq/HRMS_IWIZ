@@ -25,13 +25,21 @@ const Leaves = () => {
 
   useEffect(() => {
     fetchLeaveHistory();
+    
+    // Set up auto-refresh every 30 seconds to ensure data is fresh
+    const interval = setInterval(() => {
+      fetchLeaveHistory();
+    }, 30000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const fetchLeaveHistory = async () => {
     try {
       setLoading(true);
-      // Fetch a generous page size to ensure all leave records load immediately
-      const response = await api.get('/leaves/my-leaves?page=1&limit=500');
+      // Add cache-busting parameter to ensure fresh data
+      const timestamp = new Date().getTime();
+      const response = await api.get(`/leaves/my-leaves?page=1&limit=500&_t=${timestamp}`);
       setLeaveHistory(response.data?.data?.leaves || []);
     } catch (error) {
       console.error('Error fetching leave history:', error);

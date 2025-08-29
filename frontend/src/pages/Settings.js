@@ -47,9 +47,12 @@ const Settings = () => {
     }
     setSubmitting(true);
     try {
+      // Add cache-busting to ensure fresh data
+      const timestamp = new Date().getTime();
       await api.post('/auth/change-password', {
         currentPassword: passwordData.currentPassword,
-        newPassword: passwordData.newPassword
+        newPassword: passwordData.newPassword,
+        _t: timestamp
       });
       toast.success('Password changed successfully');
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });

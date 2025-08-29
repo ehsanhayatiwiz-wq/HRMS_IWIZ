@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import api from '../../services/api';
 import { toast } from 'react-toastify';
 import { 
   FiEdit, 
@@ -17,6 +18,7 @@ import { formatCurrency } from '../../utils/helpers';
 const EmployeeManagement = () => {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDepartment, setFilterDepartment] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
@@ -41,7 +43,7 @@ const EmployeeManagement = () => {
   const [autoGeneratePassword, setAutoGeneratePassword] = useState(true);
 
   const departments = [
-    'IT', 'Operation', 'Management'
+    'IT', 'HR', 'Finance', 'Marketing', 'Sales', 'Operations', 'Design', 'Management'
   ];
 
   const statuses = ['active', 'inactive', 'terminated', 'on_leave'];
@@ -49,7 +51,7 @@ const EmployeeManagement = () => {
   const fetchEmployees = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`/api/employees?page=${currentPage}&limit=10&search=${searchTerm}&department=${filterDepartment}&status=${filterStatus}`);
+      const response = await api.get(`/employees?page=${currentPage}&limit=10&search=${searchTerm}&department=${filterDepartment}&status=${filterStatus}`);
       setEmployees(response.data.data.employees);
       setTotalPages(response.data.data.pagination.totalPages);
     } catch (error) {
@@ -66,6 +68,7 @@ const EmployeeManagement = () => {
 
   const handleAddEmployee = async (e) => {
     e.preventDefault();
+    setActionLoading(true);
     try {
       if (autoGeneratePassword) {
         // Use admin secure endpoint (auto emails credentials)
@@ -81,12 +84,12 @@ const EmployeeManagement = () => {
         };
         
         console.log('Adding employee with payload:', payload);
-        const response = await axios.post('/api/admin/add-employee', payload);
+        const response = await api.post('/admin/add-employee', payload);
         console.log('Employee added successfully:', response.data);
       } else {
         // Manual password path
         const payload = { ...formData };
-        await axios.post('/api/employees', payload);
+        await api.post('/employees', payload);
       }
       toast.success('Employee added successfully!');
       setShowAddModal(false);
@@ -105,13 +108,15 @@ const EmployeeManagement = () => {
       fetchEmployees();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to add employee');
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const handleEditEmployee = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`/api/employees/${selectedEmployee.id}`, formData);
+      await api.put(`/employees/${selectedEmployee.id}`, formData);
       toast.success('Employee updated successfully!');
       setShowEditModal(false);
       setSelectedEmployee(null);
@@ -124,7 +129,7 @@ const EmployeeManagement = () => {
   const handleDeleteEmployee = async (employeeId) => {
     if (window.confirm('Are you sure you want to delete this employee?')) {
       try {
-        await axios.delete(`/api/employees/${employeeId}`);
+        await api.delete(`/employees/${employeeId}`);
         toast.success('Employee deleted successfully!');
         fetchEmployees();
       } catch (error) {
@@ -135,7 +140,7 @@ const EmployeeManagement = () => {
 
   const handleStatusChange = async (employeeId, newStatus) => {
     try {
-      await axios.patch(`/api/employees/${employeeId}/status`, { status: newStatus });
+      await api.patch(`/employees/${employeeId}/status`, { status: newStatus });
       toast.success('Employee status updated successfully!');
       fetchEmployees();
     } catch (error) {
@@ -146,7 +151,7 @@ const EmployeeManagement = () => {
   const handleResetPassword = async (employeeId) => {
     if (!window.confirm('Reset this employee\'s password and email new credentials?')) return;
     try {
-      await axios.post(`/api/admin/employees/${employeeId}/reset-password`);
+      await api.post(`/admin/employees/${employeeId}/reset-password`);
       toast.success('Password reset. Email sent with new credentials.');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to reset password');
@@ -160,7 +165,7 @@ const EmployeeManagement = () => {
     (async () => {
       try {
         setPayrollInfo(prev => ({ ...prev, loading: true }));
-        const resp = await axios.get(`/api/payroll/${employee.id}?page=1&limit=12`);
+        const resp = await api.get(`/payroll/${employee.id}?page=1&limit=12`);
         const payrolls = resp?.data?.data?.payrolls || [];
         const now = new Date();
         const currentMonth = now.getMonth() + 1;
@@ -200,7 +205,7 @@ const EmployeeManagement = () => {
 
   const downloadEmployeeReport = async () => {
     try {
-      const response = await axios.get('/api/reports/employees', {
+      const response = await api.get('/reports/employees', {
         responseType: 'blob'
       });
       
@@ -513,7 +518,9 @@ const EmployeeManagement = () => {
               
               <div className="modal-footer" style={{ display: 'flex', gap: 12 }}>
                 <Button type="button" variant="neutral" onClick={() => setShowAddModal(false)}>Cancel</Button>
-                <Button type="submit" variant="primary">{autoGeneratePassword ? 'Add & Email Credentials' : 'Add Employee'}</Button>
+                <Button type="submit" variant="primary" disabled={actionLoading}>
+                  {actionLoading ? 'Adding...' : (autoGeneratePassword ? 'Add & Email Credentials' : 'Add Employee')}
+                </Button>
               </div>
             </form>
           </div>

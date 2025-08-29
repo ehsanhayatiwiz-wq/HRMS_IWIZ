@@ -57,10 +57,11 @@ const AdminDashboard = () => {
       setLoading(true);
       
       if (activeSection === 'dashboard') {
+        const timestamp = new Date().getTime();
         const [adminRes, employeesRes, leavesRes] = await Promise.all([
           api.get('/dashboard/admin'),
           api.get('/employees?page=1&limit=10'),
-          api.get('/leaves/all?page=1&limit=20&status=pending')
+          api.get(`/leaves/all?page=1&limit=20&status=pending&_t=${timestamp}`)
         ]);
 
         const s = adminRes.data?.data?.employeeStats || {};
@@ -114,7 +115,9 @@ const AdminDashboard = () => {
         }
       } else if (activeSection === 'leaves') {
         try {
-          const response = await api.get(`/leaves/all?page=${currentPage}&limit=20&status=${filterStatus}`);
+          // Add cache-busting parameter to ensure fresh data
+          const timestamp = new Date().getTime();
+          const response = await api.get(`/leaves/all?page=${currentPage}&limit=20&status=${filterStatus}&_t=${timestamp}`);
           console.log('Leaves API response:', response.data);
           console.log('Leave records:', response.data?.data?.leaves);
           if (response.data?.data?.leaves?.length > 0) {
@@ -702,10 +705,10 @@ const AdminDashboard = () => {
                         </td>
                         <td>{new Date(record.date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</td>
                         <td>
-                          {record.checkIn?.time ? new Date(record.checkIn.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
+                          {record.checkInTime || '-'}
                         </td>
                         <td>
-                          {record.checkOut?.time ? new Date(record.checkOut.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
+                          {record.checkOutTime || '-'}
                         </td>
                         <td>
                           <span className="hours-display">

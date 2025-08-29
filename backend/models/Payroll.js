@@ -182,17 +182,20 @@ payrollSchema.statics.generateMonthlyPayroll = async function(month, year, admin
     
     // Calculate attendance statistics
     const totalDays = endDate.getDate();
-    const presentDays = attendanceRecords.filter(record => record.status === 'present').length;
-    const absentDays = totalDays - presentDays;
+    const presentDays = attendanceRecords.filter(record => 
+      record.status === 'present' || record.status === 'late' || record.status === 're-checked-in'
+    ).length;
     const halfDays = attendanceRecords.filter(record => record.status === 'half-day').length;
+    const absentDays = totalDays - presentDays - halfDays;
     const overtimeHours = attendanceRecords.reduce((total, record) => {
       const hours = record.totalHours || 0;
       return total + (hours > 8 ? hours - 8 : 0);
     }, 0);
     
-    // Calculate daily rate (basic salary / working days in month)
+    // Calculate daily rate (monthly salary / working days in month)
     const workingDays = totalDays - (absentDays + halfDays);
-    const dailyRate = workingDays > 0 ? employee.salary / 12 / workingDays : 0;
+    const monthlySalary = employee.salary / 12; // Convert annual to monthly
+    const dailyRate = workingDays > 0 ? monthlySalary / workingDays : 0;
     const hourlyRate = dailyRate / 8; // Assuming 8-hour workday
     
     // Create payroll record
@@ -200,12 +203,12 @@ payrollSchema.statics.generateMonthlyPayroll = async function(month, year, admin
       employeeId: employee._id,
       month,
       year,
-      basicSalary: employee.salary / 12, // Monthly basic salary
+      basicSalary: monthlySalary, // Monthly basic salary
       allowances: {
-        housing: employee.salary * 0.1 / 12, // 10% housing allowance
+        housing: monthlySalary * 0.1, // 10% housing allowance
         transport: 500, // Fixed transport allowance
         meal: 300, // Fixed meal allowance
-        medical: employee.salary * 0.05 / 12, // 5% medical allowance
+        medical: monthlySalary * 0.05, // 5% medical allowance
         other: 0
       },
       overtime: {
@@ -216,8 +219,8 @@ payrollSchema.statics.generateMonthlyPayroll = async function(month, year, admin
       deductions: {
         absent: absentDays * dailyRate,
         halfDay: halfDays * (dailyRate / 2),
-        tax: employee.salary * 0.1 / 12, // 10% tax
-        insurance: employee.salary * 0.05 / 12, // 5% insurance
+        tax: monthlySalary * 0.1, // 10% tax
+        insurance: monthlySalary * 0.05, // 5% insurance
         other: 0
       },
       attendanceData: {

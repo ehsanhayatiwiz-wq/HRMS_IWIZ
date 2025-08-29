@@ -212,7 +212,9 @@ router.get('/pending', protect, authorize('admin', 'hr'), async (req, res) => {
     const leaves = await Leave.getPendingLeaves();
 
     // Prevent any intermediary/proxy/browser caching of admin lists
-    res.set('Cache-Control', 'no-store');
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
 
     res.json({
       success: true,
@@ -283,7 +285,9 @@ router.get('/all', protect, authorize('admin'), async (req, res) => {
     }
 
     // Prevent any intermediary/proxy/browser caching of admin lists
-    res.set('Cache-Control', 'no-store');
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
 
     res.json({
       success: true,
