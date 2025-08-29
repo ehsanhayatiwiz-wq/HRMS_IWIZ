@@ -3,6 +3,7 @@ import { FiDollarSign, FiDownload, FiCalendar, FiUsers, FiBarChart2, FiCheck, Fi
 import Button from '../components/common/Button';
 import api from '../services/api';
 import { toast } from 'react-toastify';
+import { formatCurrency } from '../utils/helpers';
 import moment from 'moment';
 import './Payroll.css';
 
@@ -130,7 +131,7 @@ const Payroll = () => {
             <FiDollarSign />
           </div>
           <div className="card-content">
-            <h3>${(summary.totalNetPay || 0).toLocaleString()}</h3>
+            <h3>{formatCurrency(summary.totalNetPay || 0)}</h3>
             <p>Total Net Pay</p>
           </div>
         </div>
@@ -140,7 +141,7 @@ const Payroll = () => {
             <FiBarChart2 />
           </div>
           <div className="card-content">
-            <h3>${(summary.totalAllowances || 0).toLocaleString()}</h3>
+            <h3>{formatCurrency(summary.totalAllowances || 0)}</h3>
             <p>Total Allowances</p>
           </div>
         </div>
@@ -150,7 +151,7 @@ const Payroll = () => {
             <FiDollarSign />
           </div>
           <div className="card-content">
-            <h3>${(summary.totalDeductions || 0).toLocaleString()}</h3>
+            <h3>{formatCurrency(summary.totalDeductions || 0)}</h3>
             <p>Total Deductions</p>
           </div>
         </div>
@@ -190,8 +191,8 @@ const Payroll = () => {
               <div key={dept} className="department-card">
                 <h4>{dept}</h4>
                 <p>Employees: {data.count}</p>
-                <p>Total Pay: ${data.totalNetPay?.toLocaleString() || 0}</p>
-                <p>Average: ${(data.totalNetPay / data.count)?.toFixed(2) || 0}</p>
+                <p>Total Pay: {formatCurrency(data.totalNetPay || 0)}</p>
+                <p>Average: {formatCurrency((data.totalNetPay / data.count) || 0)}</p>
               </div>
             ))}
           </div>
@@ -257,10 +258,10 @@ const Payroll = () => {
                       </div>
                     </td>
                     <td>{payroll.month}/{payroll.year}</td>
-                    <td>${payroll.basicSalary?.toFixed(2)}</td>
-                    <td>${payroll.totalAllowances?.toFixed(2)}</td>
-                    <td>${payroll.totalDeductions?.toFixed(2)}</td>
-                    <td className="net-pay">${payroll.netPay?.toFixed(2)}</td>
+                    <td>{formatCurrency(payroll.basicSalary)}</td>
+                    <td>{formatCurrency(payroll.totalAllowances)}</td>
+                    <td>{formatCurrency(payroll.totalDeductions)}</td>
+                    <td className="net-pay">{formatCurrency(payroll.netPay)}</td>
                     <td>
                       <span className={`status-badge ${payroll.status}`}>
                         {payroll.status}
@@ -372,7 +373,7 @@ const Payroll = () => {
                 <tr key={payroll._id}>
                   <td>{payroll.employeeId?.fullName}</td>
                   <td>{payroll.month}/{payroll.year}</td>
-                  <td className="net-pay">${payroll.netPay?.toFixed(2)}</td>
+                  <td className="net-pay">{formatCurrency(payroll.netPay)}</td>
                   <td>
                     <span className={`status-badge ${payroll.status}`}>
                       {payroll.status}

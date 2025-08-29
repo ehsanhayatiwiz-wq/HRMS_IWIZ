@@ -82,3 +82,13 @@ export const hasPermission = (userRole, requiredRoles) => {
   }
   return userRole === requiredRoles;
 };
+
+// Format currency in PKR
+export const formatCurrency = (amount, { withSymbol = true } = {}) => {
+  const numeric = Number(amount || 0);
+  const formatted = numeric.toLocaleString('en-PK', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+  return withSymbol ? `Rs ${formatted}` : formatted;
+};

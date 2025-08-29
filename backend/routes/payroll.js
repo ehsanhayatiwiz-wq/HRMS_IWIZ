@@ -215,37 +215,37 @@ router.get('/:payrollId/download', protect, async (req, res) => {
 
     // Salary Breakdown
     doc.fontSize(14).text('Salary Breakdown');
-    doc.fontSize(12).text(`Basic Salary: $${payroll.basicSalary.toFixed(2)}`);
+    doc.fontSize(12).text(`Basic Salary: Rs ${payroll.basicSalary.toFixed(2)}`);
     doc.moveDown();
 
     // Allowances
     doc.fontSize(12).text('Allowances:');
-    doc.fontSize(10).text(`  Housing: $${payroll.allowances.housing.toFixed(2)}`);
-    doc.fontSize(10).text(`  Transport: $${payroll.allowances.transport.toFixed(2)}`);
-    doc.fontSize(10).text(`  Meal: $${payroll.allowances.meal.toFixed(2)}`);
-    doc.fontSize(10).text(`  Medical: $${payroll.allowances.medical.toFixed(2)}`);
-    doc.fontSize(10).text(`  Other: $${payroll.allowances.other.toFixed(2)}`);
-    doc.fontSize(12).text(`Total Allowances: $${payroll.totalAllowances.toFixed(2)}`);
+    doc.fontSize(10).text(`  Housing: Rs ${payroll.allowances.housing.toFixed(2)}`);
+    doc.fontSize(10).text(`  Transport: Rs ${payroll.allowances.transport.toFixed(2)}`);
+    doc.fontSize(10).text(`  Meal: Rs ${payroll.allowances.meal.toFixed(2)}`);
+    doc.fontSize(10).text(`  Medical: Rs ${payroll.allowances.medical.toFixed(2)}`);
+    doc.fontSize(10).text(`  Other: Rs ${payroll.allowances.other.toFixed(2)}`);
+    doc.fontSize(12).text(`Total Allowances: Rs ${payroll.totalAllowances.toFixed(2)}`);
     doc.moveDown();
 
     // Overtime
     if (payroll.overtime.amount > 0) {
-      doc.fontSize(12).text(`Overtime (${payroll.overtime.hours} hours): $${payroll.overtime.amount.toFixed(2)}`);
+      doc.fontSize(12).text(`Overtime (${payroll.overtime.hours} hours): Rs ${payroll.overtime.amount.toFixed(2)}`);
       doc.moveDown();
     }
 
     // Deductions
     doc.fontSize(12).text('Deductions:');
-    doc.fontSize(10).text(`  Absent Days: $${payroll.deductions.absent.toFixed(2)}`);
-    doc.fontSize(10).text(`  Half Days: $${payroll.deductions.halfDay.toFixed(2)}`);
-    doc.fontSize(10).text(`  Tax: $${payroll.deductions.tax.toFixed(2)}`);
-    doc.fontSize(10).text(`  Insurance: $${payroll.deductions.insurance.toFixed(2)}`);
-    doc.fontSize(10).text(`  Other: $${payroll.deductions.other.toFixed(2)}`);
-    doc.fontSize(12).text(`Total Deductions: $${payroll.totalDeductions.toFixed(2)}`);
+    doc.fontSize(10).text(`  Absent Days: Rs ${payroll.deductions.absent.toFixed(2)}`);
+    doc.fontSize(10).text(`  Half Days: Rs ${payroll.deductions.halfDay.toFixed(2)}`);
+    doc.fontSize(10).text(`  Tax: Rs ${payroll.deductions.tax.toFixed(2)}`);
+    doc.fontSize(10).text(`  Insurance: Rs ${payroll.deductions.insurance.toFixed(2)}`);
+    doc.fontSize(10).text(`  Other: Rs ${payroll.deductions.other.toFixed(2)}`);
+    doc.fontSize(12).text(`Total Deductions: Rs ${payroll.totalDeductions.toFixed(2)}`);
     doc.moveDown();
 
     // Net Pay
-    doc.fontSize(16).text(`Net Pay: $${payroll.netPay.toFixed(2)}`, { align: 'right' });
+    doc.fontSize(16).text(`Net Pay: Rs ${payroll.netPay.toFixed(2)}`, { align: 'right' });
     doc.moveDown();
 
     // Attendance Summary
@@ -427,69 +427,61 @@ router.get('/reports/summary', protect, authorize('admin'), async (req, res) => 
 // @desc    Debug route to check payroll data (Admin only)
 // @access  Private (Admin)
 router.get('/debug', protect, authorize('admin'), async (req, res) => {
+  console.log('Payroll debug request');
+  const diagnostics = { success: true, data: {}, errors: [] };
+
+  // Step 1: Count payrolls
   try {
-    console.log('Payroll debug request');
-    
-    // Check total payroll records
     const totalPayrolls = await Payroll.countDocuments({});
+    diagnostics.data.totalPayrolls = totalPayrolls;
     console.log(`Total payroll records in DB: ${totalPayrolls}`);
-    
-    // Check recent payrolls
+  } catch (e) {
+    diagnostics.success = false;
+    diagnostics.errors.push({ step: 'countPayrolls', message: e?.message || String(e) });
+  }
+
+  // Step 2: Fetch recent payrolls (lean to avoid circular refs)
+  try {
     const recentPayrolls = await Payroll.find({})
       .populate('employeeId', 'fullName employeeId department')
       .sort({ createdAt: -1 })
-      .limit(5);
-    
-    console.log('Recent payrolls:', recentPayrolls.map(p => ({
+      .limit(5)
+      .lean();
+
+    diagnostics.data.recentPayrolls = (recentPayrolls || []).map(p => ({
       id: p._id,
       month: p.month,
       year: p.year,
-      employee: p.employeeId?.fullName,
-      basicSalary: p.basicSalary,
-      totalAllowances: p.totalAllowances,
-      totalDeductions: p.totalDeductions,
-      netPay: p.netPay
-    })));
-    
-    // Check employees
-    const Employee = require('../models/Employee');
-    const totalEmployees = await Employee.countDocuments({});
-    const activeEmployees = await Employee.countDocuments({ 
-      $or: [
-        { status: 'active' },
-        { isActive: true }
-      ]
-    });
-    
-    console.log(`Total employees: ${totalEmployees}, Active: ${activeEmployees}`);
-    
-    res.json({
-      success: true,
-      data: {
-        totalPayrolls,
-        recentPayrolls: recentPayrolls.map(p => ({
-          id: p._id,
-          month: p.month,
-          year: p.year,
-          employee: p.employeeId?.fullName,
-          basicSalary: p.basicSalary,
-          totalAllowances: p.totalAllowances,
-          totalDeductions: p.totalDeductions,
-          netPay: p.netPay
-        })),
-        employeeStats: {
-          total: totalEmployees,
-          active: activeEmployees
-        }
-      }
-    });
-    
-  } catch (error) {
-    console.error('Payroll debug error:', error);
-    res.status(500).json({
-      message: 'Server error while debugging payroll'
-    });
+      employee: p.employeeId?.fullName || null,
+      basicSalary: p.basicSalary ?? null,
+      totalAllowances: p.totalAllowances ?? null,
+      totalDeductions: p.totalDeductions ?? null,
+      netPay: p.netPay ?? null
+    }));
+
+    console.log('Recent payrolls:', diagnostics.data.recentPayrolls);
+  } catch (e) {
+    diagnostics.success = false;
+    diagnostics.errors.push({ step: 'recentPayrolls', message: e?.message || String(e) });
   }
+
+  // Step 3: Employee stats
+  try {
+    const Employee = require('../models/Employee');
+    const [totalEmployees, activeEmployees] = await Promise.all([
+      Employee.countDocuments({}),
+      Employee.countDocuments({ $or: [{ status: 'active' }, { isActive: true }] })
+    ]);
+    diagnostics.data.employeeStats = { total: totalEmployees, active: activeEmployees };
+    console.log(`Total employees: ${totalEmployees}, Active: ${activeEmployees}`);
+  } catch (e) {
+    diagnostics.success = false;
+    diagnostics.errors.push({ step: 'employeeStats', message: e?.message || String(e) });
+  }
+
+  // Always return diagnostics for debug
+  const statusCode = diagnostics.success ? 200 : 200;
+  return res.status(statusCode).json(diagnostics);
 });
 
 module.exports = router;

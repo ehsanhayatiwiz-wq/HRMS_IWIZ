@@ -3,6 +3,7 @@ import { FiDownload, FiCalendar, FiEye } from 'react-icons/fi';
 import Button from '../components/common/Button';
 import api from '../services/api';
 import { toast } from 'react-toastify';
+import { formatCurrency } from '../utils/helpers';
 import moment from 'moment';
 import { useAuth } from '../contexts/AuthContext';
 import './EmployeePayroll.css';
@@ -126,26 +127,26 @@ const EmployeePayroll = () => {
                     <div className="salary-info">
                       <div className="net-pay">
                         <span className="label">Net Pay</span>
-                        <span className="amount">${payroll.netPay?.toFixed(2)}</span>
+                        <span className="amount">{formatCurrency(payroll.netPay)}</span>
                       </div>
                       
                       <div className="salary-breakdown">
                         <div className="breakdown-item">
                           <span>Basic Salary</span>
-                          <span>${payroll.basicSalary?.toFixed(2)}</span>
+                          <span>{formatCurrency(payroll.basicSalary)}</span>
                         </div>
                         <div className="breakdown-item">
                           <span>Allowances</span>
-                          <span>${payroll.totalAllowances?.toFixed(2)}</span>
+                          <span>{formatCurrency(payroll.totalAllowances)}</span>
                         </div>
                         <div className="breakdown-item">
                           <span>Deductions</span>
-                          <span>-${payroll.totalDeductions?.toFixed(2)}</span>
+                          <span>-{formatCurrency(payroll.totalDeductions)}</span>
                         </div>
                         {payroll.overtime?.amount > 0 && (
                           <div className="breakdown-item overtime">
                             <span>Overtime</span>
-                            <span>+${payroll.overtime.amount?.toFixed(2)}</span>
+                            <span>+{formatCurrency(payroll.overtime.amount)}</span>
                           </div>
                         )}
                       </div>
@@ -227,32 +228,32 @@ const EmployeePayroll = () => {
                 <div className="details-grid">
                   <div className="detail-item">
                     <span>Basic Salary</span>
-                    <span>${selectedPayroll.basicSalary?.toFixed(2)}</span>
+                    <span>{formatCurrency(selectedPayroll.basicSalary)}</span>
                   </div>
                   
                   <div className="detail-item">
                     <span>Housing Allowance</span>
-                    <span>${selectedPayroll.allowances?.housing?.toFixed(2)}</span>
+                    <span>{formatCurrency(selectedPayroll.allowances?.housing)}</span>
                   </div>
                   
                   <div className="detail-item">
                     <span>Transport Allowance</span>
-                    <span>${selectedPayroll.allowances?.transport?.toFixed(2)}</span>
+                    <span>{formatCurrency(selectedPayroll.allowances?.transport)}</span>
                   </div>
                   
                   <div className="detail-item">
                     <span>Meal Allowance</span>
-                    <span>${selectedPayroll.allowances?.meal?.toFixed(2)}</span>
+                    <span>{formatCurrency(selectedPayroll.allowances?.meal)}</span>
                   </div>
                   
                   <div className="detail-item">
                     <span>Medical Allowance</span>
-                    <span>${selectedPayroll.allowances?.medical?.toFixed(2)}</span>
+                    <span>{formatCurrency(selectedPayroll.allowances?.medical)}</span>
                   </div>
                   
                   <div className="detail-item total">
                     <span>Total Allowances</span>
-                    <span>${selectedPayroll.totalAllowances?.toFixed(2)}</span>
+                    <span>{formatCurrency(selectedPayroll.totalAllowances)}</span>
                   </div>
                 </div>
               </div>
@@ -262,27 +263,27 @@ const EmployeePayroll = () => {
                 <div className="details-grid">
                   <div className="detail-item">
                     <span>Absent Days</span>
-                    <span>-${selectedPayroll.deductions?.absent?.toFixed(2)}</span>
+                    <span>-{formatCurrency(selectedPayroll.deductions?.absent)}</span>
                   </div>
                   
                   <div className="detail-item">
                     <span>Half Days</span>
-                    <span>-${selectedPayroll.deductions?.halfDay?.toFixed(2)}</span>
+                    <span>-{formatCurrency(selectedPayroll.deductions?.halfDay)}</span>
                   </div>
                   
                   <div className="detail-item">
                     <span>Tax</span>
-                    <span>-${selectedPayroll.deductions?.tax?.toFixed(2)}</span>
+                    <span>-{formatCurrency(selectedPayroll.deductions?.tax)}</span>
                   </div>
                   
                   <div className="detail-item">
                     <span>Insurance</span>
-                    <span>-${selectedPayroll.deductions?.insurance?.toFixed(2)}</span>
+                    <span>-{formatCurrency(selectedPayroll.deductions?.insurance)}</span>
                   </div>
                   
                   <div className="detail-item total">
                     <span>Total Deductions</span>
-                    <span>-${selectedPayroll.totalDeductions?.toFixed(2)}</span>
+                    <span>-{formatCurrency(selectedPayroll.totalDeductions)}</span>
                   </div>
                 </div>
               </div>
@@ -297,11 +298,11 @@ const EmployeePayroll = () => {
                     </div>
                     <div className="detail-item">
                       <span>Overtime Rate</span>
-                      <span>${selectedPayroll.overtime.rate?.toFixed(2)}/hour</span>
+                      <span>{formatCurrency(selectedPayroll.overtime.rate, { withSymbol: false })}/hour</span>
                     </div>
                     <div className="detail-item total">
                       <span>Overtime Amount</span>
-                      <span>+${selectedPayroll.overtime.amount?.toFixed(2)}</span>
+                      <span>+{formatCurrency(selectedPayroll.overtime.amount)}</span>
                     </div>
                   </div>
                 </div>
@@ -312,25 +313,25 @@ const EmployeePayroll = () => {
                 <div className="final-calculation">
                   <div className="calculation-item">
                     <span>Basic Salary</span>
-                    <span>${selectedPayroll.basicSalary?.toFixed(2)}</span>
+                    <span>{formatCurrency(selectedPayroll.basicSalary)}</span>
                   </div>
                   <div className="calculation-item">
                     <span>+ Total Allowances</span>
-                    <span>+${selectedPayroll.totalAllowances?.toFixed(2)}</span>
+                    <span>+{formatCurrency(selectedPayroll.totalAllowances)}</span>
                   </div>
                   {selectedPayroll.overtime?.amount > 0 && (
                     <div className="calculation-item">
                       <span>+ Overtime</span>
-                      <span>+${selectedPayroll.overtime.amount?.toFixed(2)}</span>
+                      <span>+{formatCurrency(selectedPayroll.overtime.amount)}</span>
                     </div>
                   )}
                   <div className="calculation-item">
                     <span>- Total Deductions</span>
-                    <span>-${selectedPayroll.totalDeductions?.toFixed(2)}</span>
+                    <span>-{formatCurrency(selectedPayroll.totalDeductions)}</span>
                   </div>
                   <div className="calculation-item final">
                     <span>Net Pay</span>
-                    <span>${selectedPayroll.netPay?.toFixed(2)}</span>
+                    <span>{formatCurrency(selectedPayroll.netPay)}</span>
                   </div>
                 </div>
               </div>

@@ -12,6 +12,7 @@ import {
 } from 'react-icons/fi';
 import './EmployeeManagement.css';
 import Button from '../common/Button';
+import { formatCurrency } from '../../utils/helpers';
 
 const EmployeeManagement = () => {
   const [employees, setEmployees] = useState([]);
@@ -646,7 +647,7 @@ const EmployeeManagement = () => {
                   </div>
                   <div className="detail-item">
                     <label>Salary:</label>
-                    <span>${selectedEmployee.salary}</span>
+                    <span>{formatCurrency(selectedEmployee.salary)}</span>
                   </div>
                   <div className="detail-item">
                     <label>Leave Balance:</label>
