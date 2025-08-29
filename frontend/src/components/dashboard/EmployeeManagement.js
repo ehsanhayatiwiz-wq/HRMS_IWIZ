@@ -110,7 +110,7 @@ const EmployeeManagement = () => {
   const handleEditEmployee = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`/api/employees/${selectedEmployee._id}`, formData);
+      await axios.put(`/api/employees/${selectedEmployee.id}`, formData);
       toast.success('Employee updated successfully!');
       setShowEditModal(false);
       setSelectedEmployee(null);
@@ -280,7 +280,7 @@ const EmployeeManagement = () => {
           </thead>
           <tbody>
             {employees.map((employee) => (
-              <tr key={employee._id}>
+              <tr key={employee.id}>
                 <td>{employee.employeeId}</td>
                 <td>
                   <div className="employee-info">
@@ -319,18 +319,18 @@ const EmployeeManagement = () => {
                     />
                     <Button
                       variant="danger"
-                      onClick={() => handleDeleteEmployee(employee._id)}
+                      onClick={() => handleDeleteEmployee(employee.id)}
                       icon={<FiTrash2 />}
                     />
                     <Button
                       variant="accent"
-                      onClick={() => handleResetPassword(employee._id)}
+                      onClick={() => handleResetPassword(employee.id)}
                     >
                       🔒
                     </Button>
                     <select
                       value={employee.status}
-                      onChange={(e) => handleStatusChange(employee._id, e.target.value)}
+                      onChange={(e) => handleStatusChange(employee.id, e.target.value)}
                       className="status-select"
                     >
                       {statuses.map(status => (

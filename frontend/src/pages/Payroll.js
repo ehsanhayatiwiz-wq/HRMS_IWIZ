@@ -121,7 +121,7 @@ const Payroll = () => {
             <FiUsers />
           </div>
           <div className="card-content">
-            <h3>{summary.totalEmployees || 0}</h3>
+            <h3>{summary.employeesActive || summary.totalEmployees || 0}</h3>
             <p>Total Employees</p>
           </div>
         </div>

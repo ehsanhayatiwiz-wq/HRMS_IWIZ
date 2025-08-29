@@ -352,6 +352,15 @@ router.get('/reports/summary', protect, authorize('admin'), async (req, res) => 
     const payrolls = await Payroll.find(filter)
       .populate('employeeId', 'fullName department');
 
+    // Also fetch current active employees to keep UI numbers in sync
+    const Employee = require('../models/Employee');
+    const activeEmployeesCount = await Employee.countDocuments({
+      $or: [
+        { status: 'active' },
+        { isActive: true }
+      ]
+    });
+
     console.log(`Found ${payrolls.length} payroll records`);
     
     if (payrolls.length > 0) {
@@ -366,7 +375,9 @@ router.get('/reports/summary', protect, authorize('admin'), async (req, res) => 
     }
 
     const summary = {
-      totalEmployees: payrolls.length,
+      // Show actual active employees rather than number of payroll rows
+      employeesActive: activeEmployeesCount,
+      payrollCount: payrolls.length,
       totalBasicSalary: 0,
       totalAllowances: 0,
       totalOvertime: 0,
