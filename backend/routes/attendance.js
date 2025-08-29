@@ -460,15 +460,8 @@ router.get('/all', protect, authorize('admin'), async (req, res) => {
       .sort({ date: -1, 'checkIn.time': -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
-    
-
 
     const total = await Attendance.countDocuments(query);
-
-
-      
-
-    }
 
     res.json({
       success: true,
