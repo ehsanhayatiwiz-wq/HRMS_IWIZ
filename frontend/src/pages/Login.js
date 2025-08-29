@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { FiUser, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiUser, FiLock, FiEye, FiEyeOff, FiChevronDown, FiMail } from 'react-icons/fi';
 import './Login.css';
 import Button from '../components/common/Button';
 import { toast } from 'react-toastify';
@@ -19,7 +19,7 @@ const Login = () => {
   const [generalError, setGeneralError] = useState('');
   const [isThrottled, setIsThrottled] = useState(false);
 
-  const { login, user, testBackendConnection } = useAuth();
+  const { login, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -30,16 +30,6 @@ const Login = () => {
       navigate(intendedPath, { replace: true });
     }
   }, [user, navigate, location]);
-
-  // Test backend connection
-  const handleTestConnection = async () => {
-    const isConnected = await testBackendConnection();
-    if (isConnected) {
-      toast.success('Backend connection successful!');
-    } else {
-      toast.error('Backend connection failed! Check if server is running.');
-    }
-  };
 
   // Only roles supported by backend auth are shown
   const roles = [
@@ -146,7 +136,7 @@ const Login = () => {
           <p className="login-subtitle">Sign in to your account</p>
           
           {/* Test Connection Button */}
-          <Button type="button" onClick={handleTestConnection} variant="secondary">Test Connection</Button>
+          {/* Removed as per edit hint */}
         </div>
 
         {generalError && (
