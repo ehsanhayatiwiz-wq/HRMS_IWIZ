@@ -28,6 +28,14 @@ const Attendance = () => {
       setLoading(true);
       console.log('Fetching attendance data...');
       
+      // Log current time for debugging
+      const now = new Date();
+      console.log('Current time debug:', {
+        utc: now.toISOString(),
+        local: now.toString(),
+        karachiTime: new Date(now.getTime() + 5 * 60 * 60 * 1000).toISOString()
+      });
+      
       const [todayRes, historyRes] = await Promise.all([
         api.get('/attendance/today'),
         api.get('/attendance/history?page=1&limit=10')
@@ -202,6 +210,10 @@ const Attendance = () => {
         <div>
           <h1 className="page-title">Attendance Management</h1>
           <p className="page-subtitle">Track your daily attendance and view history</p>
+          <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+            Timezone: Pakistan (UTC+5) • Current time: {new Date().toLocaleString('en-PK', { timeZone: 'Asia/Karachi' })} • 
+            Day boundaries: 00:00 - 23:59 Pakistan time
+          </div>
         </div>
         <Button
           variant="neutral"

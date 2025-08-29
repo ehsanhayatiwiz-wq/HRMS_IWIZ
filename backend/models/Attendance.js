@@ -201,6 +201,18 @@ attendanceSchema.statics.getKarachiDayRangeUtc = function(baseDate = new Date())
   const startKarachiUTC = Date.UTC(karachiClock.getUTCFullYear(), karachiClock.getUTCMonth(), karachiClock.getUTCDate(), 0, 0, 0, 0);
   const startUtc = new Date(startKarachiUTC - KARACHI_OFFSET_MS);
   const endUtc = new Date(startUtc.getTime() + 24 * 60 * 60 * 1000);
+  
+  // Debug logging for timezone calculations
+  console.log('Karachi timezone calculation:', {
+    baseDate: baseDate.toISOString(),
+    karachiClock: karachiClock.toISOString(),
+    startKarachiUTC: new Date(startKarachiUTC).toISOString(),
+    startUtc: startUtc.toISOString(),
+    endUtc: endUtc.toISOString(),
+    karachiDayStart: new Date(startUtc.getTime() + KARACHI_OFFSET_MS).toISOString(),
+    karachiDayEnd: new Date(endUtc.getTime() + KARACHI_OFFSET_MS).toISOString()
+  });
+  
   return { startUtc, endUtc };
 };
 

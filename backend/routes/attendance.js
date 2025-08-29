@@ -15,23 +15,35 @@ router.post('/checkin', protect, async (req, res) => {
     
     const userId = req.user.id;
     const userType = req.userRole;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    
+    // Use Karachi timezone for consistent day boundaries
+    const { startUtc, endUtc } = Attendance.getKarachiDayRangeUtc(new Date());
+    const today = startUtc;
+
+    console.log('Check-in timezone debug:', {
+      userId,
+      userType,
+      currentTime: new Date().toISOString(),
+      karachiTime: new Date(new Date().getTime() + 5 * 60 * 60 * 1000).toISOString(),
+      startUtc: startUtc.toISOString(),
+      endUtc: endUtc.toISOString(),
+      karachiDayStart: new Date(startUtc.getTime() + 5 * 60 * 60 * 1000).toISOString(),
+      karachiDayEnd: new Date(endUtc.getTime() + 5 * 60 * 60 * 1000).toISOString()
+    });
 
     // Check if already checked in today
     const existingAttendance = await Attendance.findOne({
       userId,
       userType,
-      date: {
-        $gte: today,
-        $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
-      }
+      date: { $gte: startUtc, $lt: endUtc }
     });
 
     console.log('Existing attendance check:', {
       userId,
       userType,
       today: today.toISOString(),
+      startUtc: startUtc.toISOString(),
+      endUtc: endUtc.toISOString(),
       existingAttendance: existingAttendance ? {
         id: existingAttendance._id,
         date: existingAttendance.date,
@@ -56,7 +68,7 @@ router.post('/checkin', protect, async (req, res) => {
         userId, 
         userType,
         userModel: userType === 'admin' ? 'Admin' : 'Employee',
-        date: today 
+        date: startUtc // Use the Karachi day start time for consistency
       });
     }
 
@@ -97,22 +109,22 @@ router.post('/checkout', protect, async (req, res) => {
     
     const userId = req.user.id;
     const userType = req.userRole;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    
+    // Use Karachi timezone for consistent day boundaries
+    const { startUtc, endUtc } = Attendance.getKarachiDayRangeUtc(new Date());
 
     // Find today's attendance
     const attendance = await Attendance.findOne({
       userId,
       userType,
-      date: {
-        $gte: today,
-        $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
-      }
+      date: { $gte: startUtc, $lt: endUtc }
     });
 
     console.log('Check-out validation:', {
       userId,
       userType,
+      startUtc: startUtc.toISOString(),
+      endUtc: endUtc.toISOString(),
       hasAttendance: !!attendance,
       hasCheckIn: attendance?.checkIn?.time,
       hasCheckOut: attendance?.checkOut?.time,
@@ -224,22 +236,22 @@ router.post('/re-checkout', protect, async (req, res) => {
     
     const userId = req.user.id;
     const userType = req.userRole;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    
+    // Use Karachi timezone for consistent day boundaries
+    const { startUtc, endUtc } = Attendance.getKarachiDayRangeUtc(new Date());
 
     // Find today's attendance
     const attendance = await Attendance.findOne({
       userId,
       userType,
-      date: {
-        $gte: today,
-        $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
-      }
+      date: { $gte: startUtc, $lt: endUtc }
     });
 
     console.log('Re-check-out validation:', {
       userId,
       userType,
+      startUtc: startUtc.toISOString(),
+      endUtc: endUtc.toISOString(),
       hasAttendance: !!attendance,
       hasReCheckIn: attendance?.reCheckIn?.time,
       hasReCheckOut: attendance?.reCheckOut?.time,
@@ -621,6 +633,44 @@ router.get('/stats', protect, authorize('admin'), async (req, res) => {
   } catch (error) {
     console.error('Get attendance stats error:', error);
     res.status(500).json({ message: 'Server error while fetching attendance statistics' });
+  }
+});
+
+// @route   GET /api/attendance/timezone-test
+// @desc    Test timezone calculations
+// @access  Private
+router.get('/timezone-test', protect, async (req, res) => {
+  try {
+    const now = new Date();
+    const { startUtc, endUtc } = Attendance.getKarachiDayRangeUtc(now);
+    
+    res.json({
+      success: true,
+      data: {
+        currentTime: {
+          utc: now.toISOString(),
+          karachi: new Date(now.getTime() + 5 * 60 * 60 * 1000).toISOString(),
+          karachiFormatted: new Date(now.getTime() + 5 * 60 * 60 * 1000).toLocaleString('en-PK', { timeZone: 'Asia/Karachi' })
+        },
+        dayBoundaries: {
+          startUtc: startUtc.toISOString(),
+          endUtc: endUtc.toISOString(),
+          karachiDayStart: new Date(startUtc.getTime() + 5 * 60 * 60 * 1000).toISOString(),
+          karachiDayEnd: new Date(endUtc.getTime() + 5 * 60 * 60 * 1000).toISOString(),
+          karachiDayStartFormatted: new Date(startUtc.getTime() + 5 * 60 * 60 * 1000).toLocaleString('en-PK', { timeZone: 'Asia/Karachi' }),
+          karachiDayEndFormatted: new Date(endUtc.getTime() + 5 * 60 * 60 * 1000).toLocaleString('en-PK', { timeZone: 'Asia/Karachi' })
+        },
+        explanation: {
+          karachiOffset: 'UTC+5 (5 hours ahead of UTC)',
+          dayStart: '00:00:00 Karachi time',
+          dayEnd: '23:59:59 Karachi time',
+          example: 'If UTC time is 7:00 PM, Karachi time is 12:00 AM (next day)'
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Timezone test error:', error);
+    res.status(500).json({ message: 'Server error during timezone test' });
   }
 });
 
