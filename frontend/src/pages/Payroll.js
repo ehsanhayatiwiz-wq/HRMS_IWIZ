@@ -248,7 +248,7 @@ const Payroll = () => {
                   <tr key={payroll._id}>
                     <td>
                       <div className="employee-info">
-                        <div className="employee-name">{payroll.employeeId?.fullName}</div>
+                        <div className="employee-name">{payroll.employeeId?.fullName || payroll.employeeName || payroll.employeeId || 'Unknown'}</div>
                       </div>
                     </td>
                     <td>{payroll.month}/{payroll.year}</td>
@@ -365,7 +365,7 @@ const Payroll = () => {
             <tbody>
               {payrolls.map((payroll) => (
                 <tr key={payroll._id}>
-                  <td>{payroll.employeeId?.fullName}</td>
+                  <td>{payroll.employeeId?.fullName || payroll.employeeName || payroll.employeeId || 'Unknown'}</td>
                   <td>{payroll.month}/{payroll.year}</td>
                   <td className="net-pay">{formatCurrency(payroll.netPay)}</td>
                   <td>
