@@ -26,10 +26,15 @@ const Attendance = () => {
   const fetchAttendanceData = async () => {
     try {
       setLoading(true);
+      console.log('Fetching attendance data...');
+      
       const [todayRes, historyRes] = await Promise.all([
         api.get('/attendance/today'),
         api.get('/attendance/history?page=1&limit=10')
       ]);
+
+      console.log('Today attendance response:', todayRes.data);
+      console.log('History response:', historyRes.data);
 
       const todayData = todayRes.data.data;
       setTodayAttendance(todayData.attendance);
@@ -38,6 +43,12 @@ const Attendance = () => {
       setCanReCheckIn(todayData.canReCheckIn);
       setCanReCheckOut(todayData.canReCheckOut);
       setAttendanceHistory(historyRes.data.data.attendance);
+      
+      console.log('Attendance state updated:', {
+        todayAttendance: todayData.attendance,
+        canCheckIn: todayData.canCheckIn,
+        canCheckOut: todayData.canCheckOut
+      });
     } catch (error) {
       console.error('Error fetching attendance data:', error);
       toast.error('Failed to load attendance data');
@@ -54,7 +65,15 @@ const Attendance = () => {
       fetchAttendanceData();
     } catch (error) {
       console.error('Check-in error:', error);
-      toast.error(error.response?.data?.message || 'Check-in failed');
+      
+      // Handle specific "already checked in" error
+      if (error.response?.status === 400 && error.response?.data?.message === 'Already checked in today') {
+        toast.info('Already checked in today');
+        // Refresh data to show current status
+        fetchAttendanceData();
+      } else {
+        toast.error(error.response?.data?.message || 'Check-in failed');
+      }
     } finally {
       setCheckingIn(false);
     }
@@ -68,7 +87,16 @@ const Attendance = () => {
       fetchAttendanceData();
     } catch (error) {
       console.error('Check-out error:', error);
-      toast.error(error.response?.data?.message || 'Check-out failed');
+      
+      // Handle specific "already checked out" error
+      if (error.response?.status === 400 && error.response?.data?.message === 'Already checked out today') {
+        toast.info('Already checked out today');
+        fetchAttendanceData();
+      } else if (error.response?.status === 400 && error.response?.data?.message === 'No check-in record found for today') {
+        toast.error('Please check in first before checking out');
+      } else {
+        toast.error(error.response?.data?.message || 'Check-out failed');
+      }
     } finally {
       setCheckingOut(false);
     }
@@ -82,7 +110,23 @@ const Attendance = () => {
       fetchAttendanceData();
     } catch (error) {
       console.error('Re-check-in error:', error);
-      toast.error(error.response?.data?.message || 'Re-check-in failed');
+      
+      // Handle specific re-check-in errors
+      if (error.response?.status === 400) {
+        const message = error.response?.data?.message;
+        if (message === 'Already re-checked in today') {
+          toast.info('Already re-checked in today');
+          fetchAttendanceData();
+        } else if (message === 'No initial check-in found for today') {
+          toast.error('Please check in first before re-checking in');
+        } else if (message === 'Please check out from your first session before re-checking in') {
+          toast.error('Please check out from your first session before re-checking in');
+        } else {
+          toast.error(message || 'Re-check-in failed');
+        }
+      } else {
+        toast.error(error.response?.data?.message || 'Re-check-in failed');
+      }
     } finally {
       setReCheckingIn(false);
     }
@@ -96,7 +140,21 @@ const Attendance = () => {
       fetchAttendanceData();
     } catch (error) {
       console.error('Re-check-out error:', error);
-      toast.error(error.response?.data?.message || 'Re-check-out failed');
+      
+      // Handle specific re-check-out errors
+      if (error.response?.status === 400) {
+        const message = error.response?.data?.message;
+        if (message === 'Already re-checked out today') {
+          toast.info('Already re-checked out today');
+          fetchAttendanceData();
+        } else if (message === 'No re-check-in record found for today') {
+          toast.error('Please re-check in first before re-checking out');
+        } else {
+          toast.error(message || 'Re-check-out failed');
+        }
+      } else {
+        toast.error(error.response?.data?.message || 'Re-check-out failed');
+      }
     } finally {
       setReCheckingOut(false);
     }
@@ -145,6 +203,14 @@ const Attendance = () => {
           <h1 className="page-title">Attendance Management</h1>
           <p className="page-subtitle">Track your daily attendance and view history</p>
         </div>
+        <Button
+          variant="neutral"
+          onClick={fetchAttendanceData}
+          disabled={loading}
+          icon={<FiRefreshCw />}
+        >
+          {loading ? 'Refreshing...' : 'Refresh'}
+        </Button>
       </div>
 
       {/* Today's Attendance Card */}

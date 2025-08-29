@@ -28,6 +28,18 @@ router.post('/checkin', protect, async (req, res) => {
       }
     });
 
+    console.log('Existing attendance check:', {
+      userId,
+      userType,
+      today: today.toISOString(),
+      existingAttendance: existingAttendance ? {
+        id: existingAttendance._id,
+        date: existingAttendance.date,
+        hasCheckIn: !!existingAttendance.checkIn?.time,
+        checkInTime: existingAttendance.checkInTimeFormatted
+      } : null
+    });
+
     if (existingAttendance && existingAttendance.checkIn.time) {
       return res.status(400).json({ 
         message: 'Already checked in today',
@@ -98,6 +110,16 @@ router.post('/checkout', protect, async (req, res) => {
       }
     });
 
+    console.log('Check-out validation:', {
+      userId,
+      userType,
+      hasAttendance: !!attendance,
+      hasCheckIn: attendance?.checkIn?.time,
+      hasCheckOut: attendance?.checkOut?.time,
+      checkInTime: attendance?.checkInTimeFormatted,
+      checkOutTime: attendance?.checkOutTimeFormatted
+    });
+
     if (!attendance || !attendance.checkIn.time) {
       return res.status(400).json({ message: 'No check-in record found for today' });
     }
@@ -149,8 +171,12 @@ router.post('/re-checkin', protect, async (req, res) => {
     const userType = req.userRole;
     const today = new Date();
 
+    console.log('Re-check-in validation for user:', userId, 'date:', today.toISOString());
+    
     // Check if user can re-check-in
     const canReCheckInResult = await Attendance.canReCheckIn(userId, userType, today);
+    
+    console.log('Re-check-in validation result:', canReCheckInResult);
     
     if (!canReCheckInResult.canReCheckIn) {
       return res.status(400).json({ 
@@ -211,6 +237,16 @@ router.post('/re-checkout', protect, async (req, res) => {
       }
     });
 
+    console.log('Re-check-out validation:', {
+      userId,
+      userType,
+      hasAttendance: !!attendance,
+      hasReCheckIn: attendance?.reCheckIn?.time,
+      hasReCheckOut: attendance?.reCheckOut?.time,
+      reCheckInTime: attendance?.reCheckInTimeFormatted,
+      reCheckOutTime: attendance?.reCheckOutTimeFormatted
+    });
+
     if (!attendance || !attendance.reCheckIn || !attendance.reCheckIn.time) {
       return res.status(400).json({ message: 'No re-check-in record found for today' });
     }
@@ -264,6 +300,20 @@ router.get('/today', protect, async (req, res) => {
 
     const attendance = await Attendance.getTodayAttendance(userId, userType);
 
+    console.log('Today attendance lookup:', {
+      userId,
+      userType,
+      attendanceFound: !!attendance,
+      attendance: attendance ? {
+        id: attendance._id,
+        date: attendance.date,
+        hasCheckIn: !!attendance.checkIn?.time,
+        hasCheckOut: !!attendance.checkOut?.time,
+        checkInTime: attendance.checkInTimeFormatted,
+        checkOutTime: attendance.checkOutTimeFormatted
+      } : null
+    });
+
     if (!attendance) {
       return res.json({
         success: true,
@@ -271,7 +321,8 @@ router.get('/today', protect, async (req, res) => {
           attendance: null,
           canCheckIn: true,
           canCheckOut: false,
-          canReCheckIn: false
+          canReCheckIn: false,
+          canReCheckOut: false
         }
       });
     }
@@ -282,7 +333,14 @@ router.get('/today', protect, async (req, res) => {
     const canReCheckIn = attendance.checkOut && attendance.checkOut.time && !attendance.reCheckIn.time;
     const canReCheckOut = attendance.reCheckIn && attendance.reCheckIn.time && !attendance.reCheckOut.time;
 
-    console.log('Today attendance found for user:', userId);
+    console.log('Today attendance found for user:', userId, {
+      canCheckIn,
+      canCheckOut,
+      canReCheckIn,
+      canReCheckOut,
+      checkInTime: attendance.checkInTimeFormatted,
+      checkOutTime: attendance.checkOutTimeFormatted
+    });
 
     res.json({
       success: true,
