@@ -233,7 +233,7 @@ payrollSchema.statics.generateMonthlyPayroll = async function(month, year, admin
     
     // Use save() to trigger pre-save middleware that calculates totals/netPay
     const saved = await payroll.save();
-    console.log(`Generated payroll for ${employee.fullName}: Net Pay $${saved.netPay}`);
+    console.log(`Generated payroll for ${employee.fullName}: Net Pay Rs ${saved.netPay}`);
     savedPayrolls.push(saved);
   }
   

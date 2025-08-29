@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiDollarSign, FiDownload, FiCalendar, FiUsers, FiBarChart2, FiCheck, FiRefreshCw } from 'react-icons/fi';
+import { FiDownload, FiCalendar, FiUsers, FiBarChart2, FiCheck, FiRefreshCw } from 'react-icons/fi';
 import Button from '../components/common/Button';
 import api from '../services/api';
 import { toast } from 'react-toastify';
@@ -127,9 +127,7 @@ const Payroll = () => {
         </div>
         
         <div className="summary-card">
-          <div className="card-icon">
-            <FiDollarSign />
-          </div>
+          <div className="card-icon">Rs</div>
           <div className="card-content">
             <h3>{formatCurrency(summary.totalNetPay || 0)}</h3>
             <p>Total Net Pay</p>
@@ -137,9 +135,7 @@ const Payroll = () => {
         </div>
         
         <div className="summary-card">
-          <div className="card-icon">
-            <FiBarChart2 />
-          </div>
+          <div className="card-icon">Rs</div>
           <div className="card-content">
             <h3>{formatCurrency(summary.totalAllowances || 0)}</h3>
             <p>Total Allowances</p>
@@ -147,9 +143,7 @@ const Payroll = () => {
         </div>
         
         <div className="summary-card">
-          <div className="card-icon">
-            <FiDollarSign />
-          </div>
+          <div className="card-icon">Rs</div>
           <div className="card-content">
             <h3>{formatCurrency(summary.totalDeductions || 0)}</h3>
             <p>Total Deductions</p>
