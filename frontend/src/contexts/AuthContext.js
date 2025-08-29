@@ -271,11 +271,26 @@ export const AuthProvider = ({ children }) => {
 
   const updateProfile = async (profileData) => {
     try {
+      console.log('AuthContext: Updating profile with data:', profileData);
       const response = await api.put('/auth/profile', profileData);
+      console.log('AuthContext: Profile update response:', response.data);
       setUser(response.data.data.user);
+      
+      // Also refresh user data from server to ensure consistency
+      try {
+        console.log('AuthContext: Refreshing user data from server...');
+        const refreshResponse = await api.get('/auth/me');
+        console.log('AuthContext: Refresh response:', refreshResponse.data);
+        setUser(refreshResponse.data.data.user);
+      } catch (refreshError) {
+        console.warn('Failed to refresh user data:', refreshError);
+        // Continue with the response data if refresh fails
+      }
+      
       toast.success('Profile updated successfully!');
       return { success: true };
     } catch (error) {
+      console.error('AuthContext: Profile update error:', error);
       const message = error.response?.data?.message || 'Profile update failed';
       toast.error(message);
       return { success: false, error: message };

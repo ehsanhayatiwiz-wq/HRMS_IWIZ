@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import { FiUser, FiMail, FiPhone, FiMapPin, FiCalendar, FiEdit2, FiSave, FiX, FiKey } from 'react-icons/fi';
@@ -11,7 +11,7 @@ const Profile = () => {
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   
-  // Profile form state
+  // Profile form state - update when user data changes
   const [profileData, setProfileData] = useState({
     fullName: user?.fullName || '',
     phone: user?.phone || '',
@@ -24,6 +24,23 @@ const Profile = () => {
     },
     dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().slice(0, 10) : ''
   });
+
+  // Update profileData when user data changes
+  useEffect(() => {
+    console.log('Profile component: User data updated:', user);
+    setProfileData({
+      fullName: user?.fullName || '',
+      phone: user?.phone || '',
+      address: user?.address || {
+        street: '',
+        city: '',
+        state: '',
+        zipCode: '',
+        country: ''
+      },
+      dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().slice(0, 10) : ''
+    });
+  }, [user]);
 
   // Password form state
   const [passwordData, setPasswordData] = useState({
