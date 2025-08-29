@@ -58,19 +58,19 @@ const Reports = () => {
       const ts = Date.now();
       switch (type) {
         case 'attendance':
-          endpoint = `/api/reports/attendance?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}&_t=${ts}`;
+          endpoint = `/reports/attendance?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}&_t=${ts}`;
           filename = `attendance-report-${dateRange.startDate}-to-${dateRange.endDate}.pdf`;
           break;
         case 'leave':
-          endpoint = `/api/reports/leaves?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}&_t=${ts}`;
+          endpoint = `/reports/leaves?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}&_t=${ts}`;
           filename = `leave-report-${dateRange.startDate}-to-${dateRange.endDate}.pdf`;
           break;
         case 'employee':
-          endpoint = `/api/reports/employees?_t=${ts}`;
+          endpoint = `/reports/employees?_t=${ts}`;
           filename = `employee-report-${new Date().toISOString().split('T')[0]}.pdf`;
           break;
         case 'performance':
-          endpoint = `/api/reports/performance?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}&_t=${ts}`;
+          endpoint = `/reports/performance?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}&_t=${ts}`;
           filename = `performance-report-${dateRange.startDate}-to-${dateRange.endDate}.pdf`;
           break;
         default:
@@ -113,19 +113,19 @@ const Reports = () => {
 
       switch (type) {
         case 'attendance':
-          endpoint = `/api/reports/attendance/csv?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
+          endpoint = `/reports/attendance/csv?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
           filename = `attendance-report-${dateRange.startDate}-to-${dateRange.endDate}.csv`;
           break;
         case 'leave':
-          endpoint = `/api/reports/leaves/csv?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
+          endpoint = `/reports/leaves/csv?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
           filename = `leave-report-${dateRange.startDate}-to-${dateRange.endDate}.csv`;
           break;
         case 'employee':
-          endpoint = `/api/reports/employees/csv`;
+          endpoint = `/reports/employees/csv`;
           filename = `employee-report-${new Date().toISOString().split('T')[0]}.csv`;
           break;
         case 'performance':
-          endpoint = `/api/reports/performance/csv?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
+          endpoint = `/reports/performance/csv?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
           filename = `performance-report-${dateRange.startDate}-to-${dateRange.endDate}.csv`;
           break;
         default:
