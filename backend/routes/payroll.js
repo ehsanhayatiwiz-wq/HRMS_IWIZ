@@ -340,13 +340,30 @@ router.put('/:payrollId/status', protect, authorize('admin'), [
 router.get('/reports/summary', protect, authorize('admin'), async (req, res) => {
   try {
     const { month, year } = req.query;
+    
+    console.log('Payroll summary request - month:', month, 'year:', year);
 
     const filter = {};
     if (month) filter.month = parseInt(month);
     if (year) filter.year = parseInt(year);
 
+    console.log('Filter applied:', filter);
+
     const payrolls = await Payroll.find(filter)
       .populate('employeeId', 'fullName department');
+
+    console.log(`Found ${payrolls.length} payroll records`);
+    
+    if (payrolls.length > 0) {
+      console.log('Sample payroll record:', {
+        id: payrolls[0]._id,
+        employee: payrolls[0].employeeId?.fullName,
+        basicSalary: payrolls[0].basicSalary,
+        totalAllowances: payrolls[0].totalAllowances,
+        totalDeductions: payrolls[0].totalDeductions,
+        netPay: payrolls[0].netPay
+      });
+    }
 
     const summary = {
       totalEmployees: payrolls.length,
@@ -358,12 +375,21 @@ router.get('/reports/summary', protect, authorize('admin'), async (req, res) => 
       byDepartment: {}
     };
 
-    payrolls.forEach(payroll => {
+    payrolls.forEach((payroll, index) => {
       const basic = Number(payroll.basicSalary) || 0;
       const allowances = Number(payroll.totalAllowances) || 0;
       const overtime = Number(payroll.overtime?.amount) || 0;
       const deductions = Number(payroll.totalDeductions) || 0;
       const net = Number(payroll.netPay) || 0;
+
+      console.log(`Processing payroll ${index + 1}:`, {
+        employee: payroll.employeeId?.fullName,
+        basic,
+        allowances,
+        overtime,
+        deductions,
+        net
+      });
 
       summary.totalBasicSalary += basic;
       summary.totalAllowances += allowances;
@@ -371,7 +397,7 @@ router.get('/reports/summary', protect, authorize('admin'), async (req, res) => 
       summary.totalDeductions += deductions;
       summary.totalNetPay += net;
 
-      const dept = payroll.employeeId.department;
+      const dept = payroll.employeeId?.department || 'Unknown';
       if (!summary.byDepartment[dept]) {
         summary.byDepartment[dept] = {
           count: 0,
@@ -382,6 +408,8 @@ router.get('/reports/summary', protect, authorize('admin'), async (req, res) => 
       summary.byDepartment[dept].totalNetPay += net;
     });
 
+    console.log('Final summary:', summary);
+
     res.json({
       success: true,
       data: { summary }
@@ -391,6 +419,75 @@ router.get('/reports/summary', protect, authorize('admin'), async (req, res) => 
     console.error('Payroll summary error:', error);
     res.status(500).json({
       message: 'Server error while generating summary'
+    });
+  }
+});
+
+// @route   GET /api/payroll/debug
+// @desc    Debug route to check payroll data (Admin only)
+// @access  Private (Admin)
+router.get('/debug', protect, authorize('admin'), async (req, res) => {
+  try {
+    console.log('Payroll debug request');
+    
+    // Check total payroll records
+    const totalPayrolls = await Payroll.countDocuments({});
+    console.log(`Total payroll records in DB: ${totalPayrolls}`);
+    
+    // Check recent payrolls
+    const recentPayrolls = await Payroll.find({})
+      .populate('employeeId', 'fullName employeeId department')
+      .sort({ createdAt: -1 })
+      .limit(5);
+    
+    console.log('Recent payrolls:', recentPayrolls.map(p => ({
+      id: p._id,
+      month: p.month,
+      year: p.year,
+      employee: p.employeeId?.fullName,
+      basicSalary: p.basicSalary,
+      totalAllowances: p.totalAllowances,
+      totalDeductions: p.totalDeductions,
+      netPay: p.netPay
+    })));
+    
+    // Check employees
+    const Employee = require('../models/Employee');
+    const totalEmployees = await Employee.countDocuments({});
+    const activeEmployees = await Employee.countDocuments({ 
+      $or: [
+        { status: 'active' },
+        { isActive: true }
+      ]
+    });
+    
+    console.log(`Total employees: ${totalEmployees}, Active: ${activeEmployees}`);
+    
+    res.json({
+      success: true,
+      data: {
+        totalPayrolls,
+        recentPayrolls: recentPayrolls.map(p => ({
+          id: p._id,
+          month: p.month,
+          year: p.year,
+          employee: p.employeeId?.fullName,
+          basicSalary: p.basicSalary,
+          totalAllowances: p.totalAllowances,
+          totalDeductions: p.totalDeductions,
+          netPay: p.netPay
+        })),
+        employeeStats: {
+          total: totalEmployees,
+          active: activeEmployees
+        }
+      }
+    });
+    
+  } catch (error) {
+    console.error('Payroll debug error:', error);
+    res.status(500).json({
+      message: 'Server error while debugging payroll'
     });
   }
 });

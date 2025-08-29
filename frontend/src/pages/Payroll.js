@@ -22,14 +22,25 @@ const Payroll = () => {
       setLoading(true);
       
       if (activeTab === 'overview') {
+        // Fix month/year handling - ensure we get the correct month (1-12) and year
+        const month = parseInt(selectedMonth.split('-')[1]); // Extract month from YYYY-MM format
+        const year = parseInt(selectedYear);
+        
+        console.log('Fetching payroll data for month:', month, 'year:', year);
+        
         const [payrollsRes, summaryRes] = await Promise.all([
-          api.get(`/payroll/all?page=${currentPage}&limit=10&month=${moment(selectedMonth).month() + 1}&year=${selectedYear}`),
-          api.get(`/payroll/reports/summary?month=${moment(selectedMonth).month() + 1}&year=${selectedYear}`)
+          api.get(`/payroll/all?page=${currentPage}&limit=10&month=${month}&year=${year}`),
+          api.get(`/payroll/reports/summary?month=${month}&year=${year}`)
         ]);
+        
+        console.log('Payrolls response:', payrollsRes.data);
+        console.log('Summary response:', summaryRes.data);
         
         setPayrolls(payrollsRes.data?.data?.payrolls || []);
         setTotalPages(payrollsRes.data?.data?.pagination?.totalPages || 1);
         setSummary(summaryRes.data?.data?.summary || {});
+        
+        console.log('Summary data set:', summaryRes.data?.data?.summary);
       } else if (activeTab === 'generate') {
         // Fetch recent payrolls for reference
         const response = await api.get('/payroll/all?page=1&limit=5');
@@ -37,6 +48,7 @@ const Payroll = () => {
       }
     } catch (error) {
       console.error('Error fetching payroll data:', error);
+      console.error('Error details:', error.response?.data);
       toast.error('Failed to load payroll data');
     } finally {
       setLoading(false);
@@ -50,8 +62,10 @@ const Payroll = () => {
   const generatePayroll = async () => {
     try {
       setGenerating(true);
-      const month = moment(selectedMonth).month() + 1;
+      const month = parseInt(selectedMonth.split('-')[1]); // Extract month from YYYY-MM format
       const year = parseInt(selectedYear);
+      
+      console.log('Generating payroll for month:', month, 'year:', year);
       
       const response = await api.post('/payroll/generate', { month, year });
       
@@ -140,6 +154,28 @@ const Payroll = () => {
             <p>Total Deductions</p>
           </div>
         </div>
+      </div>
+
+      {/* Debug Section */}
+      <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
+        <h4>Debug Info</h4>
+        <p>Summary Data: {JSON.stringify(summary, null, 2)}</p>
+        <Button 
+          variant="secondary" 
+          icon={<FiRefreshCw />}
+          onClick={async () => {
+            try {
+              const response = await api.get('/payroll/debug');
+              console.log('Debug response:', response.data);
+              alert('Check console for debug info');
+            } catch (error) {
+              console.error('Debug error:', error);
+              alert('Debug failed - check console');
+            }
+          }}
+        >
+          Debug Payroll Data
+        </Button>
       </div>
 
       {/* Department Breakdown */}

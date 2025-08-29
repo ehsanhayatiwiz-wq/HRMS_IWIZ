@@ -339,32 +339,63 @@ router.patch('/:id/status', protect, authorize('admin'), [
 });
 
 // @route   DELETE /api/employees/:id
-// @desc    Deactivate employee (Admin only)
+// @desc    Delete employee completely (Admin only)
 // @access  Private (Admin)
 router.delete('/:id', protect, authorize('admin'), async (req, res) => {
   try {
-    console.log('Deactivate employee request:', req.params.id);
+    console.log('Delete employee request:', req.params.id);
     
     const employee = await Employee.findById(req.params.id);
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found' });
     }
 
-    // Soft delete - set isActive to false
-    employee.isActive = false;
-    employee.status = 'inactive';
-    await employee.save();
+    // Hard delete - remove employee completely
+    // First, clean up related records
+    console.log('Cleaning up related records for employee:', employee.fullName);
+    
+    // Delete attendance records
+    const attendanceDeleted = await Attendance.deleteMany({ 
+      userId: employee._id, 
+      userType: 'employee' 
+    });
+    console.log(`Deleted ${attendanceDeleted.deletedCount} attendance records`);
+    
+    // Delete leave records
+    const leavesDeleted = await Leave.deleteMany({ 
+      userId: employee._id, 
+      userType: 'employee' 
+    });
+    console.log(`Deleted ${leavesDeleted.deletedCount} leave records`);
+    
+    // Delete payroll records
+    const Payroll = require('../models/Payroll');
+    const payrollDeleted = await Payroll.deleteMany({ 
+      employeeId: employee._id 
+    });
+    console.log(`Deleted ${payrollDeleted.deletedCount} payroll records`);
+    
+    // Finally, delete the employee
+    await Employee.findByIdAndDelete(employee._id);
 
-    console.log('Employee deactivated successfully:', employee.fullName);
+    console.log('Employee completely deleted:', employee.fullName);
 
     res.json({
       success: true,
-      message: 'Employee deactivated successfully'
+      message: 'Employee deleted successfully',
+      data: {
+        deletedEmployee: employee.fullName,
+        relatedRecordsDeleted: {
+          attendance: attendanceDeleted.deletedCount,
+          leaves: leavesDeleted.deletedCount,
+          payroll: payrollDeleted.deletedCount
+        }
+      }
     });
 
   } catch (error) {
-    console.error('Deactivate employee error:', error);
-    res.status(500).json({ message: 'Server error while deactivating employee' });
+    console.error('Delete employee error:', error);
+    res.status(500).json({ message: 'Server error while deleting employee' });
   }
 });
 

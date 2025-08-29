@@ -139,10 +139,23 @@ payrollSchema.statics.generateMonthlyPayroll = async function(month, year, admin
   const Employee = require('./Employee');
   const Attendance = require('./Attendance');
   
-  const employees = await Employee.find({ status: 'active' });
+  console.log(`Generating payroll for month: ${month}, year: ${year}`);
+  
+  // Look for employees that are active (either status: 'active' or isActive: true)
+  const employees = await Employee.find({ 
+    $or: [
+      { status: 'active' },
+      { isActive: true }
+    ]
+  });
+  
+  console.log(`Found ${employees.length} active employees`);
+  
   const savedPayrolls = [];
   
   for (const employee of employees) {
+    console.log(`Processing employee: ${employee.fullName} (${employee.employeeId})`);
+    
     // Check if payroll already exists for this month
     const existingPayroll = await this.findOne({ 
       employeeId: employee._id, 
@@ -151,6 +164,7 @@ payrollSchema.statics.generateMonthlyPayroll = async function(month, year, admin
     });
     
     if (existingPayroll) {
+      console.log(`Payroll already exists for ${employee.fullName} in ${month}/${year}`);
       continue; // Skip if already generated
     }
     
@@ -160,8 +174,11 @@ payrollSchema.statics.generateMonthlyPayroll = async function(month, year, admin
     
     const attendanceRecords = await Attendance.find({
       userId: employee._id,
+      userType: 'employee',
       date: { $gte: startDate, $lte: endDate }
     });
+    
+    console.log(`Found ${attendanceRecords.length} attendance records for ${employee.fullName}`);
     
     // Calculate attendance statistics
     const totalDays = endDate.getDate();
@@ -213,11 +230,14 @@ payrollSchema.statics.generateMonthlyPayroll = async function(month, year, admin
       generatedBy: adminId,
       status: 'generated'
     });
+    
     // Use save() to trigger pre-save middleware that calculates totals/netPay
     const saved = await payroll.save();
+    console.log(`Generated payroll for ${employee.fullName}: Net Pay $${saved.netPay}`);
     savedPayrolls.push(saved);
   }
   
+  console.log(`Successfully generated ${savedPayrolls.length} payroll records`);
   return savedPayrolls;
 };
 
