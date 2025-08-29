@@ -271,7 +271,7 @@ const Attendance = () => {
                 <div className="status-item">
                   <span className="status-label">First Session</span>
                   <span className="status-value">
-                    {todayAttendance.firstSessionHours ? `${todayAttendance.firstSessionHours.toFixed(2)} hours` : '-'}
+                    {todayAttendance.firstSessionHoursFormatted || (todayAttendance.firstSessionHours ? `${todayAttendance.firstSessionHours.toFixed(2)} hours` : '-')}
                   </span>
                 </div>
                 
@@ -279,7 +279,7 @@ const Attendance = () => {
                   <div className="status-item">
                     <span className="status-label">Second Session</span>
                     <span className="status-value">
-                      {todayAttendance.secondSessionHours.toFixed(2)} hours
+                      {todayAttendance.secondSessionHoursFormatted || `${todayAttendance.secondSessionHours.toFixed(2)} hours`}
                     </span>
                   </div>
                 )}
@@ -287,7 +287,7 @@ const Attendance = () => {
                 <div className="status-item">
                   <span className="status-label">Total Hours</span>
                   <span className="status-value">
-                    {todayAttendance.totalHours ? `${todayAttendance.totalHours.toFixed(2)} hours` : '-'}
+                    {todayAttendance.totalHoursFormatted || (todayAttendance.totalHours ? `${todayAttendance.totalHours.toFixed(2)} hours` : '-')}
                   </span>
                 </div>
                 

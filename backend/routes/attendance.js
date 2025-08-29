@@ -73,6 +73,13 @@ router.post('/checkin', protect, async (req, res) => {
     }
 
     const currentTime = new Date();
+    
+    console.log('Check-in time storage:', {
+      currentTime: currentTime.toISOString(),
+      karachiTime: new Date(currentTime.getTime() + 5 * 60 * 60 * 1000).toISOString(),
+      karachiFormatted: new Date(currentTime.getTime() + 5 * 60 * 60 * 1000).toLocaleString('en-PK', { timeZone: 'Asia/Karachi' })
+    });
+    
     attendance.checkIn = {
       time: currentTime,
       location: req.body.location || 'Office',
@@ -145,6 +152,30 @@ router.post('/checkout', protect, async (req, res) => {
 
     // Update check-out
     const currentTime = new Date();
+    const timeDifference = currentTime - attendance.checkIn.time;
+    const minimumTimeMs = 1 * 60 * 1000; // 1 minute minimum
+    
+    console.log('Check-out time validation:', {
+      checkInTime: attendance.checkIn.time.toISOString(),
+      checkOutTime: currentTime.toISOString(),
+      timeDifferenceMs: timeDifference,
+      minimumTimeMs: minimumTimeMs,
+      isValid: timeDifference >= minimumTimeMs
+    });
+    
+    if (timeDifference < minimumTimeMs) {
+      return res.status(400).json({ 
+        message: 'Please wait at least 1 minute before checking out',
+        timeElapsed: Math.round(timeDifference / 1000) + ' seconds'
+      });
+    }
+    
+    console.log('Check-out time storage:', {
+      currentTime: currentTime.toISOString(),
+      karachiTime: new Date(currentTime.getTime() + 5 * 60 * 60 * 1000).toISOString(),
+      karachiFormatted: new Date(currentTime.getTime() + 5 * 60 * 60 * 1000).toLocaleString('en-PK', { timeZone: 'Asia/Karachi' })
+    });
+    
     attendance.checkOut = {
       time: currentTime,
       location: req.body.location || 'Office',
@@ -161,7 +192,10 @@ router.post('/checkout', protect, async (req, res) => {
       message: 'Check-out successful',
       data: {
         checkOutTime: attendance.checkOutTimeFormatted,
+        firstSessionHours: attendance.firstSessionHours,
+        firstSessionHoursFormatted: attendance.firstSessionHoursFormatted,
         totalHours: attendance.totalHours,
+        totalHoursFormatted: attendance.totalHoursFormatted,
         canReCheckIn: true
       }
     });
@@ -217,7 +251,9 @@ router.post('/re-checkin', protect, async (req, res) => {
       data: {
         reCheckInTime: attendance.reCheckInTimeFormatted,
         firstSessionHours: attendance.firstSessionHours,
-        totalHours: attendance.totalHours
+        firstSessionHoursFormatted: attendance.firstSessionHoursFormatted,
+        totalHours: attendance.totalHours,
+        totalHoursFormatted: attendance.totalHoursFormatted
       }
     });
 
@@ -272,6 +308,24 @@ router.post('/re-checkout', protect, async (req, res) => {
 
     // Update re-check-out
     const currentTime = new Date();
+    const timeDifference = currentTime - attendance.reCheckIn.time;
+    const minimumTimeMs = 1 * 60 * 1000; // 1 minute minimum
+    
+    console.log('Re-check-out time validation:', {
+      reCheckInTime: attendance.reCheckIn.time.toISOString(),
+      reCheckOutTime: currentTime.toISOString(),
+      timeDifferenceMs: timeDifference,
+      minimumTimeMs: minimumTimeMs,
+      isValid: timeDifference >= minimumTimeMs
+    });
+    
+    if (timeDifference < minimumTimeMs) {
+      return res.status(400).json({ 
+        message: 'Please wait at least 1 minute before re-checking out',
+        timeElapsed: Math.round(timeDifference / 1000) + ' seconds'
+      });
+    }
+    
     attendance.reCheckOut = {
       time: currentTime,
       location: req.body.location || 'Office',
@@ -289,8 +343,11 @@ router.post('/re-checkout', protect, async (req, res) => {
       data: {
         reCheckOutTime: attendance.reCheckOutTimeFormatted,
         firstSessionHours: attendance.firstSessionHours,
+        firstSessionHoursFormatted: attendance.firstSessionHoursFormatted,
         secondSessionHours: attendance.secondSessionHours,
-        totalHours: attendance.totalHours
+        secondSessionHoursFormatted: attendance.secondSessionHoursFormatted,
+        totalHours: attendance.totalHours,
+        totalHoursFormatted: attendance.totalHoursFormatted
       }
     });
 
@@ -363,8 +420,11 @@ router.get('/today', protect, async (req, res) => {
           reCheckInTime: attendance.reCheckInTimeFormatted,
           reCheckOutTime: attendance.reCheckOutTimeFormatted,
           totalHours: attendance.totalHours,
+          totalHoursFormatted: attendance.totalHoursFormatted,
           firstSessionHours: attendance.firstSessionHours,
+          firstSessionHoursFormatted: attendance.firstSessionHoursFormatted,
           secondSessionHours: attendance.secondSessionHours,
+          secondSessionHoursFormatted: attendance.secondSessionHoursFormatted,
           status: attendance.status,
           checkInCount: attendance.checkInCount
         },
@@ -644,6 +704,10 @@ router.get('/timezone-test', protect, async (req, res) => {
     const now = new Date();
     const { startUtc, endUtc } = Attendance.getKarachiDayRangeUtc(now);
     
+    // Test time formatting
+    const testTime = new Date('2024-01-15T12:35:00.000Z'); // 12:35 PM UTC
+    const karachiTime = new Date(testTime.getTime() + 5 * 60 * 60 * 1000); // 5:35 PM Karachi
+    
     res.json({
       success: true,
       data: {
@@ -651,6 +715,22 @@ router.get('/timezone-test', protect, async (req, res) => {
           utc: now.toISOString(),
           karachi: new Date(now.getTime() + 5 * 60 * 60 * 1000).toISOString(),
           karachiFormatted: new Date(now.getTime() + 5 * 60 * 60 * 1000).toLocaleString('en-PK', { timeZone: 'Asia/Karachi' })
+        },
+        timeFormattingTest: {
+          testTimeUTC: testTime.toISOString(),
+          testTimeKarachi: karachiTime.toISOString(),
+          formattedTime: testTime.toLocaleTimeString('en-PK', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+            timeZone: 'Asia/Karachi'
+          }),
+          karachiFormatted: karachiTime.toLocaleTimeString('en-PK', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+            timeZone: 'Asia/Karachi'
+          })
         },
         dayBoundaries: {
           startUtc: startUtc.toISOString(),

@@ -125,63 +125,128 @@ attendanceSchema.index({ userId: 1, date: 1 }, { unique: true });
 attendanceSchema.index({ date: 1 });
 attendanceSchema.index({ userType: 1 });
 
+// Helper function to format time in Karachi timezone
+function formatKarachiTime(date) {
+  if (!date) return null;
+  
+  // Convert to Karachi time (UTC+5)
+  const karachiTime = new Date(date.getTime() + 5 * 60 * 60 * 1000);
+  
+  // Format as HH:MM
+  const hours = karachiTime.getUTCHours().toString().padStart(2, '0');
+  const minutes = karachiTime.getUTCMinutes().toString().padStart(2, '0');
+  
+  return `${hours}:${minutes}`;
+}
+
 // Virtual properties for formatted times
 attendanceSchema.virtual('checkInTimeFormatted').get(function() {
   if (!this.checkIn || !this.checkIn.time) return null;
-  return new Date(this.checkIn.time).toLocaleTimeString('en-PK', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-    timeZone: 'Asia/Karachi'
+  
+  const formattedTime = formatKarachiTime(this.checkIn.time);
+  
+  console.log('Check-in time formatting:', {
+    originalTime: this.checkIn.time.toISOString(),
+    formattedTime: formattedTime,
+    karachiTime: new Date(this.checkIn.time.getTime() + 5 * 60 * 60 * 1000).toISOString()
   });
+  
+  return formattedTime;
 });
 
 attendanceSchema.virtual('checkOutTimeFormatted').get(function() {
   if (!this.checkOut || !this.checkOut.time) return null;
-  return new Date(this.checkOut.time).toLocaleTimeString('en-PK', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-    timeZone: 'Asia/Karachi'
+  
+  const formattedTime = formatKarachiTime(this.checkOut.time);
+  
+  console.log('Check-out time formatting:', {
+    originalTime: this.checkOut.time.toISOString(),
+    formattedTime: formattedTime,
+    karachiTime: new Date(this.checkOut.time.getTime() + 5 * 60 * 60 * 1000).toISOString()
   });
+  
+  return formattedTime;
 });
 
 attendanceSchema.virtual('reCheckInTimeFormatted').get(function() {
   if (!this.reCheckIn || !this.reCheckIn.time) return null;
-  return new Date(this.reCheckIn.time).toLocaleTimeString('en-PK', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-    timeZone: 'Asia/Karachi'
-  });
+  return formatKarachiTime(this.reCheckIn.time);
 });
 
 attendanceSchema.virtual('reCheckOutTimeFormatted').get(function() {
   if (!this.reCheckOut || !this.reCheckOut.time) return null;
-  return new Date(this.reCheckOut.time).toLocaleTimeString('en-PK', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-    timeZone: 'Asia/Karachi'
-  });
+  return formatKarachiTime(this.reCheckOut.time);
+});
+
+// Format hours for display
+attendanceSchema.virtual('firstSessionHoursFormatted').get(function() {
+  if (!this.firstSessionHours || this.firstSessionHours === 0) return '0 hours';
+  const hours = Math.floor(this.firstSessionHours);
+  const minutes = Math.round((this.firstSessionHours - hours) * 60);
+  if (minutes === 0) {
+    return `${hours} hour${hours !== 1 ? 's' : ''}`;
+  }
+  return `${hours}h ${minutes}m`;
+});
+
+attendanceSchema.virtual('secondSessionHoursFormatted').get(function() {
+  if (!this.secondSessionHours || this.secondSessionHours === 0) return '0 hours';
+  const hours = Math.floor(this.secondSessionHours);
+  const minutes = Math.round((this.secondSessionHours - hours) * 60);
+  if (minutes === 0) {
+    return `${hours} hour${hours !== 1 ? 's' : ''}`;
+  }
+  return `${hours}h ${minutes}m`;
+});
+
+attendanceSchema.virtual('totalHoursFormatted').get(function() {
+  if (!this.totalHours || this.totalHours === 0) return '0 hours';
+  const hours = Math.floor(this.totalHours);
+  const minutes = Math.round((this.totalHours - hours) * 60);
+  if (minutes === 0) {
+    return `${hours} hour${hours !== 1 ? 's' : ''}`;
+  }
+  return `${hours}h ${minutes}m`;
 });
 
 // Calculate hours before saving
 attendanceSchema.pre('save', function(next) {
+  console.log('Calculating hours for attendance:', this._id);
+  
   // Calculate first session hours
   if (this.checkIn && this.checkIn.time && this.checkOut && this.checkOut.time) {
     const firstSessionMs = this.checkOut.time - this.checkIn.time;
     this.firstSessionHours = Math.round((firstSessionMs / (1000 * 60 * 60)) * 100) / 100;
+    
+    console.log('First session calculation:', {
+      checkInTime: this.checkIn.time.toISOString(),
+      checkOutTime: this.checkOut.time.toISOString(),
+      differenceMs: firstSessionMs,
+      hours: this.firstSessionHours
+    });
   }
 
   // Calculate second session hours
   if (this.reCheckIn && this.reCheckIn.time && this.reCheckOut && this.reCheckOut.time) {
     const secondSessionMs = this.reCheckOut.time - this.reCheckIn.time;
     this.secondSessionHours = Math.round((secondSessionMs / (1000 * 60 * 60)) * 100) / 100;
+    
+    console.log('Second session calculation:', {
+      reCheckInTime: this.reCheckIn.time.toISOString(),
+      reCheckOutTime: this.reCheckOut.time.toISOString(),
+      differenceMs: secondSessionMs,
+      hours: this.secondSessionHours
+    });
   }
 
   // Calculate total hours
-  this.totalHours = this.firstSessionHours + this.secondSessionHours;
+  this.totalHours = (this.firstSessionHours || 0) + (this.secondSessionHours || 0);
+  
+  console.log('Total hours calculation:', {
+    firstSessionHours: this.firstSessionHours,
+    secondSessionHours: this.secondSessionHours,
+    totalHours: this.totalHours
+  });
 
   // Update status based on check-ins
   if (this.reCheckIn && this.reCheckIn.time) {
