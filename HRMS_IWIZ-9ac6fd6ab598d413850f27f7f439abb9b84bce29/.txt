@@ -1,0 +1,19 @@
+mongobd atlas url 
+mongodb+srv://ehsanhayatiwiz:Qwerty1122@@cluster0.49i8d9j.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+remember there is an @ sign in the password
+
+render backend 
+@https://hrms-iwiz.onrender.com 
+
+versal frontend 
+
+
+now make me new environment variables 
+
+also update the env.examples i will update the envs myself
+
+
+
+
+id: irtazamadadnaqvi@iwiz.com
+pass: 03145372506
