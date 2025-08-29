@@ -108,6 +108,7 @@ const Payroll = () => {
       fetchPayrollData();
     } catch (error) {
       console.error('Error updating payroll status:', error);
+      console.error('Error response:', error.response?.data);
       toast.error('Failed to update payroll status');
     }
   };
@@ -245,7 +246,7 @@ const Payroll = () => {
               </thead>
               <tbody>
                 {payrolls.map((payroll) => (
-                  <tr key={payroll._id}>
+                  <tr key={payroll.id || payroll._id}>
                     <td>
                       <div className="employee-info">
                         <div className="employee-name">{payroll.employeeId?.fullName || payroll.employeeName || payroll.employeeId || 'Unknown'}</div>
@@ -263,8 +264,8 @@ const Payroll = () => {
                     </td>
                     <td>
                       <div className="action-buttons" style={{ display: 'flex', gap: 8 }}>
-                        <Button variant="secondary" onClick={() => downloadSalarySlip(payroll._id)} icon={<FiDownload />} />
-                        <Button variant="primary" onClick={() => updatePayrollStatus(payroll._id, 'paid')} disabled={payroll.status === 'paid'} icon={<FiCheck />} />
+                        <Button variant="secondary" onClick={() => downloadSalarySlip(payroll.id || payroll._id)} icon={<FiDownload />} />
+                        <Button variant="primary" onClick={() => updatePayrollStatus(payroll.id || payroll._id, 'paid')} disabled={payroll.status === 'paid'} icon={<FiCheck />} />
                       </div>
                     </td>
                   </tr>
@@ -364,7 +365,7 @@ const Payroll = () => {
             </thead>
             <tbody>
               {payrolls.map((payroll) => (
-                <tr key={payroll._id}>
+                <tr key={payroll.id || payroll._id}>
                   <td>{payroll.employeeId?.fullName || payroll.employeeName || payroll.employeeId || 'Unknown'}</td>
                   <td>{payroll.month}/{payroll.year}</td>
                   <td className="net-pay">{formatCurrency(payroll.netPay)}</td>

@@ -74,13 +74,14 @@ const AdminDashboard = () => {
         });
         setEmployees(employeesRes.data?.data?.employees || []);
         
-        // Debug: Log the leave requests data for dashboard
+        // Debug: Log the leave requests data for dashboard (normalized to employeeId)
         console.log('Dashboard leaves API response:', leavesRes.data);
         console.log('Dashboard leave records:', leavesRes.data?.data?.leaves);
         if (leavesRes.data?.data?.leaves?.length > 0) {
-          console.log('First dashboard leave record:', leavesRes.data.data.leaves[0]);
-          console.log('First record employeeName:', leavesRes.data.data.leaves[0].employeeName);
-          console.log('First record userId:', leavesRes.data.data.leaves[0].userId);
+          const first = leavesRes.data.data.leaves[0];
+          console.log('First dashboard leave record:', first);
+          console.log('First record employeeName:', first.employeeName);
+          console.log('First record employeeId:', first.employeeId);
         }
         
         setLeaveRequests(leavesRes.data?.data?.leaves || []);

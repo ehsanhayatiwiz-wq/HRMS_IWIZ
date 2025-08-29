@@ -109,7 +109,7 @@ const EmployeePayroll = () => {
 
             <div className="payroll-cards">
               {payrolls.map((payroll) => (
-                <div key={payroll._id} className="payroll-card">
+                <div key={payroll.id || payroll._id} className="payroll-card">
                   <div className="card-header">
                     <div className="month-year">
                       <FiCalendar />
@@ -179,7 +179,7 @@ const EmployeePayroll = () => {
                     <Button variant="secondary" onClick={() => viewPayrollDetails(payroll)} icon={<FiEye />}>
                       View Details
                     </Button>
-                    <Button variant="primary" onClick={() => downloadSalarySlip(payroll._id)} icon={<FiDownload />}>
+                    <Button variant="primary" onClick={() => downloadSalarySlip(payroll.id || payroll._id)} icon={<FiDownload />}>
                       Download Slip
                     </Button>
                   </div>
@@ -339,7 +339,7 @@ const EmployeePayroll = () => {
             
             <div className="modal-footer" style={{ display: 'flex', gap: 12 }}>
               <Button variant="neutral" onClick={closeDetails}>Close</Button>
-              <Button variant="primary" onClick={() => downloadSalarySlip(selectedPayroll._id)} icon={<FiDownload />}>
+              <Button variant="primary" onClick={() => downloadSalarySlip(selectedPayroll.id || selectedPayroll._id)} icon={<FiDownload />}>
                 Download PDF
               </Button>
             </div>

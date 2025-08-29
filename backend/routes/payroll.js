@@ -86,6 +86,7 @@ router.get('/all', protect, authorize('admin'), async (req, res) => {
     // Normalize: attach employeeName for frontend fallbacks
     const normalized = payrolls.map(p => ({
       ...p.toObject(),
+      id: p._id,
       employeeName: p.employeeId?.fullName || null
     }));
 

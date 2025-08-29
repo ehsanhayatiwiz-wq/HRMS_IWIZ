@@ -92,10 +92,12 @@ router.post('/add-employee', protect, authorize('admin'), [
       position,
       phone,
       dateOfBirth,
-      dateOfJoining,
+      dateOfJoining: dateOfJoining ? new Date(dateOfJoining) : new Date(),
       address,
       salary,
       leaveBalance,
+      status: 'active',
+      isActive: true,
       isFirstLogin: true,
       passwordResetRequired: true
     });
@@ -116,7 +118,13 @@ router.post('/add-employee', protect, authorize('admin'), [
           employeeId: employee.employeeId,
           department: employee.department,
           position: employee.position,
-          salary: employee.salary
+          phone: employee.phone,
+          dateOfBirth: employee.dateOfBirth,
+          dateOfJoining: employee.dateOfJoining,
+          salary: employee.salary,
+          leaveBalance: employee.leaveBalance,
+          status: employee.status,
+          isActive: employee.isActive
         }
       }
     });
