@@ -182,6 +182,17 @@ const Attendance = () => {
     }
   };
 
+  const handleTestTimezone = async () => {
+    try {
+      const response = await api.get('/attendance/timezone-test');
+      console.log('Timezone test result:', response.data);
+      toast.info('Check console for timezone test results');
+    } catch (error) {
+      console.error('Timezone test error:', error);
+      toast.error('Failed to test timezone');
+    }
+  };
+
   const getStatusBadge = (status) => {
     if (!status) {
       return (
@@ -245,6 +256,14 @@ const Attendance = () => {
             icon={<FiRefreshCw />}
           >
             Recalculate Hours
+          </Button>
+          <Button
+            variant="neutral"
+            onClick={handleTestTimezone}
+            disabled={loading}
+            icon={<FiClock />}
+          >
+            Test Timezone
           </Button>
         </div>
       </div>

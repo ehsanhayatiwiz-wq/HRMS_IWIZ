@@ -129,14 +129,25 @@ attendanceSchema.index({ userType: 1 });
 function formatKarachiTime(date) {
   if (!date) return null;
   
-  // Convert to Karachi time (UTC+5)
+  // Manual conversion to Karachi time (UTC+5)
   const karachiTime = new Date(date.getTime() + 5 * 60 * 60 * 1000);
   
-  // Format as HH:MM
+  // Get the UTC hours and minutes (which will be Karachi local time)
   const hours = karachiTime.getUTCHours().toString().padStart(2, '0');
   const minutes = karachiTime.getUTCMinutes().toString().padStart(2, '0');
   
-  return `${hours}:${minutes}`;
+  const formattedTime = `${hours}:${minutes}`;
+  
+  console.log('formatKarachiTime debug:', {
+    originalDate: date.toISOString(),
+    karachiTime: karachiTime.toISOString(),
+    karachiUTCHours: karachiTime.getUTCHours(),
+    karachiUTCMinutes: karachiTime.getUTCMinutes(),
+    formattedResult: formattedTime,
+    explanation: 'UTC+5 conversion: original time + 5 hours = Karachi time'
+  });
+  
+  return formattedTime;
 }
 
 // Virtual properties for formatted times
@@ -170,12 +181,30 @@ attendanceSchema.virtual('checkOutTimeFormatted').get(function() {
 
 attendanceSchema.virtual('reCheckInTimeFormatted').get(function() {
   if (!this.reCheckIn || !this.reCheckIn.time) return null;
-  return formatKarachiTime(this.reCheckIn.time);
+  
+  const formattedTime = formatKarachiTime(this.reCheckIn.time);
+  
+  console.log('Re-check-in time formatting:', {
+    originalTime: this.reCheckIn.time.toISOString(),
+    formattedTime: formattedTime,
+    karachiTime: new Date(this.reCheckIn.time.getTime() + 5 * 60 * 60 * 1000).toISOString()
+  });
+  
+  return formattedTime;
 });
 
 attendanceSchema.virtual('reCheckOutTimeFormatted').get(function() {
   if (!this.reCheckOut || !this.reCheckOut.time) return null;
-  return formatKarachiTime(this.reCheckOut.time);
+  
+  const formattedTime = formatKarachiTime(this.reCheckOut.time);
+  
+  console.log('Re-check-out time formatting:', {
+    originalTime: this.reCheckOut.time.toISOString(),
+    formattedTime: formattedTime,
+    karachiTime: new Date(this.reCheckOut.time.getTime() + 5 * 60 * 60 * 1000).toISOString()
+  });
+  
+  return formattedTime;
 });
 
 // Format hours for display

@@ -77,7 +77,9 @@ router.post('/checkin', protect, async (req, res) => {
     console.log('Check-in time storage:', {
       currentTime: currentTime.toISOString(),
       karachiTime: new Date(currentTime.getTime() + 5 * 60 * 60 * 1000).toISOString(),
-      karachiFormatted: new Date(currentTime.getTime() + 5 * 60 * 60 * 1000).toLocaleString('en-PK', { timeZone: 'Asia/Karachi' })
+      karachiHours: new Date(currentTime.getTime() + 5 * 60 * 60 * 1000).getUTCHours(),
+      karachiMinutes: new Date(currentTime.getTime() + 5 * 60 * 60 * 1000).getUTCMinutes(),
+      expectedFormat: `${new Date(currentTime.getTime() + 5 * 60 * 60 * 1000).getUTCHours().toString().padStart(2, '0')}:${new Date(currentTime.getTime() + 5 * 60 * 60 * 1000).getUTCMinutes().toString().padStart(2, '0')}`
     });
     
     attendance.checkIn = {
@@ -727,6 +729,12 @@ router.get('/timezone-test', protect, async (req, res) => {
     const testTime = new Date('2024-01-15T12:35:00.000Z'); // 12:35 PM UTC
     const karachiTime = new Date(testTime.getTime() + 5 * 60 * 60 * 1000); // 5:35 PM Karachi
     
+    // Test the formatKarachiTime function
+    const Attendance = require('../models/Attendance');
+    const testFormattedTime = Attendance.schema.virtuals.checkInTimeFormatted.get.call({
+      checkIn: { time: testTime }
+    });
+    
     res.json({
       success: true,
       data: {
@@ -738,18 +746,18 @@ router.get('/timezone-test', protect, async (req, res) => {
         timeFormattingTest: {
           testTimeUTC: testTime.toISOString(),
           testTimeKarachi: karachiTime.toISOString(),
-          formattedTime: testTime.toLocaleTimeString('en-PK', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false,
-            timeZone: 'Asia/Karachi'
-          }),
-          karachiFormatted: karachiTime.toLocaleTimeString('en-PK', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false,
-            timeZone: 'Asia/Karachi'
-          })
+          testFormattedTime: testFormattedTime,
+          manualConversion: {
+            originalHours: testTime.getUTCHours(),
+            originalMinutes: testTime.getUTCMinutes(),
+            karachiHours: karachiTime.getUTCHours(),
+            karachiMinutes: karachiTime.getUTCMinutes(),
+            result: `${karachiTime.getUTCHours().toString().padStart(2, '0')}:${karachiTime.getUTCMinutes().toString().padStart(2, '0')}`
+          },
+          // Test with current time
+          currentTimeUTC: new Date().toISOString(),
+          currentTimeKarachi: new Date(new Date().getTime() + 5 * 60 * 60 * 1000).toISOString(),
+          currentTimeFormatted: `${new Date(new Date().getTime() + 5 * 60 * 60 * 1000).getUTCHours().toString().padStart(2, '0')}:${new Date(new Date().getTime() + 5 * 60 * 60 * 1000).getUTCMinutes().toString().padStart(2, '0')}`
         },
         dayBoundaries: {
           startUtc: startUtc.toISOString(),
