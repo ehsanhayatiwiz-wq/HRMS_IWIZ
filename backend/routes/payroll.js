@@ -83,10 +83,16 @@ router.get('/all', protect, authorize('admin'), async (req, res) => {
 
     const total = await Payroll.countDocuments(filter);
 
+    // Normalize: attach employeeName for frontend fallbacks
+    const normalized = payrolls.map(p => ({
+      ...p.toObject(),
+      employeeName: p.employeeId?.fullName || null
+    }));
+
     res.json({
       success: true,
       data: {
-        payrolls,
+        payrolls: normalized,
         pagination: {
           currentPage: parseInt(page),
           totalPages: Math.ceil(total / limit),
