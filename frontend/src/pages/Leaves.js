@@ -31,7 +31,7 @@ const Leaves = () => {
     try {
       setLoading(true);
       // Fetch a generous page size to ensure all leave records load immediately
-      const response = await api.get('/leaves/my-leaves?page=1&limit=500');
+      const response = await api.get('/leaves/my-leaves?page=1&limit=0');
       setLeaveHistory(response.data?.data?.leaves || []);
     } catch (error) {
       console.error('Error fetching leave history:', error);
@@ -119,6 +119,9 @@ const Leaves = () => {
         halfDayType: 'morning'
       });
       setShowForm(false);
+
+      // 🔥 Force refresh from server to stay in sync with Admin dashboard
+      await fetchLeaveHistory();
   
     } catch (error) {
       console.error('Leave submission error:', error);
@@ -386,4 +389,4 @@ const Leaves = () => {
   );
 };
 
-export default Leaves; 
+export default Leaves;
