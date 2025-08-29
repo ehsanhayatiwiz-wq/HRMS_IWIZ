@@ -123,37 +123,41 @@ attendanceSchema.index({ userType: 1 });
 // Virtual properties for formatted times
 attendanceSchema.virtual('checkInTimeFormatted').get(function() {
   if (!this.checkIn || !this.checkIn.time) return null;
-  return new Date(this.checkIn.time).toLocaleTimeString('en-US', {
+  return new Date(this.checkIn.time).toLocaleTimeString('en-PK', {
     hour: '2-digit',
     minute: '2-digit',
-    hour12: false
+    hour12: false,
+    timeZone: 'Asia/Karachi'
   });
 });
 
 attendanceSchema.virtual('checkOutTimeFormatted').get(function() {
   if (!this.checkOut || !this.checkOut.time) return null;
-  return new Date(this.checkOut.time).toLocaleTimeString('en-US', {
+  return new Date(this.checkOut.time).toLocaleTimeString('en-PK', {
     hour: '2-digit',
     minute: '2-digit',
-    hour12: false
+    hour12: false,
+    timeZone: 'Asia/Karachi'
   });
 });
 
 attendanceSchema.virtual('reCheckInTimeFormatted').get(function() {
   if (!this.reCheckIn || !this.reCheckIn.time) return null;
-  return new Date(this.reCheckIn.time).toLocaleTimeString('en-US', {
+  return new Date(this.reCheckIn.time).toLocaleTimeString('en-PK', {
     hour: '2-digit',
     minute: '2-digit',
-    hour12: false
+    hour12: false,
+    timeZone: 'Asia/Karachi'
   });
 });
 
 attendanceSchema.virtual('reCheckOutTimeFormatted').get(function() {
   if (!this.reCheckOut || !this.reCheckOut.time) return null;
-  return new Date(this.reCheckOut.time).toLocaleTimeString('en-US', {
+  return new Date(this.reCheckOut.time).toLocaleTimeString('en-PK', {
     hour: '2-digit',
     minute: '2-digit',
-    hour12: false
+    hour12: false,
+    timeZone: 'Asia/Karachi'
   });
 });
 
@@ -184,16 +188,24 @@ attendanceSchema.pre('save', function(next) {
 });
 
 // Static method to check if user can re-check-in
+attendanceSchema.statics.getKarachiDayRangeUtc = function(baseDate = new Date()) {
+  // Convert current UTC time to Karachi local wall clock by adding +5h,
+  // then clamp to midnight and convert back to UTC
+  const KARACHI_OFFSET_MS = 5 * 60 * 60 * 1000; // UTC+5, no DST
+  const karachiClock = new Date(baseDate.getTime() + KARACHI_OFFSET_MS);
+  const startKarachiUTC = Date.UTC(karachiClock.getUTCFullYear(), karachiClock.getUTCMonth(), karachiClock.getUTCDate(), 0, 0, 0, 0);
+  const startUtc = new Date(startKarachiUTC - KARACHI_OFFSET_MS);
+  const endUtc = new Date(startUtc.getTime() + 24 * 60 * 60 * 1000);
+  return { startUtc, endUtc };
+};
+
 attendanceSchema.statics.canReCheckIn = async function(userId, userType, date) {
-  const today = new Date(date);
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  const { startUtc, endUtc } = this.getKarachiDayRangeUtc(date || new Date());
 
   const attendance = await this.findOne({
     userId,
     userType,
-    date: { $gte: today, $lt: tomorrow }
+    date: { $gte: startUtc, $lt: endUtc }
   });
 
   if (!attendance) {
@@ -213,15 +225,11 @@ attendanceSchema.statics.canReCheckIn = async function(userId, userType, date) {
 
 // Static method to get today's attendance
 attendanceSchema.statics.getTodayAttendance = async function(userId, userType) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
+  const { startUtc, endUtc } = this.getKarachiDayRangeUtc(new Date());
   return await this.findOne({
     userId,
     userType,
-    date: { $gte: today, $lt: tomorrow }
+    date: { $gte: startUtc, $lt: endUtc }
   });
 };
 

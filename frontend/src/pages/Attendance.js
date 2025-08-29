@@ -323,7 +323,7 @@ const Attendance = () => {
               <tbody>
                 {attendanceHistory.map((attendance, index) => (
                   <tr key={attendance.id || attendance._id || `attendance-${index}`}>
-                    <td>{new Date(attendance.date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</td>
+                    <td>{new Date(attendance.date).toLocaleDateString('en-PK', { month: 'short', day: '2-digit', year: 'numeric', timeZone: 'Asia/Karachi' })}</td>
                     <td>{attendance.checkInTime || '-'}</td>
                     <td>{attendance.checkOutTime || '-'}</td>
                     <td>

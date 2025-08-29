@@ -14,7 +14,7 @@ router.get('/employees', async (req, res) => {
   try {
     const employees = await Employee.find({}).sort({ createdAt: -1 });
 
-    const doc = new PDFDocument();
+    const doc = new PDFDocument({ size: 'A4', margin: 40 });
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename=employee-report.pdf');
     res.setHeader('Cache-Control', 'no-cache');
@@ -177,7 +177,7 @@ router.get('/attendance', async (req, res) => {
         record.userId?.fullName || 'Unknown',
         record.userId?.employeeId || 'N/A',
         record.userId?.department || 'N/A',
-        new Date(record.date).toLocaleDateString(),
+        new Date(record.date).toLocaleDateString('en-PK', { timeZone: 'Asia/Karachi' }),
         `${(record.totalHours || 0).toFixed(2)}h`
       ]);
       y += 26;
@@ -248,10 +248,12 @@ router.get('/leaves', async (req, res) => {
     doc.moveDown();
 
     leaves.forEach((leave, index) => {
+      const fromStr = new Date(leave.fromDate).toLocaleDateString('en-PK', { timeZone: 'Asia/Karachi' });
+      const toStr = new Date(leave.toDate).toLocaleDateString('en-PK', { timeZone: 'Asia/Karachi' });
       doc.fontSize(10).text(`${index + 1}. ${leave.userId?.fullName || 'Unknown'}`, { continued: true });
       doc.text(` - ${leave.userId?.employeeId || 'N/A'}`, { continued: true });
       doc.text(` - ${leave.leaveType}`, { continued: true });
-      doc.text(` - ${leave.fromDate.toLocaleDateString()} to ${leave.toDate.toLocaleDateString()}`, { continued: true });
+      doc.text(` - ${fromStr} to ${toStr}`, { continued: true });
       doc.text(` - ${leave.totalDays} days`, { continued: true });
       doc.text(` - ${leave.status}`, { align: 'right' });
       doc.moveDown(0.5);
@@ -343,7 +345,8 @@ router.get('/employees/csv', async (req, res) => {
 
     let csv = 'Name,Employee ID,Email,Department,Position,Phone,Status,Leave Balance,Date of Joining\n';
     employees.forEach(employee => {
-      csv += `"${employee.fullName}","${employee.employeeId}","${employee.email}","${employee.department}","${employee.position}","${employee.phone}","${employee.status}","${employee.leaveBalance}","${employee.dateOfJoining.toLocaleDateString()}"\n`;
+      const doj = employee.dateOfJoining ? new Date(employee.dateOfJoining).toLocaleDateString('en-PK', { timeZone: 'Asia/Karachi' }) : '';
+      csv += `"${employee.fullName}","${employee.employeeId}","${employee.email}","${employee.department}","${employee.position}","${employee.phone || ''}","${employee.status}","${employee.leaveBalance}","${doj}"\n`;
     });
 
     res.setHeader('Content-Type', 'text/csv');
@@ -371,7 +374,10 @@ router.get('/attendance/csv', async (req, res) => {
 
     let csv = 'Employee Name,Employee ID,Department,Date,Check In,Check Out,Total Hours,Status\n';
     attendanceRecords.forEach(record => {
-      csv += `"${record.userId?.fullName || 'Unknown'}","${record.userId?.employeeId || 'N/A'}","${record.userId?.department || 'N/A'}","${record.date.toLocaleDateString()}","${record.checkIn?.time ? record.checkIn.time.toLocaleTimeString() : '-'}","${record.checkOut?.time ? record.checkOut.time.toLocaleTimeString() : '-'}","${record.totalHours || 0}","${record.status}"\n`;
+      const dateStr = new Date(record.date).toLocaleDateString('en-PK', { timeZone: 'Asia/Karachi' });
+      const inStr = record.checkIn?.time ? new Date(record.checkIn.time).toLocaleTimeString('en-PK', { hour12: false, timeZone: 'Asia/Karachi' }) : '-';
+      const outStr = record.checkOut?.time ? new Date(record.checkOut.time).toLocaleTimeString('en-PK', { hour12: false, timeZone: 'Asia/Karachi' }) : '-';
+      csv += `"${record.userId?.fullName || 'Unknown'}","${record.userId?.employeeId || 'N/A'}","${record.userId?.department || 'N/A'}","${dateStr}","${inStr}","${outStr}","${(record.totalHours || 0).toFixed(2)}","${record.status}"\n`;
     });
 
     res.setHeader('Content-Type', 'text/csv');

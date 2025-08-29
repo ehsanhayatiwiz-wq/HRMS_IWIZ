@@ -52,8 +52,15 @@ const AdminDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const inFlightRef = React.useRef(false);
+  const [lastErrorAt, setLastErrorAt] = useState(0);
+  const [pollIntervalMs, setPollIntervalMs] = useState(60000);
+  const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
+
   const fetchDashboardData = React.useCallback(async () => {
     try {
+      if (inFlightRef.current) return; // prevent overlapping fetches
+      inFlightRef.current = true;
       setLoading(true);
       
       if (activeSection === 'dashboard') {
@@ -73,6 +80,9 @@ const AdminDashboard = () => {
           attendanceRate: s.attendanceRate || 0,
           onLeaveToday: s.onLeaveEmployees || 0
         });
+
+        // Success → normalize poll interval
+        if (pollIntervalMs !== 60000) setPollIntervalMs(60000);
         setEmployees(employeesRes.data?.data?.employees || []);
         
         // Debug: Log the leave requests data for dashboard (normalized to employeeId)
@@ -134,13 +144,22 @@ const AdminDashboard = () => {
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
-      if (activeSection === 'dashboard') {
-        toast.error('Failed to load dashboard data');
+      const now = Date.now();
+      // Avoid spamming toasts on transient network issues
+      const shouldToast = now - lastErrorAt > 10000; // 10s
+      if (shouldToast) {
+        const message = error.response?.data?.message || error.userMessage || 'Failed to load data. Please check your connection.';
+        toast.error(message);
+        setLastErrorAt(now);
       }
+
+      // Backoff polling on failures up to 5 minutes
+      setPollIntervalMs(prev => Math.min(prev * 2, 300000));
     } finally {
       setLoading(false);
+      inFlightRef.current = false;
     }
-  }, [activeSection, currentPage, searchTerm, filterStatus, filterDepartment, selectedDate]);
+  }, [activeSection, currentPage, searchTerm, filterStatus, filterDepartment, selectedDate, pollIntervalMs]);
 
   // Add search and filter effects
   useEffect(() => {
@@ -173,16 +192,28 @@ const AdminDashboard = () => {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
-  // Lightweight polling to keep data fresh while admin is viewing
+  // Lightweight polling with overlap protection and dynamic backoff
   useEffect(() => {
     // Poll only on dynamic sections where data changes frequently
     const shouldPoll = activeSection === 'dashboard' || activeSection === 'leaves' || activeSection === 'employees' || activeSection === 'attendance';
     if (!shouldPoll) return;
     const interval = setInterval(() => {
-      fetchDashboardData();
-    }, 30000); // 30s
+      if (!inFlightRef.current) fetchDashboardData();
+    }, pollIntervalMs);
     return () => clearInterval(interval);
-  }, [activeSection, fetchDashboardData]);
+  }, [activeSection, fetchDashboardData, pollIntervalMs]);
+
+  // Track online/offline to show a gentle banner
+  useEffect(() => {
+    const goOnline = () => setIsOffline(false);
+    const goOffline = () => setIsOffline(true);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    return () => {
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
+    };
+  }, []);
 
   // Sync internal section state with the URL path (e.g., /admin/leaves → 'leaves')
   useEffect(() => {
@@ -703,7 +734,7 @@ const AdminDashboard = () => {
                             </div>
                           </div>
                         </td>
-                        <td>{new Date(record.date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</td>
+                        <td>{new Date(record.date).toLocaleDateString('en-PK', { month: 'short', day: '2-digit', year: 'numeric', timeZone: 'Asia/Karachi' })}</td>
                         <td>
                           {record.checkInTime || '-'}
                         </td>
