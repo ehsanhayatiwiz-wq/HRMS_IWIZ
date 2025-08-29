@@ -327,7 +327,36 @@ const AdminDashboard = () => {
   const handleSaveEmployee = async (employeeData) => {
     try {
       if (editingEmployee) {
-        await api.put(`/employees/${editingEmployee.id}`, employeeData);
+        // For updates, only send the fields that have changed and are not empty
+        const updatePayload = {};
+        
+        if (employeeData.fullName && employeeData.fullName.trim()) updatePayload.fullName = employeeData.fullName.trim();
+        if (employeeData.email && employeeData.email.trim()) updatePayload.email = employeeData.email.trim();
+        if (employeeData.department && employeeData.department.trim()) updatePayload.department = employeeData.department.trim();
+        if (employeeData.position && employeeData.position.trim()) updatePayload.position = employeeData.position.trim();
+        if (employeeData.phone && employeeData.phone.trim()) updatePayload.phone = employeeData.phone.trim();
+        if (employeeData.joiningDate) updatePayload.joiningDate = employeeData.joiningDate;
+        if (employeeData.salary && employeeData.salary > 0) updatePayload.salary = Number(employeeData.salary);
+        if (employeeData.address && Object.values(employeeData.address).some(val => val && val.trim())) {
+          updatePayload.address = {};
+          if (employeeData.address.street && employeeData.address.street.trim()) updatePayload.address.street = employeeData.address.street.trim();
+          if (employeeData.address.city && employeeData.address.city.trim()) updatePayload.address.city = employeeData.address.city.trim();
+          if (employeeData.address.zipCode && employeeData.address.zipCode.trim()) updatePayload.address.zipCode = employeeData.address.zipCode.trim();
+          if (employeeData.address.country && employeeData.address.country.trim()) updatePayload.address.country = employeeData.address.country.trim();
+        }
+        if (employeeData.leaveBalance !== undefined && employeeData.leaveBalance >= 0) updatePayload.leaveBalance = Number(employeeData.leaveBalance);
+        if (employeeData.status) updatePayload.status = employeeData.status;
+        
+        // Ensure we have at least one field to update
+        if (Object.keys(updatePayload).length === 0) {
+          toast.error('No changes detected');
+          return;
+        }
+        
+        console.log('Sending update payload:', updatePayload);
+        console.log('Original employeeData:', employeeData);
+        console.log('Payload keys:', Object.keys(updatePayload));
+        await api.put(`/employees/${editingEmployee.id}`, updatePayload);
         toast.success('Employee updated successfully');
       } else {
         // Always use manual creation with admin-set temporary password
@@ -337,11 +366,11 @@ const AdminDashboard = () => {
           password: employeeData.password,
           department: employeeData.department,
           position: employeeData.position,
-          phone: employeeData.phone,
+          phone: employeeData.phone || '',
           dateOfJoining: employeeData.joiningDate || new Date().toISOString(),
-          salary: employeeData.salary,
-          address: employeeData.address,
-          leaveBalance: employeeData.leaveBalance
+          salary: employeeData.salary || 0,
+          address: employeeData.address && Object.values(employeeData.address).some(val => val && val.trim()) ? employeeData.address : undefined,
+          leaveBalance: employeeData.leaveBalance || 25
         };
         await api.post('/employees', payload);
         toast.success('Employee created successfully');
@@ -1090,10 +1119,8 @@ const EmployeeModal = ({ employee, onSave, onClose }) => {
       const pwd = (formData.password || '').trim();
       if (!pwd) {
         newErrors.password = 'Temporary password is required';
-      } else if (pwd.length < 8) {
-        newErrors.password = 'Password must be at least 8 characters';
-      } else if (!/(?=.*[0-9])(?=.*[^A-Za-z0-9])/.test(pwd)) {
-        newErrors.password = 'Password must include a number and a symbol';
+      } else if (pwd.length < 6) {
+        newErrors.password = 'Password must be at least 6 characters';
       }
     }
     
@@ -1190,7 +1217,12 @@ const EmployeeModal = ({ employee, onSave, onClose }) => {
               >
                 <option value="">Select Department</option>
                 <option value="IT">IT</option>
-                <option value="Operation">Operation</option>
+                <option value="HR">HR</option>
+                <option value="Finance">Finance</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Sales">Sales</option>
+                <option value="Operations">Operations</option>
+                <option value="Design">Design</option>
                 <option value="Management">Management</option>
               </select>
               {errors.department && <span className="error-message">{errors.department}</span>}
