@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 
@@ -16,104 +15,30 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [token, setToken] = useState(localStorage.getItem('token'));
-  const [lastRequestTime, setLastRequestTime] = useState(0);
-  // Resolve API base. Prefer build-time env; otherwise, choose sensible runtime fallback
-  const API_BASE =
-    process.env.REACT_APP_API_URL ||
-    (typeof window !== 'undefined'
-      ? (window.location.hostname.endsWith('vercel.app')
-          ? 'https://hrms-iwiz.onrender.com/api'
-          : '/api')
-      : '/api');
 
-  // Request throttling to prevent rate limiting
-  const throttleRequest = async (requestFn) => {
-    const now = Date.now();
-    const timeSinceLastRequest = now - lastRequestTime;
-    const minDelay = 1000; // Minimum 1 second between requests
-    
-    if (timeSinceLastRequest < minDelay) {
-      const delay = minDelay - timeSinceLastRequest;
-      console.log(`Throttling request, waiting ${delay}ms...`);
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-    
-    setLastRequestTime(Date.now());
-    return await requestFn();
-  };
-
-  // Set up axios defaults
+  // Check if user is authenticated on mount
   useEffect(() => {
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    } else {
-      delete axios.defaults.headers.common['Authorization'];
-    }
-  }, [token]);
-
-  // Test backend connectivity
-  const testBackendConnection = async () => {
-    try {
-      console.log('Testing backend connection...');
-      const response = await api.get('/auth/test', { 
-        timeout: 20000,
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
-      console.log('Backend connection test successful:', response.data);
-      return true;
-    } catch (error) {
-      console.error('Backend connection test failed:', error);
-      
-      if (error.response?.status === 429) {
-        console.log('Rate limited during connection test, this is normal');
-        return true; // Rate limiting means server is running
-      }
-      
-      if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
-        console.error('Backend server is not running or not accessible');
-        return false;
-      }
-      
-      return false;
-    }
-  };
-
-  // Check if user is authenticated on app load
-  useEffect(() => {
-    const checkAuth = async () => {
-      if (token) {
-        try {
-          const response = await api.get('/auth/me');
-          setUser(response.data.data.user);
-        } catch (error) {
-          console.error('Auth check failed:', error);
-          logout();
-        }
-      }
-      setLoading(false);
-    };
-
     checkAuth();
-  }, [token]);
+  }, []);
 
-  // Retry mechanism with exponential backoff
-  const retryWithBackoff = async (fn, maxRetries = 3, baseDelay = 1000) => {
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
-      try {
-        return await fn();
-      } catch (error) {
-        if (error.response?.status === 429 && attempt < maxRetries - 1) {
-          const delay = baseDelay * Math.pow(2, attempt);
-          console.log(`Rate limited, retrying in ${delay}ms... (attempt ${attempt + 1}/${maxRetries})`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-          continue;
-        }
-        throw error;
+  const checkAuth = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setLoading(false);
+        return;
       }
+
+      const response = await api.get('/auth/me');
+      if (response.data.success) {
+        setUser(response.data.data.user);
+      } else {
+        localStorage.removeItem('token');
+      }
+    } catch (error) {
+      localStorage.removeItem('token');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -135,10 +60,6 @@ export const AuthProvider = ({ children }) => {
         
         // Update user state
         setUser(user);
-        
-        // Update auth state
-        // setIsAuthenticated(true); // This state was not defined in the original file
-        // setUserRole(user.role); // This state was not defined in the original file
         
         toast.success('Login successful!');
         return { success: true };
@@ -219,14 +140,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('token');
-    delete axios.defaults.headers.common['Authorization'];
-    toast.info('Logged out successfully');
-  };
-
   const updateProfile = async (profileData) => {
     try {
       const response = await api.put('/users/profile', profileData);
@@ -262,27 +175,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const changePassword = async (currentPassword, newPassword) => {
-    try {
-      await api.post('/auth/change-password', {
-        currentPassword,
-        newPassword
-      });
-      toast.success('Password changed successfully!');
-      return { success: true };
-    } catch (error) {
-      const message = error.response?.data?.message || 'Password change failed';
-      toast.error(message);
-      return { success: false, error: message };
-    }
-  };
-
-  const isAdmin = () => {
-    return user && (user.role === 'admin' || user.role === 'hr');
-  };
-
-  const isEmployee = () => {
-    return user && user.role === 'employee';
+  const logout = () => {
+    localStorage.removeItem('token');
+    setUser(null);
+    toast.success('Logged out successfully');
   };
 
   const value = {
@@ -292,10 +188,7 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     updateProfile,
-    changePassword,
-    isAdmin,
-    isEmployee,
-    testBackendConnection
+    checkAuth
   };
 
   return (
