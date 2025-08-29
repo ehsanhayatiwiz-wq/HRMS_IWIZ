@@ -16,7 +16,7 @@ import { Layout } from './components/layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
 import './App.css';
-import ChangePassword from './pages/Settings';
+import Settings from './pages/Settings';
 import NotFound from './pages/NotFound';
 
 function AppRoutes() {
@@ -35,7 +35,7 @@ function AppRoutes() {
     <Routes>
       {/* Public Routes */}
       <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
-      <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
+      <Route path="/change-password" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       {/* Registration disabled: Admin-only creation */}
       
       {/* Protected Routes */}
