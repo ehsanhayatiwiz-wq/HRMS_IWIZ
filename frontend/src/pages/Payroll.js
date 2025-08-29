@@ -17,15 +17,44 @@ const Payroll = () => {
   const [generating, setGenerating] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [fetchInProgress, setFetchInProgress] = useState(false);
+
+  // Helper function to safely parse month and year
+  const parseMonthYear = (monthStr, yearStr) => {
+    try {
+      const month = parseInt(monthStr.split('-')[1]); // Extract month from YYYY-MM format
+      const year = parseInt(yearStr);
+      
+      if (isNaN(month) || month < 1 || month > 12) {
+        console.warn('Invalid month:', monthStr, 'using current month');
+        return { month: moment().month() + 1, year: moment().year() };
+      }
+      
+      if (isNaN(year) || year < 2020 || year > 2030) {
+        console.warn('Invalid year:', yearStr, 'using current year');
+        return { month, year: moment().year() };
+      }
+      
+      return { month, year };
+    } catch (error) {
+      console.error('Error parsing month/year:', error);
+      return { month: moment().month() + 1, year: moment().year() };
+    }
+  };
 
   const fetchPayrollData = async () => {
+    if (fetchInProgress) {
+      console.log('Fetch already in progress, skipping...');
+      return;
+    }
+
     try {
+      setFetchInProgress(true);
       setLoading(true);
       
       if (activeTab === 'overview') {
         // Fix month/year handling - ensure we get the correct month (1-12) and year
-        const month = parseInt(selectedMonth.split('-')[1]); // Extract month from YYYY-MM format
-        const year = parseInt(selectedYear);
+        const { month, year } = parseMonthYear(selectedMonth, selectedYear);
         
         console.log('Fetching payroll data for month:', month, 'year:', year);
         
@@ -55,6 +84,7 @@ const Payroll = () => {
       toast.error('Failed to load payroll data');
     } finally {
       setLoading(false);
+      setFetchInProgress(false);
     }
   };
 
@@ -65,18 +95,31 @@ const Payroll = () => {
   const generatePayroll = async () => {
     try {
       setGenerating(true);
-      const month = parseInt(selectedMonth.split('-')[1]); // Extract month from YYYY-MM format
-      const year = parseInt(selectedYear);
+      const { month, year } = parseMonthYear(selectedMonth, selectedYear);
       
       console.log('Generating payroll for month:', month, 'year:', year);
       
       const response = await api.post('/payroll/generate', { month, year });
       
-      toast.success(response.data.message);
-      fetchPayrollData();
+      toast.success(response.data.message || 'Payroll generated successfully!');
+      
+      // Refresh data after generation
+      setTimeout(() => {
+        fetchPayrollData();
+      }, 1000);
+      
     } catch (error) {
       console.error('Error generating payroll:', error);
-      toast.error(error.response?.data?.message || 'Failed to generate payroll');
+      
+      if (error.response?.status === 400) {
+        toast.error(error.response.data.message || 'Invalid payroll generation request');
+      } else if (error.response?.status === 409) {
+        toast.error('Payroll for this month/year already exists');
+      } else if (error.response?.status === 500) {
+        toast.error('Server error during payroll generation. Please try again later.');
+      } else {
+        toast.error('Failed to generate payroll. Please try again.');
+      }
     } finally {
       setGenerating(false);
     }
@@ -366,8 +409,18 @@ const Payroll = () => {
   return (
     <div className="payroll-page">
       <div className="page-header">
-        <h2>Payroll Management</h2>
-        <p>Manage employee payroll, generate salary slips, and track payments</p>
+        <div>
+          <h2>Payroll Management</h2>
+          <p>Manage employee payroll, generate salary slips, and track payments</p>
+        </div>
+        <Button
+          variant="secondary"
+          onClick={fetchPayrollData}
+          icon={<FiRefreshCw />}
+          disabled={loading || fetchInProgress}
+        >
+          {loading ? 'Refreshing...' : 'Refresh Data'}
+        </Button>
       </div>
 
       <div className="payroll-tabs">

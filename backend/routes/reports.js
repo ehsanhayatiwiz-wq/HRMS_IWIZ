@@ -12,13 +12,19 @@ router.use(protect, authorize('admin', 'hr'));
 // Generate Employee Report PDF
 router.get('/employees', async (req, res) => {
   try {
+    console.log('Generating employee report PDF...');
+    
     const employees = await Employee.find({}).sort({ createdAt: -1 });
+    console.log(`Found ${employees.length} employees for report`);
 
     const doc = new PDFDocument({ size: 'A4', margin: 40 });
+    
+    // Set proper headers
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename=employee-report.pdf');
-    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     
     // Pipe PDF to response
     doc.pipe(res);
@@ -37,6 +43,7 @@ router.get('/employees', async (req, res) => {
       doc.destroy();
     });
 
+    // Generate PDF content
     doc.fontSize(24).text('Employee Report', { align: 'center' });
     doc.moveDown();
     doc.fontSize(12).text(`Generated on: ${new Date().toLocaleDateString()}`, { align: 'center' });
@@ -45,38 +52,33 @@ router.get('/employees', async (req, res) => {
     doc.fontSize(14).text('Employee Details', { underline: true });
     doc.moveDown();
 
-    employees.forEach((employee, index) => {
-      doc.fontSize(10).text(`${index + 1}. ${employee.fullName}`, { continued: true });
-      doc.text(` - ${employee.employeeId}`, { continued: true });
-      doc.text(` - ${employee.department}`, { continued: true });
-      doc.text(` - ${employee.position}`, { continued: true });
-      doc.text(` - ${employee.status}`, { continued: true });
-      doc.text(` - ${employee.leaveBalance} days leave`, { align: 'right' });
-      doc.moveDown(0.5);
-    });
+    if (employees.length === 0) {
+      doc.fontSize(12).text('No employees found.', { align: 'center' });
+    } else {
+      employees.forEach((employee, index) => {
+        doc.fontSize(10).text(`${index + 1}. ${employee.fullName || 'Unknown'}`, { continued: true });
+        doc.text(` - ${employee.employeeId || 'N/A'}`, { continued: true });
+        doc.text(` - ${employee.department || 'N/A'}`, { continued: true });
+        doc.text(` - ${employee.position || 'N/A'}`, { continued: true });
+        doc.text(` - ${employee.status || 'N/A'}`, { continued: true });
+        doc.text(` - ${employee.leaveBalance || 0} days leave`, { align: 'right' });
+        doc.moveDown(0.5);
+      });
+    }
 
     // Finalize PDF
     doc.end();
     
-    // Ensure response is properly closed
-    res.on('finish', () => {
-      console.log('PDF report generated successfully');
-    });
+    console.log('Employee report PDF generated successfully');
     
-    res.on('error', (error) => {
-      console.error('PDF report error:', error);
-    });
-    
-    // Handle stream end
-    doc.on('end', () => {
-      console.log('PDF stream ended successfully');
-    });
   } catch (error) {
     console.error('Error generating employee report:', error);
-    res.status(500).json({ 
-      message: 'Failed to generate employee report',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-    });
+    if (!res.headersSent) {
+      res.status(500).json({ 
+        message: 'Failed to generate employee report',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      });
+    }
   }
 });
 

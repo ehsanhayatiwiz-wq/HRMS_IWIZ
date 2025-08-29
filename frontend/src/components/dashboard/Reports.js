@@ -50,6 +50,12 @@ const Reports = () => {
       return;
     }
 
+    // Validate date range
+    if (new Date(dateRange.endDate) < new Date(dateRange.startDate)) {
+      toast.error('End date cannot be before start date');
+      return;
+    }
+
     setLoading(true);
     try {
       let endpoint = '';
@@ -77,9 +83,17 @@ const Reports = () => {
           throw new Error('Invalid report type');
       }
 
+      console.log('Generating report:', type, 'from endpoint:', endpoint);
+
       const response = await api.get(endpoint, {
-        responseType: 'blob'
+        responseType: 'blob',
+        timeout: 30000 // 30 second timeout for PDF generation
       });
+
+      // Check if response is actually a PDF
+      if (response.data.type && response.data.type !== 'application/pdf') {
+        throw new Error('Invalid response format - expected PDF');
+      }
 
       // Create download link
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -94,15 +108,30 @@ const Reports = () => {
       toast.success(`${reportTypes.find(r => r.id === type)?.title} generated successfully!`);
     } catch (error) {
       console.error('Error generating report:', error);
-      toast.error('Failed to generate report. Please try again.');
+      
+      if (error.code === 'ECONNABORTED') {
+        toast.error('Report generation timed out. Please try again.');
+      } else if (error.response?.status === 500) {
+        toast.error('Server error during report generation. Please try again later.');
+      } else if (error.message.includes('Invalid response format')) {
+        toast.error('Report generation failed. Please try again.');
+      } else {
+        toast.error('Failed to generate report. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleExportCSV = async (type) => {
-    if (!dateRange.startDate || !dateRange.endDate) {
+    if (type !== 'employee' && (!dateRange.startDate || !dateRange.endDate)) {
       toast.error('Please select both start and end dates');
+      return;
+    }
+
+    // Validate date range for date-dependent reports
+    if (type !== 'employee' && new Date(dateRange.endDate) < new Date(dateRange.startDate)) {
+      toast.error('End date cannot be before start date');
       return;
     }
 
@@ -132,8 +161,11 @@ const Reports = () => {
           throw new Error('Invalid report type');
       }
 
+      console.log('Exporting CSV:', type, 'from endpoint:', endpoint);
+
       const response = await api.get(endpoint, {
-        responseType: 'blob'
+        responseType: 'blob',
+        timeout: 15000 // 15 second timeout for CSV export
       });
 
       // Create download link
@@ -149,7 +181,14 @@ const Reports = () => {
       toast.success(`${reportTypes.find(r => r.id === type)?.title} exported as CSV successfully!`);
     } catch (error) {
       console.error('Error exporting CSV:', error);
-      toast.error('Failed to export CSV. Please try again.');
+      
+      if (error.code === 'ECONNABORTED') {
+        toast.error('CSV export timed out. Please try again.');
+      } else if (error.response?.status === 500) {
+        toast.error('Server error during CSV export. Please try again later.');
+      } else {
+        toast.error('Failed to export CSV. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
