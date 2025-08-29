@@ -115,7 +115,7 @@ router.put('/profile', protect, [
     .withMessage('Emergency contact phone is required')
 ], async (req, res) => {
   try {
-    console.log('Update profile request for user:', req.user.id);
+
     
     // Check for validation errors
     const errors = validationResult(req);
@@ -147,7 +147,7 @@ router.put('/profile', protect, [
       { new: true, runValidators: true }
     ).select('-password');
 
-    console.log('Profile updated successfully for user type:', userType);
+
 
     res.json({
       success: true,

@@ -266,7 +266,7 @@ router.get('/:payrollId/download', protect, async (req, res) => {
     
     // Ensure response is properly closed
     res.on('finish', () => {
-      console.log('PDF download completed successfully');
+
     });
     
     res.on('error', (error) => {
@@ -275,7 +275,7 @@ router.get('/:payrollId/download', protect, async (req, res) => {
     
     // Handle stream end
     doc.on('end', () => {
-      console.log('PDF stream ended successfully');
+
     });
 
   } catch (error) {
@@ -405,14 +405,14 @@ router.get('/reports/summary', protect, authorize('admin'), async (req, res) => 
 // @desc    Debug route to check payroll data (Admin only)
 // @access  Private (Admin)
 router.get('/debug', protect, authorize('admin'), async (req, res) => {
-  console.log('Payroll debug request');
+  
   const diagnostics = { success: true, data: {}, errors: [] };
 
   // Step 1: Count payrolls
   try {
     const totalPayrolls = await Payroll.countDocuments({});
     diagnostics.data.totalPayrolls = totalPayrolls;
-    console.log(`Total payroll records in DB: ${totalPayrolls}`);
+
   } catch (e) {
     diagnostics.success = false;
     diagnostics.errors.push({ step: 'countPayrolls', message: e?.message || String(e) });
@@ -437,7 +437,7 @@ router.get('/debug', protect, authorize('admin'), async (req, res) => {
       netPay: p.netPay ?? null
     }));
 
-    console.log('Recent payrolls:', diagnostics.data.recentPayrolls);
+    
   } catch (e) {
     diagnostics.success = false;
     diagnostics.errors.push({ step: 'recentPayrolls', message: e?.message || String(e) });
@@ -451,7 +451,7 @@ router.get('/debug', protect, authorize('admin'), async (req, res) => {
       Employee.countDocuments({ $or: [{ status: 'active' }, { isActive: true }] })
     ]);
     diagnostics.data.employeeStats = { total: totalEmployees, active: activeEmployees };
-    console.log(`Total employees: ${totalEmployees}, Active: ${activeEmployees}`);
+
   } catch (e) {
     diagnostics.success = false;
     diagnostics.errors.push({ step: 'employeeStats', message: e?.message || String(e) });

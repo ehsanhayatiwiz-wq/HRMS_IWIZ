@@ -12,10 +12,10 @@ router.use(protect, authorize('admin', 'hr'));
 // Generate Employee Report PDF
 router.get('/employees', async (req, res) => {
   try {
-    console.log('Generating employee report PDF...');
+
     
     const employees = await Employee.find({}).sort({ createdAt: -1 });
-    console.log(`Found ${employees.length} employees for report`);
+    
 
     const doc = new PDFDocument({ size: 'A4', margin: 40 });
     
@@ -69,7 +69,7 @@ router.get('/employees', async (req, res) => {
     // Finalize PDF
     doc.end();
     
-    console.log('Employee report PDF generated successfully');
+    
     
   } catch (error) {
     console.error('Error generating employee report:', error);
@@ -190,7 +190,7 @@ router.get('/attendance', async (req, res) => {
     
     // Ensure response is properly closed
     res.on('finish', () => {
-      console.log('PDF attendance report generated successfully');
+
     });
     
     res.on('error', (error) => {
@@ -199,7 +199,7 @@ router.get('/attendance', async (req, res) => {
     
     // Handle stream end
     doc.on('end', () => {
-      console.log('PDF attendance stream ended successfully');
+
     });
   } catch (error) {
     console.error('Error generating attendance report:', error);

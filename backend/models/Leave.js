@@ -114,7 +114,6 @@ leaveSchema.methods.calculateTotalDays = function() {
     
     return totalDays;
   } catch (error) {
-    console.error('Error calculating total days:', error);
     return 1; // Return 1 day as fallback
   }
 };
@@ -141,7 +140,6 @@ leaveSchema.statics.calculateTotalDays = function(fromDate, toDate, isHalfDay = 
     
     return totalDays;
   } catch (error) {
-    console.error('Error calculating total days:', error);
     return 1; // Return 1 day as fallback
   }
 };
@@ -163,7 +161,6 @@ leaveSchema.statics.checkLeaveOverlap = async function(userId, fromDate, toDate,
     const overlappingLeave = await this.findOne(query);
     return !!overlappingLeave;
   } catch (error) {
-    console.error('Error checking leave overlap:', error);
     return false; // Return false as fallback
   }
 };
@@ -179,7 +176,6 @@ leaveSchema.statics.getUserLeaveBalance = async function(userId, userType) {
       return employee ? employee.leaveBalance : 0;
     }
   } catch (error) {
-    console.error('Error getting user leave balance:', error);
     return 0; // Return 0 as fallback
   }
 };
@@ -199,12 +195,9 @@ leaveSchema.statics.updateUserLeaveBalance = async function(userId, userType, le
         }
         
         await employee.save();
-      } else {
-        console.warn(`Employee with ID ${userId} not found for leave balance update`);
       }
     }
   } catch (error) {
-    console.error('Error updating leave balance:', error);
     throw error; // Re-throw to be handled by the calling function
   }
 };
@@ -228,7 +221,6 @@ leaveSchema.pre('save', function(next) {
     }
     next();
   } catch (error) {
-    console.error('Error in pre-save middleware:', error);
     next(error);
   }
 });

@@ -17,6 +17,8 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  // Add withCredentials for CORS
+  withCredentials: false
 });
 
 // Request interceptor to add auth token
@@ -44,6 +46,12 @@ api.interceptors.response.use(
       if (window.location.pathname !== '/login') {
         window.location.href = '/login';
       }
+      return Promise.reject(error);
+    }
+
+    // Handle CORS errors specifically
+    if (error.message === 'Network Error' || error.code === 'ERR_NETWORK') {
+      error.userMessage = 'Network error. Please check your connection and try again.';
       return Promise.reject(error);
     }
 

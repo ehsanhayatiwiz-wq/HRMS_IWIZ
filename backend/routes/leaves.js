@@ -307,7 +307,6 @@ router.put('/:id/approve', protect, authorize('admin'), [
   body('notes').optional().trim().isLength({ max: 500 }).withMessage('Notes cannot exceed 500 characters')
 ], async (req, res) => {
   try {
-    
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -339,8 +338,6 @@ router.put('/:id/approve', protect, authorize('admin'), [
 
     await leave.save();
 
-    console.log('Leave request approved successfully');
-
     res.json({
       success: true,
       message: 'Leave request approved successfully',
@@ -356,10 +353,6 @@ router.put('/:id/approve', protect, authorize('admin'), [
     });
 
   } catch (error) {
-    console.error('Approve leave error details:');
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
-    console.error('Error name:', error.name);
     res.status(500).json({ message: 'Server error while approving leave request' });
   }
 });
@@ -371,7 +364,6 @@ router.put('/:id/reject', protect, authorize('admin'), [
   body('rejectionReason').trim().isLength({ min: 5, max: 500 }).withMessage('Rejection reason must be between 5 and 500 characters')
 ], async (req, res) => {
   try {
-    
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -403,8 +395,6 @@ router.put('/:id/reject', protect, authorize('admin'), [
 
     await leave.save();
 
-    console.log('Leave request rejected successfully');
-
     res.json({
       success: true,
       message: 'Leave request rejected successfully',
@@ -420,7 +410,6 @@ router.put('/:id/reject', protect, authorize('admin'), [
     });
 
   } catch (error) {
-    console.error('Reject leave error:', error);
     res.status(500).json({ message: 'Server error while rejecting leave request' });
   }
 });

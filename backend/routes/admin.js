@@ -248,7 +248,7 @@ router.post('/employees/:employeeId/reset-password', protect, authorize('admin')
     await employee.save();
 
     // Email service removed for simplicity
-    console.log('Password reset completed. Email service disabled.');
+
 
     res.json({
       success: true,
