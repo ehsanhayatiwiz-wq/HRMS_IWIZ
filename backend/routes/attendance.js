@@ -471,6 +471,22 @@ router.get('/history', protect, async (req, res) => {
 
     console.log(`Found ${attendance.length} attendance records for user:`, userId);
 
+    // Debug the first record to see what's happening
+    if (attendance.length > 0) {
+      const firstRecord = attendance[0];
+      console.log('First attendance record debug:', {
+        id: firstRecord._id,
+        date: firstRecord.date,
+        checkInTime: firstRecord.checkIn?.time?.toISOString(),
+        checkOutTime: firstRecord.checkOut?.time?.toISOString(),
+        checkInTimeFormatted: firstRecord.checkInTimeFormatted,
+        checkOutTimeFormatted: firstRecord.checkOutTimeFormatted,
+        totalHours: firstRecord.totalHours,
+        firstSessionHours: firstRecord.firstSessionHours,
+        secondSessionHours: firstRecord.secondSessionHours
+      });
+    }
+
     res.json({
       success: true,
       data: {
@@ -481,8 +497,11 @@ router.get('/history', protect, async (req, res) => {
           reCheckInTime: record.reCheckInTimeFormatted,
           reCheckOutTime: record.reCheckOutTimeFormatted,
           totalHours: record.totalHours,
+          totalHoursFormatted: record.totalHoursFormatted,
           firstSessionHours: record.firstSessionHours,
+          firstSessionHoursFormatted: record.firstSessionHoursFormatted,
           secondSessionHours: record.secondSessionHours,
+          secondSessionHoursFormatted: record.secondSessionHoursFormatted,
           status: record.status,
           checkInCount: record.checkInCount
         })),
@@ -751,6 +770,84 @@ router.get('/timezone-test', protect, async (req, res) => {
   } catch (error) {
     console.error('Timezone test error:', error);
     res.status(500).json({ message: 'Server error during timezone test' });
+  }
+});
+
+// @route   POST /api/attendance/recalculate-hours
+// @desc    Recalculate hours for existing attendance records
+// @access  Private
+router.post('/recalculate-hours', protect, async (req, res) => {
+  try {
+    console.log('Recalculating hours for user:', req.user.id);
+    
+    const userId = req.user.id;
+    const userType = req.userRole;
+
+    // Get all attendance records for this user
+    const attendanceRecords = await Attendance.find({ userId, userType });
+    
+    console.log(`Found ${attendanceRecords.length} attendance records to recalculate`);
+
+    let updatedCount = 0;
+    
+    for (const record of attendanceRecords) {
+      let needsUpdate = false;
+      
+      // Recalculate first session hours
+      if (record.checkIn?.time && record.checkOut?.time) {
+        const firstSessionMs = record.checkOut.time - record.checkIn.time;
+        const newFirstSessionHours = Math.round((firstSessionMs / (1000 * 60 * 60)) * 100) / 100;
+        
+        if (record.firstSessionHours !== newFirstSessionHours) {
+          record.firstSessionHours = newFirstSessionHours;
+          needsUpdate = true;
+        }
+      }
+
+      // Recalculate second session hours
+      if (record.reCheckIn?.time && record.reCheckOut?.time) {
+        const secondSessionMs = record.reCheckOut.time - record.reCheckIn.time;
+        const newSecondSessionHours = Math.round((secondSessionMs / (1000 * 60 * 60)) * 100) / 100;
+        
+        if (record.secondSessionHours !== newSecondSessionHours) {
+          record.secondSessionHours = newSecondSessionHours;
+          needsUpdate = true;
+        }
+      }
+
+      // Recalculate total hours
+      const newTotalHours = (record.firstSessionHours || 0) + (record.secondSessionHours || 0);
+      if (record.totalHours !== newTotalHours) {
+        record.totalHours = newTotalHours;
+        needsUpdate = true;
+      }
+
+      if (needsUpdate) {
+        await record.save();
+        updatedCount++;
+        
+        console.log('Updated attendance record:', {
+          id: record._id,
+          date: record.date,
+          firstSessionHours: record.firstSessionHours,
+          secondSessionHours: record.secondSessionHours,
+          totalHours: record.totalHours
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Recalculated hours for ${updatedCount} attendance records`,
+      data: {
+        totalRecords: attendanceRecords.length,
+        updatedRecords: updatedCount
+      }
+    });
+
+  } catch (error) {
+    console.error('Recalculate hours error:', error);
+    res.status(500).json({ message: 'Server error during hours recalculation' });
   }
 });
 

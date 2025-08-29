@@ -168,6 +168,20 @@ const Attendance = () => {
     }
   };
 
+  const handleRecalculateHours = async () => {
+    try {
+      setLoading(true);
+      const response = await api.post('/attendance/recalculate-hours');
+      toast.success(response.data.message);
+      fetchAttendanceData();
+    } catch (error) {
+      console.error('Recalculate hours error:', error);
+      toast.error(error.response?.data?.message || 'Failed to recalculate hours');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getStatusBadge = (status) => {
     if (!status) {
       return (
@@ -215,14 +229,24 @@ const Attendance = () => {
             Day boundaries: 00:00 - 23:59 Pakistan time
           </div>
         </div>
-        <Button
-          variant="neutral"
-          onClick={fetchAttendanceData}
-          disabled={loading}
-          icon={<FiRefreshCw />}
-        >
-          {loading ? 'Refreshing...' : 'Refresh'}
-        </Button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <Button
+            variant="neutral"
+            onClick={fetchAttendanceData}
+            disabled={loading}
+            icon={<FiRefreshCw />}
+          >
+            {loading ? 'Refreshing...' : 'Refresh'}
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={handleRecalculateHours}
+            disabled={loading}
+            icon={<FiRefreshCw />}
+          >
+            Recalculate Hours
+          </Button>
+        </div>
       </div>
 
       {/* Today's Attendance Card */}
@@ -405,7 +429,7 @@ const Attendance = () => {
                     <td>{attendance.checkInTime || '-'}</td>
                     <td>{attendance.checkOutTime || '-'}</td>
                     <td>
-                      {attendance.totalHours ? `${attendance.totalHours.toFixed(2)}h` : '-'}
+                      {attendance.totalHoursFormatted || (attendance.totalHours ? `${attendance.totalHours.toFixed(2)}h` : '-')}
                     </td>
                     <td>
                       {getStatusBadge(attendance.status || 'pending')}
