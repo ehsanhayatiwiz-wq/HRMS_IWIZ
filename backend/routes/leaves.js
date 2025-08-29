@@ -243,29 +243,46 @@ router.get('/pending', protect, authorize('admin', 'hr'), async (req, res) => {
 
 // @route   GET /api/leaves/all
 // @desc    Get all leave requests (Admin only)
-// inside router.get('/all')
+// @access  Private (Admin)
 router.get('/all', protect, authorize('admin'), async (req, res) => {
   try {
+    console.log('Get all leave requests request from admin:', req.user.id);
+    
     const { page = 1, limit = 20, status, leaveType, employeeId } = req.query;
+    
+    // Build query - include all leaves regardless of stored userType to avoid legacy data exclusion
     const query = {};
-    if (status) query.status = status;
-    if (leaveType) query.leaveType = leaveType;
-    if (employeeId) query.userId = employeeId;
-
-    let leavesQuery = Leave.find(query)
-      .populate('userId', 'fullName employeeId department email')
-      .sort({ createdAt: -1 });
-
-    // 🔥 if limit=0 → return ALL records
-    if (parseInt(limit) > 0) {
-      leavesQuery = leavesQuery
-        .skip((parseInt(page) - 1) * parseInt(limit))
-        .limit(parseInt(limit));
+    
+    if (status) {
+      query.status = status;
+    }
+    
+    if (leaveType) {
+      query.leaveType = leaveType;
+    }
+    
+    if (employeeId) {
+      query.userId = employeeId;
     }
 
-    const leaves = await leavesQuery;
+    const leaves = await Leave.find(query)
+      .populate('userId', 'fullName employeeId department email')
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit))
+      .skip((parseInt(page) - 1) * parseInt(limit));
+
     const total = await Leave.countDocuments(query);
 
+    console.log(`Found ${leaves.length} leave requests`);
+    
+    // Debug: Log the first record to see the structure
+    if (leaves.length > 0) {
+      console.log('First leave record structure:', JSON.stringify(leaves[0], null, 2));
+      console.log('First record userId:', leaves[0].userId);
+      console.log('First record userId.fullName:', leaves[0].userId?.fullName);
+    }
+
+    // Prevent any intermediary/proxy/browser caching of admin lists
     res.set('Cache-Control', 'no-store');
 
     res.json({
@@ -291,10 +308,10 @@ router.get('/all', protect, authorize('admin'), async (req, res) => {
         })),
         pagination: {
           currentPage: parseInt(page),
-          totalPages: limit == 0 ? 1 : Math.ceil(total / limit),
+          totalPages: Math.ceil(total / limit),
           totalRecords: total,
-          hasNextPage: limit == 0 ? false : page * limit < total,
-          hasPrevPage: limit == 0 ? false : page > 1
+          hasNextPage: page * limit < total,
+          hasPrevPage: page > 1
         }
       }
     });
@@ -304,7 +321,6 @@ router.get('/all', protect, authorize('admin'), async (req, res) => {
     res.status(500).json({ message: 'Server error while fetching leave requests' });
   }
 });
-
 
 // @route   PUT /api/leaves/:id/approve
 // @desc    Approve leave request (Admin only)

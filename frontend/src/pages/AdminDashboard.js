@@ -114,7 +114,7 @@ const AdminDashboard = () => {
         }
       } else if (activeSection === 'leaves') {
         try {
-          const response = await api.get(`/leaves/all?page=${currentPage}&limit=0&status=${filterStatus}`);
+          const response = await api.get(`/leaves/all?page=${currentPage}&limit=20&status=${filterStatus}`);
           console.log('Leaves API response:', response.data);
           console.log('Leave records:', response.data?.data?.leaves);
           if (response.data?.data?.leaves?.length > 0) {
