@@ -359,3 +359,50 @@ router.get('/employees/salary-summary', protect, authorize('admin'), async (req,
 });
 
 module.exports = router;
+
+// Maintenance: Normalize legacy employee records
+// @route   POST /api/admin/maintenance/activate-legacy
+// @desc    Set status='active', isActive=true, and ensure dateOfJoining for legacy/inconsistent employees
+// @access  Private (Admin)
+router.post('/maintenance/activate-legacy', protect, authorize('admin'), async (req, res) => {
+  try {
+    const now = new Date();
+    // Match employees that are inactive, missing status, or missing DoJ
+    const filter = {
+      $or: [
+        { isActive: { $ne: true } },
+        { status: { $ne: 'active' } },
+        { dateOfJoining: { $exists: false } },
+        { dateOfJoining: null }
+      ]
+    };
+
+    const updates = {
+      $set: {
+        status: 'active',
+        isActive: true
+      }
+    };
+
+    // First pass: set status/isActive
+    const result1 = await Employee.updateMany(filter, updates);
+
+    // Second pass: fix missing dateOfJoining without overwriting valid dates
+    const result2 = await Employee.updateMany(
+      { $or: [ { dateOfJoining: { $exists: false } }, { dateOfJoining: null } ] },
+      { $set: { dateOfJoining: now } }
+    );
+
+    res.json({
+      success: true,
+      message: 'Legacy employees normalized successfully',
+      data: {
+        statusUpdated: result1.modifiedCount || result1.nModified || 0,
+        joiningDateFixed: result2.modifiedCount || result2.nModified || 0
+      }
+    });
+  } catch (error) {
+    console.error('Activate legacy employees error:', error);
+    res.status(500).json({ message: 'Server error while normalizing legacy employees' });
+  }
+});

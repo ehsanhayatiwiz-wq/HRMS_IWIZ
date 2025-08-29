@@ -298,8 +298,8 @@ const Profile = () => {
             </div>
             <div className="info-item">
               <span className="info-label">Status</span>
-              <span className={`status-badge ${user?.isActive ? 'active' : 'inactive'}`}>
-                {user?.isActive ? 'Active' : 'Inactive'}
+              <span className={`status-badge ${((user?.status || '').toLowerCase() === 'active' || user?.isActive) ? 'active' : 'inactive'}`}>
+                {user?.status ? String(user.status).replace('_', ' ').toUpperCase() : (user?.isActive ? 'ACTIVE' : 'INACTIVE')}
               </span>
             </div>
           </div>
