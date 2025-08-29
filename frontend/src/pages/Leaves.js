@@ -30,7 +30,8 @@ const Leaves = () => {
   const fetchLeaveHistory = async () => {
     try {
       setLoading(true);
-      // Fetch a generous page size to ensure all leave rese = await api.get('/leaves/my-leaves?page=1&limit=500');
+      // Fetch a generous page size to ensure all leave records load immediately
+      const response = await api.get('/leaves/my-leaves?page=1&limit=500');
       setLeaveHistory(response.data?.data?.leaves || []);
     } catch (error) {
       console.error('Error fetching leave history:', error);
