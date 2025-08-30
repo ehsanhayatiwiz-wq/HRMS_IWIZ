@@ -89,23 +89,22 @@ const adminSchema = new mongoose.Schema({
 // adminSchema.index({ adminId: 1 });
 // adminSchema.index({ department: 1 });
 
-// TEMPORARILY DISABLED: Hash password before saving
-// adminSchema.pre('save', async function(next) {
-//   if (!this.isModified('password')) return next();
-//   
-//   try {
-//     const salt = await bcrypt.genSalt(12);
-//     this.password = await bcrypt.hash(this.password, salt);
-//     next();
-//   } catch (error) {
-//     next(error);
-//   }
-// });
+// Hash password before saving
+adminSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  
+  try {
+    const salt = await bcrypt.genSalt(12);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 
-// TEMPORARILY DISABLED: Compare password method (direct string comparison for testing)
+// Compare password method
 adminSchema.methods.comparePassword = async function(candidatePassword) {
-  // return await bcrypt.compare(candidatePassword, this.password);
-  return candidatePassword === this.password;
+  return await bcrypt.compare(candidatePassword, this.password);
 };
 
 // Generate admin ID

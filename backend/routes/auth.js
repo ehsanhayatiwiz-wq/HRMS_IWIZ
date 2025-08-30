@@ -213,10 +213,11 @@ router.post('/login', [
     }
 
     // Generate JWT token
+    const config = require('../config');
     const token = jwt.sign(
       { id: user._id, role: userRole },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
+      config.jwt.secret,
+      { expiresIn: config.jwt.expire }
     );
 
     // Remove password from response

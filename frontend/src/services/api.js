@@ -4,7 +4,9 @@ import axios from 'axios';
 const resolvedBaseURL =
   process.env.REACT_APP_API_URL ||
   (typeof window !== 'undefined'
-    ? (window.location.hostname.endsWith('vercel.app')
+    ? (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:5000/api'
+        : window.location.hostname.endsWith('vercel.app')
         ? 'https://hrms-iwiz.onrender.com/api'
         : '/api')
     : '/api');

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import { toast } from 'react-toastify';
-import moment from 'moment';
+// Using native Date methods instead of moment.js for better performance
 import { FiPlus, FiCalendar, FiClock, FiFileText, FiCheckCircle, FiXCircle, FiClock as FiClockIcon } from 'react-icons/fi';
 import Button from '../components/common/Button';
 import './Dashboard.css';
@@ -320,12 +320,12 @@ const Leaves = () => {
                     </td>
                     <td>
                       <span className="date">
-                        <FiCalendar /> {moment(leave.fromDate).format('MMM DD, YYYY')}
+                        <FiCalendar /> {new Date(leave.fromDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}
                       </span>
                     </td>
                     <td>
                       <span className="date">
-                        <FiCalendar /> {moment(leave.toDate).format('MMM DD, YYYY')}
+                        <FiCalendar /> {new Date(leave.toDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}
                       </span>
                     </td>
                     <td>
@@ -345,7 +345,7 @@ const Leaves = () => {
                     </td>
                     <td>
                       <span className="date">
-                        {moment(leave.createdAt).format('MMM DD, YYYY')}
+                        {new Date(leave.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}
                       </span>
                     </td>
                   </tr>

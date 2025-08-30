@@ -9,7 +9,7 @@ import { Reports } from '../components/dashboard';
 // moment.js removed - using native Date methods
 import './AdminDashboard.css';
 import Payroll from './Payroll';
-import Button from '../components/common/Button';
+
 
 const sidebarItems = [
   { label: 'Dashboard Overview', icon: FiHome, section: 'dashboard' },
@@ -63,7 +63,7 @@ const AdminDashboard = () => {
 
       inFlightRef.current = true;
       setLoading(true);
-
+      
       if (activeSection === 'employees') {
         try {
           const response = await api.get(`/employees?page=${currentPage}&limit=20&search=${searchTerm}&department=${filterDepartment}&_t=${Date.now()}`);
@@ -203,21 +203,21 @@ const AdminDashboard = () => {
       const response = await api.put(`/leaves/${leaveId}/approve`, { notes: 'Approved by admin' });
       
       if (response.data.success) {
-        toast.success('Leave request approved successfully!');
+      toast.success('Leave request approved successfully!');
         
         // Find the leave to get employee info for notification
         const leave = leaveRequests.find(l => l.id === leaveId);
-        if (leave) {
-          addNotification({
-            type: 'leave_approved',
-            title: 'Leave Request Approved',
-            message: `Your ${leave.leaveType} leave has been approved`,
-            employeeId: leave.employeeId
-          });
-        }
+      if (leave) {
+        addNotification({
+          type: 'leave_approved',
+          title: 'Leave Request Approved',
+          message: `Your ${leave.leaveType} leave has been approved`,
+          employeeId: leave.employeeId
+        });
+      }
         
         // Refresh data
-        fetchDashboardData();
+      fetchDashboardData();
       } else {
         toast.error(response.data.message || 'Failed to approve leave request');
       }
@@ -234,21 +234,21 @@ const AdminDashboard = () => {
       const response = await api.put(`/leaves/${leaveId}/reject`, { rejectionReason: reason });
       
       if (response.data.success) {
-        toast.success('Leave request rejected successfully!');
+      toast.success('Leave request rejected successfully!');
         
         // Find the leave to get employee info for notification
         const leave = leaveRequests.find(l => l.id === leaveId);
-        if (leave) {
-          addNotification({
-            type: 'leave_rejected',
-            title: 'Leave Request Rejected',
-            message: `Your ${leave.leaveType} leave has been rejected: ${reason}`,
-            employeeId: leave.employeeId
-          });
-        }
+      if (leave) {
+        addNotification({
+          type: 'leave_rejected',
+          title: 'Leave Request Rejected',
+          message: `Your ${leave.leaveType} leave has been rejected: ${reason}`,
+          employeeId: leave.employeeId
+        });
+      }
         
         // Refresh data
-        fetchDashboardData();
+      fetchDashboardData();
       } else {
         toast.error(response.data.message || 'Failed to reject leave request');
       }
@@ -277,8 +277,8 @@ const AdminDashboard = () => {
       try {
         const response = await api.delete(`/employees/${employeeId}`);
         if (response.data.success) {
-          toast.success('Employee deleted successfully');
-          fetchDashboardData();
+        toast.success('Employee deleted successfully');
+        fetchDashboardData();
         } else {
           toast.error(response.data.message || 'Failed to delete employee');
         }
@@ -319,7 +319,7 @@ const AdminDashboard = () => {
         
         const response = await api.put(`/employees/${editingEmployee.id}`, updatePayload);
         if (response.data.success) {
-          toast.success('Employee updated successfully');
+        toast.success('Employee updated successfully');
         } else {
           toast.error(response.data.message || 'Failed to update employee');
           return;
@@ -340,7 +340,7 @@ const AdminDashboard = () => {
         };
         const response = await api.post('/employees', payload);
         if (response.data.success) {
-          toast.success('Employee created successfully');
+        toast.success('Employee created successfully');
         } else {
           toast.error(response.data.message || 'Failed to create employee');
           return;
@@ -349,9 +349,9 @@ const AdminDashboard = () => {
       setShowEmployeeModal(false);
       setEditingEmployee(null);
       fetchDashboardData();
-          } catch (error) {
+    } catch (error) {
         toast.error(error.userMessage || error.response?.data?.message || 'Failed to save employee');
-      }
+    }
   };
 
   const downloadAttendanceReport = async () => {
@@ -472,8 +472,8 @@ const AdminDashboard = () => {
                   <span>Generate Payroll</span>
                 </button>
               </div>
-            </div>
-
+              </div>
+              
             {/* Recent Activity */}
             <div className="recent-activity">
               <h3>Recent Activity</h3>
@@ -488,8 +488,8 @@ const AdminDashboard = () => {
                     <div className="activity-content">
                       <p>New employee registered</p>
                       <span className="activity-time">2 hours ago</span>
-                    </div>
-                  </div>
+                      </div>
+                      </div>
                 )}
               </div>
             </div>
@@ -512,7 +512,7 @@ const AdminDashboard = () => {
                     className="search-input"
                   />
                 </div>
-                <Button variant="secondary" onClick={fetchDashboardData}>Refresh</Button>
+                <button className="btn-secondary" onClick={fetchDashboardData}>Refresh</button>
                 <select
                   value={filterDepartment}
                   onChange={(e) => setFilterDepartment(e.target.value)}
@@ -523,7 +523,10 @@ const AdminDashboard = () => {
                   <option value="Operation">Operation</option>
                   <option value="Management">Management</option>
                 </select>
-                <Button variant="primary" onClick={() => { setEditingEmployee(null); setShowEmployeeModal(true); }} icon={<FiUser />}>Add Employee</Button>
+                <button className="btn-primary" onClick={() => { setEditingEmployee(null); setShowEmployeeModal(true); }}>
+                  <FiUser />
+                  Add Employee
+                </button>
               </div>
             </div>
 
@@ -622,8 +625,12 @@ const AdminDashboard = () => {
                           </td>
                           <td>
                             <div className="action-buttons" style={{ display: 'flex', gap: 8 }}>
-                              <Button variant="secondary" onClick={() => handleEditEmployee(employee)} icon={<FiEdit />} />
-                              <Button variant="danger" onClick={() => handleDeleteEmployee(employee.id)} icon={<FiTrash2 />} />
+                              <button className="btn btn-secondary" onClick={() => handleEditEmployee(employee)}>
+                                <FiEdit />
+                              </button>
+                              <button className="btn btn-danger" onClick={() => handleDeleteEmployee(employee.id)}>
+                                <FiTrash2 />
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -634,23 +641,23 @@ const AdminDashboard = () => {
                   {/* Pagination */}
                   {totalPages > 1 && (
                     <div className="pagination" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                      <Button 
-                        variant="secondary"
+                      <button 
+                        className="btn btn-secondary"
                         disabled={currentPage === 1}
                         onClick={() => setCurrentPage(prev => prev - 1)}
                       >
                         Previous
-                      </Button>
+                      </button>
                       <span className="page-info">
                         Page {currentPage} of {totalPages}
                       </span>
-                      <Button 
-                        variant="secondary"
+                      <button 
+                        className="btn btn-secondary"
                         disabled={currentPage === totalPages}
                         onClick={() => setCurrentPage(prev => prev + 1)}
                       >
                         Next
-                      </Button>
+                      </button>
                     </div>
                   )}
                 </>
@@ -684,8 +691,11 @@ const AdminDashboard = () => {
                     className="search-input"
                   />
                 </div>
-                <Button variant="secondary" onClick={fetchDashboardData}>Refresh</Button>
-                <Button variant="primary" onClick={downloadAttendanceReport} icon={<FiDownload />}>Export Report</Button>
+                <button className="btn-secondary" onClick={fetchDashboardData}>Refresh</button>
+                <button className="btn-primary" onClick={downloadAttendanceReport}>
+                  <FiDownload />
+                  Export Report
+                </button>
               </div>
             </div>
             
@@ -735,12 +745,13 @@ const AdminDashboard = () => {
                           </span>
                         </td>
                         <td>
-                          <Button
-                            variant="secondary"
+                          <button
+                            className="btn btn-secondary"
                             title="View Details"
                             onClick={() => openAttendanceDetails(record)}
-                            icon={<FiEye />}
-                          />
+                          >
+                            <FiEye />
+                          </button>
                         </td>
                       </tr>
                     );
@@ -751,23 +762,23 @@ const AdminDashboard = () => {
               {/* Pagination */}
               {totalPages > 1 && (
                 <div className="pagination" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                  <Button 
-                    variant="secondary"
+                  <button 
+                    className="btn btn-secondary"
                     disabled={currentPage === 1}
                     onClick={() => setCurrentPage(prev => prev - 1)}
                   >
                     Previous
-                  </Button>
+                  </button>
                   <span className="page-info">
                     Page {currentPage} of {totalPages}
                   </span>
-                  <Button 
-                    variant="secondary"
+                  <button 
+                    className="btn btn-secondary"
                     disabled={currentPage === totalPages}
                     onClick={() => setCurrentPage(prev => prev + 1)}
                   >
                     Next
-                  </Button>
+                  </button>
                 </div>
               )}
             </div>
@@ -790,8 +801,11 @@ const AdminDashboard = () => {
                   <option value="approved">Approved</option>
                   <option value="rejected">Rejected</option>
                 </select>
-                <Button variant="secondary" onClick={fetchDashboardData}>Refresh</Button>
-                <Button variant="primary" onClick={downloadLeaveReport} icon={<FiDownload />}>Export Report</Button>
+                <button className="btn-secondary" onClick={fetchDashboardData}>Refresh</button>
+                <button className="btn-primary" onClick={downloadLeaveReport}>
+                  <FiDownload />
+                  Export Report
+                </button>
               </div>
             </div>
             
@@ -923,96 +937,53 @@ const AdminDashboard = () => {
 
   return (
     <ErrorBoundary>
-      <div className="admin-dashboard">
-        <header className="content-header">
-          <div className="header-content">
-            <h2>{sidebarItems.find(item => item.section === activeSection)?.label || 'Dashboard'}</h2>
-            <div className="header-actions">
-              <button className="btn btn-secondary btn-sm" onClick={() => markAllAsRead()} title="Mark all notifications as read">
-                <FiBell />
-                {unreadCount > 0 && <span className="badge" style={{marginLeft: 6}}>{unreadCount}</span>}
-              </button>
-              <button className="btn btn-secondary btn-sm" onClick={logout}>
-                <FiUser />
-                <span>Logout</span>
-              </button>
-            </div>
+    <div className="admin-dashboard">
+      <header className="content-header">
+        <div className="header-content">
+          <h2>{sidebarItems.find(item => item.section === activeSection)?.label || 'Dashboard'}</h2>
+          <div className="header-actions">
+            <button className="btn btn-secondary btn-sm" onClick={() => markAllAsRead()} title="Mark all notifications as read">
+              <FiBell />
+              {unreadCount > 0 && <span className="badge" style={{marginLeft: 6}}>{unreadCount}</span>}
+            </button>
+            <button className="btn btn-secondary btn-sm" onClick={logout}>
+              <FiUser />
+              <span>Logout</span>
+            </button>
           </div>
-        </header>
-        
-        <main className="content-main">
-          {renderDashboardContent()}
-        </main>
+        </div>
+      </header>
+      
+      <main className="content-main">
+        {renderDashboardContent()}
+      </main>
 
-        {attendanceDetailsOpen && selectedAttendanceRecord && (
-          <>
-            <div className="modal-overlay" onClick={closeAttendanceDetails}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
-                <h3>Attendance Details</h3>
-                <button className="modal-close" onClick={closeAttendanceDetails}>×</button>
-              </div>
-              <div className="modal-body">
-                <p><strong>Employee:</strong> {selectedAttendanceRecord.userId?.fullName || 'Unknown'}</p>
-                <p><strong>Email:</strong> {selectedAttendanceRecord.userId?.email || 'Unknown'}</p>
-                <p><strong>Employee ID:</strong> {selectedAttendanceRecord.userId?.employeeId || 'N/A'}</p>
-                <p><strong>Department:</strong> {selectedAttendanceRecord.userId?.department || 'N/A'}</p>
-                <p><strong>Date:</strong> {new Date(selectedAttendanceRecord.date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</p>
-                <p><strong>Check-in:</strong> {selectedAttendanceRecord.checkIn?.time ? new Date(selectedAttendanceRecord.checkIn.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}</p>
-                <p><strong>Check-out:</strong> {selectedAttendanceRecord.checkOut?.time ? new Date(selectedAttendanceRecord.checkOut.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}</p>
-                <p><strong>Re-check-in:</strong> {selectedAttendanceRecord.reCheckIn?.time ? new Date(selectedAttendanceRecord.reCheckIn.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}</p>
-                <p><strong>Re-check-out:</strong> {selectedAttendanceRecord.reCheckOut?.time ? new Date(selectedAttendanceRecord.reCheckOut.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}</p>
-                <p><strong>Total Hours:</strong> {selectedAttendanceRecord.totalHours || 0}h</p>
-                <p><strong>Status:</strong> {selectedAttendanceRecord.status}</p>
-              </div>
-              <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Button variant="neutral" onClick={closeAttendanceDetails}>Close</Button>
-              </div>
-            </div>
-          </div>
-          </>
-        )}
-
-        {leaveDetailsOpen && selectedLeaveRecord && (
-          <div className="modal-overlay" onClick={() => setLeaveDetailsOpen(false)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
-                <h3>Leave Details</h3>
-                <button className="modal-close" onClick={() => setLeaveDetailsOpen(false)}>×</button>
-              </div>
-              <div className="modal-body">
-                <p><strong>Employee:</strong> {selectedLeaveRecord.employeeName || 'Unknown'} ({selectedLeaveRecord.employeeId || ''})</p>
-                <p><strong>Type:</strong> {selectedLeaveRecord.leaveType}</p>
-                <p><strong>From:</strong> {new Date(selectedLeaveRecord.fromDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</p>
-                <p><strong>To:</strong> {new Date(selectedLeaveRecord.toDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</p>
-                <p><strong>Days:</strong> {selectedLeaveRecord.totalDays}</p>
-                <p><strong>Status:</strong> {selectedLeaveRecord.status}</p>
-                {selectedLeaveRecord.reason && (
-                  <p><strong>Reason:</strong> {selectedLeaveRecord.reason}</p>
-                )}
-                {selectedLeaveRecord.rejectionReason && (
-                  <p><strong>Rejection Reason:</strong> {selectedLeaveRecord.rejectionReason}</p>
-                )}
-              </div>
-              <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Button variant="neutral" onClick={() => setLeaveDetailsOpen(false)}>Close</Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Employee Modal */}
-        {showEmployeeModal && (
-          <EmployeeModal
-            employee={editingEmployee}
-            onSave={handleSaveEmployee}
-            onClose={() => {
-              setShowEmployeeModal(false);
-              setEditingEmployee(null);
-            }}
+      {attendanceDetailsOpen && selectedAttendanceRecord && (
+          <AttendanceDetailsModal
+            record={selectedAttendanceRecord}
+            onClose={closeAttendanceDetails}
           />
-        )}
-      </div>
+      )}
+
+      {leaveDetailsOpen && selectedLeaveRecord && (
+          <LeaveDetailsModal
+            leave={selectedLeaveRecord}
+            onClose={() => setLeaveDetailsOpen(false)}
+          />
+      )}
+
+      {/* Employee Modal */}
+      {showEmployeeModal && (
+        <EmployeeModal
+          employee={editingEmployee}
+          onSave={handleSaveEmployee}
+          onClose={() => {
+            setShowEmployeeModal(false);
+            setEditingEmployee(null);
+          }}
+        />
+      )}
+    </div>
     </ErrorBoundary>
   );
 };
@@ -1489,5 +1460,123 @@ class ErrorBoundary extends React.Component {
     return this.props.children;
   }
 }
+
+// Attendance Details Modal Component
+const AttendanceDetailsModal = ({ record, onClose }) => {
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3 className="modal-title">Attendance Details</h3>
+          <button className="modal-close" onClick={onClose}>×</button>
+        </div>
+        <div className="modal-body">
+          <div className="form-group">
+            <label className="form-label">Employee</label>
+            <p>{record.userId?.fullName || 'Unknown'}</p>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Email</label>
+            <p>{record.userId?.email || 'Unknown'}</p>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Employee ID</label>
+            <p>{record.userId?.employeeId || 'N/A'}</p>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Department</label>
+            <p>{record.userId?.department || 'N/A'}</p>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Date</label>
+            <p>{new Date(record.date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</p>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Check-in</label>
+            <p>{record.checkIn?.time ? new Date(record.checkIn.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}</p>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Check-out</label>
+            <p>{record.checkOut?.time ? new Date(record.checkOut.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}</p>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Re-check-in</label>
+            <p>{record.reCheckIn?.time ? new Date(record.reCheckIn.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}</p>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Re-check-out</label>
+            <p>{record.reCheckOut?.time ? new Date(record.reCheckOut.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}</p>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Total Hours</label>
+            <p>{record.totalHours || 0}h</p>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Status</label>
+            <StatusBadge status={record.status}>{record.status}</StatusBadge>
+          </div>
+        </div>
+        <div className="modal-footer">
+          <button className="btn-secondary" onClick={onClose}>Close</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Leave Details Modal Component
+const LeaveDetailsModal = ({ leave, onClose }) => {
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3 className="modal-title">Leave Details</h3>
+          <button className="modal-close" onClick={onClose}>×</button>
+        </div>
+        <div className="modal-body">
+          <div className="form-group">
+            <label className="form-label">Employee</label>
+            <p>{leave.employeeName || 'Unknown'} ({leave.employeeId || ''})</p>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Type</label>
+            <p>{leave.leaveType}</p>
+          </div>
+          <div className="form-group">
+            <label className="form-label">From</label>
+            <p>{new Date(leave.fromDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</p>
+          </div>
+          <div className="form-group">
+            <label className="form-label">To</label>
+            <p>{new Date(leave.toDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</p>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Days</label>
+            <p>{leave.totalDays}</p>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Status</label>
+            <StatusBadge status={leave.status}>{leave.status}</StatusBadge>
+          </div>
+          {leave.reason && (
+            <div className="form-group">
+              <label className="form-label">Reason</label>
+              <p>{leave.reason}</p>
+            </div>
+          )}
+          {leave.rejectionReason && (
+            <div className="form-group">
+              <label className="form-label">Rejection Reason</label>
+              <p>{leave.rejectionReason}</p>
+            </div>
+          )}
+        </div>
+        <div className="modal-footer">
+          <button className="btn-secondary" onClick={onClose}>Close</button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default AdminDashboard; 

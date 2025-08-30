@@ -4,7 +4,7 @@ import Button from '../components/common/Button';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 import { formatCurrency } from '../utils/helpers';
-import moment from 'moment';
+// Using native Date methods instead of moment.js for better performance
 import { useAuth } from '../contexts/AuthContext';
 import './EmployeePayroll.css';
 
@@ -70,7 +70,7 @@ const EmployeePayroll = () => {
   };
 
   const getMonthName = (month) => {
-    return moment().month(month - 1).format('MMMM');
+    return new Date(2024, month - 1, 1).toLocaleDateString('en-US', { month: 'long' });
   };
 
   const getStatusColor = (status) => {

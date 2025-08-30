@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { FiDownload, FiCalendar, FiUsers, FiBarChart2, FiCheck, FiRefreshCw } from 'react-icons/fi';
-import Button from '../components/common/Button';
+
 import api from '../services/api';
 import { toast } from 'react-toastify';
 import { formatCurrency } from '../utils/helpers';
-import moment from 'moment';
+// Using native Date methods instead of moment.js for better performance
 import './Payroll.css';
 
 const Payroll = () => {
@@ -12,8 +12,8 @@ const Payroll = () => {
   const [loading, setLoading] = useState(false);
   const [payrolls, setPayrolls] = useState([]);
   const [summary, setSummary] = useState({});
-  const [selectedMonth, setSelectedMonth] = useState(moment().format('YYYY-MM'));
-  const [selectedYear, setSelectedYear] = useState(moment().year());
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [generating, setGenerating] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -25,21 +25,21 @@ const Payroll = () => {
       const month = parseInt(monthStr.split('-')[1]); // Extract month from YYYY-MM format
       const year = parseInt(yearStr);
       
-              if (isNaN(month) || month < 1 || month > 12) {
-          toast.info('Invalid month, using current month');
-          return { month: moment().month() + 1, year: moment().year() };
-        }
-        
-        if (isNaN(year) || year < 2020 || year > 2030) {
-          toast.info('Invalid year, using current year');
-          return { month, year: moment().year() };
-        }
-        
-        return { month, year };
-      } catch (error) {
-        // Error parsing month/year
-        return { month: moment().month() + 1, year: moment().year() };
+      if (isNaN(month) || month < 1 || month > 12) {
+        toast.info('Invalid month, using current month');
+        return { month: new Date().getMonth() + 1, year: new Date().getFullYear() };
       }
+      
+      if (isNaN(year) || year < 2020 || year > 2030) {
+        toast.info('Invalid year, using current year');
+        return { month, year: new Date().getFullYear() };
+      }
+      
+      return { month, year };
+    } catch (error) {
+      // Error parsing month/year
+      return { month: new Date().getMonth() + 1, year: new Date().getFullYear() };
+    }
   };
 
   const fetchPayrollData = async () => {
@@ -206,11 +206,14 @@ const Payroll = () => {
               onChange={(e) => setSelectedMonth(e.target.value)}
               className="month-select"
             >
-              {Array.from({ length: 12 }, (_, i) => (
-                <option key={i + 1} value={moment().month(i).format('YYYY-MM')}>
-                  {moment().month(i).format('MMMM')}
-                </option>
-              ))}
+              {Array.from({ length: 12 }, (_, i) => {
+                const date = new Date(2024, i, 1);
+                return (
+                  <option key={i + 1} value={date.toISOString().slice(0, 7)}>
+                    {date.toLocaleDateString('en-US', { month: 'long' })}
+                  </option>
+                );
+              })}
             </select>
             <select
               value={selectedYear}
@@ -218,7 +221,7 @@ const Payroll = () => {
               className="year-select"
             >
               {Array.from({ length: 5 }, (_, i) => {
-                const year = moment().year() - 2 + i;
+                const year = new Date().getFullYear() - 2 + i;
                 return (
                   <option key={year} value={year}>
                     {year}
@@ -266,8 +269,12 @@ const Payroll = () => {
                     </td>
                     <td>
                       <div className="action-buttons" style={{ display: 'flex', gap: 8 }}>
-                        <Button variant="secondary" onClick={() => handleDownloadSalarySlip(payroll.id || payroll._id)} icon={<FiDownload />} />
-                        <Button variant="primary" onClick={() => handleUpdateStatus(payroll.id || payroll._id, 'paid')} disabled={payroll.status === 'paid'} icon={<FiCheck />} />
+                                        <button className="btn-secondary" onClick={() => handleDownloadSalarySlip(payroll.id || payroll._id)}>
+                  <FiDownload />
+                </button>
+                <button className="btn-primary" onClick={() => handleUpdateStatus(payroll.id || payroll._id, 'paid')} disabled={payroll.status === 'paid'}>
+                  <FiCheck />
+                </button>
                       </div>
                     </td>
                   </tr>
@@ -280,21 +287,21 @@ const Payroll = () => {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="pagination" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-            <Button
-              variant="secondary"
+            <button
+              className="btn-secondary"
               disabled={currentPage === 1}
               onClick={() => setCurrentPage(prev => prev - 1)}
             >
               Previous
-            </Button>
+            </button>
             <span>Page {currentPage} of {totalPages}</span>
-            <Button
-              variant="secondary"
+            <button
+              className="btn-secondary"
               disabled={currentPage === totalPages}
               onClick={() => setCurrentPage(prev => prev + 1)}
             >
               Next
-            </Button>
+            </button>
           </div>
         )}
       </div>
@@ -316,11 +323,14 @@ const Payroll = () => {
                 onChange={(e) => setSelectedMonth(e.target.value)}
                 className="month-select"
               >
-                {Array.from({ length: 12 }, (_, i) => (
-                  <option key={i + 1} value={moment().month(i).format('YYYY-MM')}>
-                    {moment().month(i).format('MMMM')}
-                  </option>
-                ))}
+                {Array.from({ length: 12 }, (_, i) => {
+                  const date = new Date(2024, i, 1);
+                  return (
+                    <option key={i + 1} value={date.toISOString().slice(0, 7)}>
+                      {date.toLocaleDateString('en-US', { month: 'long' })}
+                    </option>
+                  );
+                })}
               </select>
               <select
                 value={selectedYear}
@@ -328,7 +338,7 @@ const Payroll = () => {
                 className="year-select"
               >
                 {Array.from({ length: 5 }, (_, i) => {
-                  const year = moment().year() - 2 + i;
+                  const year = new Date().getFullYear() - 2 + i;
                   return (
                     <option key={year} value={year}>
                       {year}
@@ -339,15 +349,14 @@ const Payroll = () => {
             </div>
           </div>
           
-          <Button
-            className="generate-btn"
+          <button
+            className="btn-primary generate-btn"
             onClick={handleGeneratePayroll}
             disabled={generating}
-            variant="primary"
-            icon={generating ? <FiRefreshCw className="spinning" /> : <FiCalendar />}
           >
-            {generating ? 'Generating Payroll...' : `Generate Payroll for ${moment(selectedMonth).format('MMMM YYYY')}`}
-          </Button>
+            {generating ? <FiRefreshCw className="spinning" /> : <FiCalendar />}
+            {generating ? 'Generating Payroll...' : `Generate Payroll for ${new Date(selectedMonth + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`}
+          </button>
         </div>
       </div>
 
@@ -376,7 +385,7 @@ const Payroll = () => {
                       {payroll.status}
                     </span>
                   </td>
-                  <td>{moment(payroll.generatedAt).format('MMM DD, YYYY')}</td>
+                  <td>{new Date(payroll.generatedAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</td>
                 </tr>
               ))}
             </tbody>
@@ -393,14 +402,14 @@ const Payroll = () => {
           <h2>Payroll Management</h2>
           <p>Manage employee payroll, generate salary slips, and track payments</p>
         </div>
-        <Button
-          variant="secondary"
+        <button
+          className="btn-secondary"
           onClick={fetchPayrollData}
-          icon={<FiRefreshCw />}
           disabled={loading || fetchInProgress}
         >
+          <FiRefreshCw />
           {loading ? 'Refreshing...' : 'Refresh Data'}
-        </Button>
+        </button>
       </div>
 
       <div className="payroll-tabs">

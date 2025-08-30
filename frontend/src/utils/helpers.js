@@ -1,23 +1,33 @@
-import moment from 'moment';
+// Using native Date methods instead of moment.js for better performance
 
 // Format date for display
 export const formatDate = (date, format = 'MMM DD, YYYY') => {
   if (!date) return '-';
-  return moment(date).format(format);
+  const d = new Date(date);
+  return d.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: '2-digit', 
+    year: 'numeric' 
+  });
 };
 
 // Format time for display
 export const formatTime = (time, format = 'HH:mm') => {
   if (!time) return '-';
-  return moment(time).format(format);
+  const d = new Date(time);
+  return d.toLocaleTimeString('en-US', { 
+    hour: '2-digit', 
+    minute: '2-digit', 
+    hour12: false 
+  });
 };
 
 // Calculate time difference in hours
 export const calculateHours = (startTime, endTime) => {
   if (!startTime || !endTime) return 0;
-  const start = moment(startTime);
-  const end = moment(endTime);
-  return end.diff(start, 'hours', true);
+  const start = new Date(startTime);
+  const end = new Date(endTime);
+  return (end - start) / (1000 * 60 * 60); // Convert milliseconds to hours
 };
 
 // Get status badge class
