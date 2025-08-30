@@ -325,7 +325,64 @@ router.get('/employees/salary-summary', protect, authorize('admin'), async (req,
   }
 });
 
-module.exports = router;
+// @route   PATCH /api/admin/employees/:employeeId/status
+// @desc    Update employee status (Admin only)
+// @access  Private (Admin)
+router.patch('/employees/:employeeId/status', protect, authorize('admin'), [
+  body('status')
+    .isIn(['active', 'inactive', 'terminated', 'on_leave'])
+    .withMessage('Status must be active, inactive, terminated, or on_leave')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+
+    const { employeeId } = req.params;
+    const { status } = req.body;
+
+    const employee = await Employee.findById(employeeId);
+    if (!employee) {
+      return res.status(404).json({
+        message: 'Employee not found'
+      });
+    }
+
+    // Update status
+    employee.status = status;
+    employee.isActive = status === 'active';
+    
+    // If terminated, set termination date
+    if (status === 'terminated') {
+      employee.terminationDate = new Date();
+    }
+
+    await employee.save();
+
+    res.json({
+      success: true,
+      message: 'Employee status updated successfully',
+      data: {
+        employee: {
+          id: employee._id,
+          fullName: employee.fullName,
+          status: employee.status,
+          isActive: employee.isActive
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Update employee status error:', error);
+    res.status(500).json({
+      message: 'Server error while updating employee status'
+    });
+  }
+});
 
 // Maintenance: Normalize legacy employee records
 // @route   POST /api/admin/maintenance/activate-legacy
@@ -373,3 +430,5 @@ router.post('/maintenance/activate-legacy', protect, authorize('admin'), async (
     res.status(500).json({ message: 'Server error while normalizing legacy employees' });
   }
 });
+
+module.exports = router;

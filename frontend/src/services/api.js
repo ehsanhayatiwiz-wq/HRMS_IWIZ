@@ -1,15 +1,7 @@
 import axios from 'axios';
 
-// Resolve API base URL with env first, then sensible fallbacks
-const resolvedBaseURL =
-  process.env.REACT_APP_API_URL ||
-  (typeof window !== 'undefined'
-    ? (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-        ? 'http://localhost:5000/api'
-        : window.location.hostname.endsWith('vercel.app')
-        ? 'https://hrms-iwiz.onrender.com/api'
-        : '/api')
-    : '/api');
+// Force local API URL for development
+const resolvedBaseURL = 'http://localhost:5000/api';
 
 // Create axios instance with default config
 const api = axios.create({

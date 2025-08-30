@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { FiHome, FiUsers, FiClock, FiFileText, FiBarChart2, FiSearch, FiDownload, FiCheck, FiX, FiEdit, FiTrash2, FiEye, FiCalendar, FiUser, FiTrendingUp, FiTrendingDown, FiBell, FiDollarSign, FiAlertTriangle } from 'react-icons/fi';
 import api from '../services/api';
 import { toast } from 'react-toastify';
@@ -113,7 +113,7 @@ const AdminDashboard = () => {
       setLoading(false);
       inFlightRef.current = false;
     }
-  }, [activeSection, currentPage, searchTerm, filterStatus, filterDepartment, selectedDate, pollIntervalMs, lastErrorAt]);
+  }, [activeSection, currentPage, searchTerm, filterStatus, filterDepartment, selectedDate, lastErrorAt]);
 
   // Add search and filter effects
   useEffect(() => {
@@ -261,6 +261,10 @@ const AdminDashboard = () => {
   };
 
   const handleDeleteEmployee = async (employeeId) => {
+    if (!employeeId) {
+      toast.error('Employee ID not found');
+      return;
+    }
     if (window.confirm('Are you sure you want to delete this employee? This action cannot be undone.')) {
       try {
         const response = await api.delete(`/employees/${employeeId}`);
@@ -305,7 +309,12 @@ const AdminDashboard = () => {
           return;
         }
         
-        const response = await api.put(`/employees/${editingEmployee.id}`, updatePayload);
+        const employeeId = editingEmployee.id || editingEmployee._id;
+        if (!employeeId) {
+          toast.error('Employee ID not found');
+          return;
+        }
+        const response = await api.put(`/employees/${employeeId}`, updatePayload);
         if (response.data.success) {
         toast.success('Employee updated successfully');
         } else {

@@ -54,6 +54,57 @@ router.post('/generate', protect, authorize('admin'), [
   }
 });
 
+// @route   GET /api/payroll/summary
+// @desc    Get payroll summary for a specific month/year (Admin only)
+// @access  Private (Admin)
+router.get('/summary', protect, authorize('admin'), async (req, res) => {
+  try {
+    const { month, year } = req.query;
+    
+    if (!month || !year) {
+      return res.status(400).json({ message: 'Month and year are required' });
+    }
+
+    const payrolls = await Payroll.find({ 
+      month: parseInt(month), 
+      year: parseInt(year) 
+    }).populate('employeeId', 'fullName employeeId department');
+
+    // Calculate summary
+    const summary = {
+      totalEmployees: payrolls.length,
+      totalBasicSalary: 0,
+      totalAllowances: 0,
+      totalDeductions: 0,
+      totalGrossSalary: 0,
+      totalNetPay: 0
+    };
+
+    payrolls.forEach((payroll) => {
+      summary.totalBasicSalary += payroll.basicSalary || 0;
+      summary.totalAllowances += (payroll.allowances?.houseRent || 0) + 
+                                (payroll.allowances?.medical || 0) + 
+                                (payroll.allowances?.conveyance || 0);
+      summary.totalDeductions += (payroll.deductions?.providentFund || 0) + 
+                                (payroll.deductions?.tax || 0) + 
+                                (payroll.deductions?.insurance || 0);
+      summary.totalGrossSalary += payroll.grossSalary || 0;
+      summary.totalNetPay += payroll.netPay || 0;
+    });
+
+    res.json({
+      success: true,
+      data: {
+        summary
+      }
+    });
+
+  } catch (error) {
+    console.error('Payroll summary error:', error);
+    res.status(500).json({ message: 'Server error while fetching payroll summary' });
+  }
+});
+
 // @route   GET /api/payroll/all
 // @desc    Get all payroll records (Admin only)
 // @access  Private (Admin)

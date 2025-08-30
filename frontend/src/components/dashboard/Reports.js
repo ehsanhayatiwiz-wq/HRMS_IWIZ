@@ -19,28 +19,36 @@ const Reports = () => {
       title: 'Attendance Report',
       description: 'Monthly attendance summary for all employees',
       icon: <FiCalendar />,
-      color: 'primary'
+      color: 'primary',
+      endpoint: '/reports/attendance',
+      csvEndpoint: '/reports/attendance/csv'
     },
     {
       id: 'leave',
       title: 'Leave Summary',
       description: 'Leave usage and balance report',
       icon: <FiFileText />,
-      color: 'success'
+      color: 'success',
+      endpoint: '/reports/leaves',
+      csvEndpoint: '/reports/leaves/csv'
     },
     {
       id: 'employee',
       title: 'Employee Report',
       description: 'Complete employee information and statistics',
       icon: <FiUsers />,
-      color: 'info'
+      color: 'info',
+      endpoint: '/reports/employees',
+      csvEndpoint: '/reports/employees/csv'
     },
     {
       id: 'performance',
       title: 'Performance Trends',
       description: 'Employee performance analysis and trends',
       icon: <FiBarChart2 />,
-      color: 'warning'
+      color: 'warning',
+      endpoint: '/reports/performance',
+      csvEndpoint: '/reports/performance/csv'
     }
   ];
 

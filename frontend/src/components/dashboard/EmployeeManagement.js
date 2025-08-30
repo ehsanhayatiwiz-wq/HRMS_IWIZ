@@ -124,7 +124,12 @@ const EmployeeManagement = () => {
   const handleEditEmployee = async (e) => {
     e.preventDefault();
     try {
-      await api.put(`/employees/${selectedEmployee.id}`, formData);
+      const employeeId = selectedEmployee.id || selectedEmployee._id;
+      if (!employeeId) {
+        toast.error('Employee ID not found');
+        return;
+      }
+      await api.put(`/employees/${employeeId}`, formData);
       toast.success('Employee updated successfully!');
       setShowEditModal(false);
       setSelectedEmployee(null);
