@@ -36,7 +36,7 @@ const EmployeePayroll = () => {
 
   useEffect(() => {
     fetchPayrollData();
-  }, [user.id, currentPage]);
+  }, [user.id, currentPage, fetchPayrollData]);
 
   const downloadSalarySlip = async (payrollId) => {
     try {

@@ -17,7 +17,7 @@ const Payroll = () => {
   const [generating, setGenerating] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [fetchInProgress, setFetchInProgress] = useState(false);
+  const [fetchInProgress] = useState(false);
 
   // Helper function to safely parse month and year
   const parseMonthYear = (monthStr, yearStr) => {
@@ -80,7 +80,7 @@ const Payroll = () => {
 
   useEffect(() => {
     fetchPayrollData();
-  }, [activeTab, selectedMonth, selectedYear, currentPage]);
+  }, [activeTab, selectedMonth, selectedYear, currentPage, fetchPayrollData]);
 
   const handleGeneratePayroll = async () => {
     try {

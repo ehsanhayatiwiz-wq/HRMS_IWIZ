@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { FiHome, FiUsers, FiClock, FiFileText, FiBarChart2, FiSearch, FiDownload, FiCheck, FiX, FiEdit, FiTrash2, FiEye, FiCalendar, FiUser, FiTrendingUp, FiTrendingDown, FiBell, FiDollarSign, FiRefreshCw, FiAlertTriangle } from 'react-icons/fi';
+import { FiHome, FiUsers, FiClock, FiFileText, FiBarChart2, FiSearch, FiDownload, FiCheck, FiX, FiEdit, FiTrash2, FiEye, FiCalendar, FiUser, FiTrendingUp, FiTrendingDown, FiBell, FiDollarSign, FiAlertTriangle } from 'react-icons/fi';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
@@ -23,7 +23,7 @@ const sidebarItems = [
 const AdminDashboard = () => {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ 
+  const [stats] = useState({ 
     totalEmployees: 0, 
     presentToday: 0, 
     pendingLeaves: 0,
@@ -50,12 +50,12 @@ const AdminDashboard = () => {
   const { logout } = useAuth();
   const { addNotification, unreadCount, markAllAsRead } = useNotifications();
   const location = useLocation();
-  const navigate = useNavigate();
+
 
   const inFlightRef = React.useRef(false);
   const [lastErrorAt, setLastErrorAt] = useState(0);
   const [pollIntervalMs, setPollIntervalMs] = useState(60000);
-  const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
+  const [, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
 
   const fetchDashboardData = React.useCallback(async () => {
     try {
@@ -184,19 +184,7 @@ const AdminDashboard = () => {
     }
   }, [location.pathname, activeSection]);
 
-  const handleSidebarClick = (section) => {
-    if (section === 'logout') {
-      logout();
-      return;
-    }
-    setActiveSection(section);
-    setCurrentPage(1);
-    setSearchTerm('');
-    setFilterStatus('');
-    setFilterDepartment('');
-    // Ensure URL reflects the selected section for consistency with sidebar routing
-    navigate(`/admin/${section}`);
-  };
+
 
   const handleApproveLeave = async (leaveId) => {
     try {

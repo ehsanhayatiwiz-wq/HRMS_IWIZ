@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { FiUser, FiLock, FiEye, FiEyeOff, FiChevronDown, FiMail } from 'react-icons/fi';
+import { FiLock, FiEye, FiEyeOff, FiChevronDown, FiMail } from 'react-icons/fi';
 import './Login.css';
 import Button from '../components/common/Button';
-import { toast } from 'react-toastify';
 
 const Login = () => {
   const [formData, setFormData] = useState({

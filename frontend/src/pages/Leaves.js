@@ -3,12 +3,12 @@ import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 // Using native Date methods instead of moment.js for better performance
-import { FiPlus, FiCalendar, FiClock, FiFileText, FiCheckCircle, FiXCircle, FiClock as FiClockIcon } from 'react-icons/fi';
+import { FiPlus, FiCalendar, FiClock, FiFileText, FiXCircle, FiClock as FiClockIcon } from 'react-icons/fi';
 import Button from '../components/common/Button';
 import './Dashboard.css';
 
 const Leaves = () => {
-  const { user } = useAuth();
+
   const [leaveHistory, setLeaveHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -50,7 +50,7 @@ const Leaves = () => {
 
   useEffect(() => {
     fetchLeaveHistory();
-  }, []);
+  }, [fetchLeaveHistory]);
 
   const handleSubmitLeave = async (e) => {
     e.preventDefault();

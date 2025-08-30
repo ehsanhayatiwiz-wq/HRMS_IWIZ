@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-toastify';
 import { 
@@ -75,7 +74,7 @@ const EmployeeManagement = () => {
 
   useEffect(() => {
     fetchEmployees();
-  }, [currentPage, searchTerm, filterDepartment, filterStatus]);
+  }, [currentPage, searchTerm, filterDepartment, filterStatus, fetchEmployees]);
 
   const handleAddEmployee = async (e) => {
     e.preventDefault();
@@ -94,7 +93,7 @@ const EmployeeManagement = () => {
           dateOfJoining: new Date().toISOString().slice(0,10)
         };
         
-        const response = await api.post('/admin/add-employee', payload);
+        await api.post('/admin/add-employee', payload);
       } else {
         // Manual password path
         const payload = { ...formData };

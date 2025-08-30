@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { toast } from 'react-toastify';
-import { useAuth } from '../contexts/AuthContext';
+
 // moment.js removed - using native Date methods
 import { FiCheckCircle, FiXCircle, FiCalendar, FiTrendingUp, FiRefreshCw, FiClock } from 'react-icons/fi';
 import Button from '../components/common/Button';
@@ -17,8 +17,8 @@ const Attendance = () => {
   const [reCheckingOut, setReCheckingOut] = useState(false);
   const [canCheckIn, setCanCheckIn] = useState(true);
   const [canCheckOut, setCanCheckOut] = useState(false);
-  const [canReCheckIn, setCanReCheckIn] = useState(false);
-  const [canReCheckOut, setCanReCheckOut] = useState(false);
+  const [canReCheckIn] = useState(false);
+  const [canReCheckOut] = useState(false);
 
   useEffect(() => {
     fetchAttendanceData();

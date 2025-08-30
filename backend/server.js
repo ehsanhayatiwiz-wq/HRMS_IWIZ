@@ -48,7 +48,10 @@ app.use(cors(securityConfig.cors));
 const connectDB = require('./config/database');
 
 // Database connection
-connectDB();
+connectDB().catch(err => {
+  console.error('❌ Failed to connect to database:', err.message);
+  console.log('⚠️ Server will continue without database connection');
+});
 
 // Backup system removed for simplicity
 let backupSystem = null;
@@ -91,11 +94,16 @@ if (config.server.nodeEnv !== 'production') {
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
+  const dbStatus = mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected';
+  const overallStatus = dbStatus === 'Connected' ? 'OK' : 'WARNING';
+  
   res.json({
-    status: 'OK',
+    status: overallStatus,
     timestamp: new Date().toISOString(),
     environment: config.server.nodeEnv,
-    database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
+    database: dbStatus,
+    uptime: process.uptime(),
+    memory: process.memoryUsage()
   });
 });
 
@@ -138,8 +146,14 @@ if (config.server.nodeEnv === 'production') {
 
 const PORT = config.server.port;
 
+console.log('🔧 Starting IWIZ HRMS Server...');
+console.log(`📊 Environment: ${config.server.nodeEnv}`);
+console.log(`🔗 Port: ${PORT}`);
+console.log(`🗄️ Database URI: ${config.mongodb.uri.substring(0, 20)}...`);
+
 app.listen(PORT, () => {
   console.log(`🚀 IWIZ HRMS Server running on port ${PORT}`);
   console.log(`📊 Environment: ${config.server.nodeEnv}`);
   console.log(`🔗 API URL: http://localhost:${PORT}/api`);
+  console.log(`🔗 Health Check: http://localhost:${PORT}/api/health`);
 }); 
