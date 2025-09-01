@@ -4,7 +4,7 @@ import Button from '../components/common/Button';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
-import { useNotifications } from '../contexts';
+import { useNotifications } from '../contexts/NotificationContext';
 import './Dashboard.css';
 
 const EmployeeDashboard = () => {
