@@ -65,7 +65,17 @@ const leaveSchema = new mongoose.Schema({
     type: String,
     enum: ['morning', 'afternoon'],
     required: function() {
-      return this.isHalfDay;
+      return this.isHalfDay === true;
+    },
+    validate: {
+      validator: function(value) {
+        // Only validate if isHalfDay is true
+        if (this.isHalfDay === true) {
+          return value && ['morning', 'afternoon'].includes(value);
+        }
+        return true; // Skip validation if not a half day
+      },
+      message: 'Half day type must be either morning or afternoon when isHalfDay is true'
     }
   },
   salaryDeduction: {
@@ -166,7 +176,7 @@ leaveSchema.methods.calculateSalaryDeduction = function(userSalary, leaveBalance
   return extraDays * dailySalary;
 };
 
-// Pre-save middleware to calculate total days
+// Pre-save middleware to calculate total days and validate fields
 leaveSchema.pre('save', function(next) {
   // Recalculate totalDays only when relevant fields change or on creation
   if (
@@ -183,6 +193,17 @@ leaveSchema.pre('save', function(next) {
     }
     this.totalDays = Math.max(0.5, recalculatedTotal);
   }
+
+  // Ensure halfDayType is set if isHalfDay is true
+  if (this.isHalfDay === true && !this.halfDayType) {
+    this.halfDayType = 'morning'; // Default to morning
+  }
+
+  // Clear halfDayType if isHalfDay is false
+  if (this.isHalfDay === false) {
+    this.halfDayType = undefined;
+  }
+
   next();
 });
 

@@ -234,7 +234,21 @@ const AdminDashboard = () => {
       // Rollback on failure
       setLeaveRequests(previousLeaves);
       console.error('Approve leave error:', error);
-      toast.error(error.response?.data?.message || 'Failed to approve leave request');
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      
+      let errorMessage = 'Failed to approve leave request';
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.status === 500) {
+        errorMessage = 'Server error occurred. Please try again later.';
+      } else if (error.response?.status === 404) {
+        errorMessage = 'Leave request not found.';
+      } else if (error.response?.status === 400) {
+        errorMessage = 'Invalid leave request.';
+      }
+      
+      toast.error(errorMessage);
     }
   };
 
@@ -262,7 +276,21 @@ const AdminDashboard = () => {
       // Rollback on failure
       setLeaveRequests(previousLeaves);
       console.error('Reject leave error:', error);
-      toast.error(error.response?.data?.message || 'Failed to reject leave request');
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      
+      let errorMessage = 'Failed to reject leave request';
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.status === 500) {
+        errorMessage = 'Server error occurred. Please try again later.';
+      } else if (error.response?.status === 404) {
+        errorMessage = 'Leave request not found.';
+      } else if (error.response?.status === 400) {
+        errorMessage = 'Invalid leave request.';
+      }
+      
+      toast.error(errorMessage);
     }
   };
 

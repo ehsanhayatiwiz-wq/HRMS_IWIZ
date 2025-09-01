@@ -364,6 +364,11 @@ router.put('/:id/approve', protect, authorize('admin'), async (req, res) => {
       leave.notes = trimmed.slice(0, 500);
     }
 
+    // Ensure halfDayType is set if isHalfDay is true to prevent validation errors
+    if (leave.isHalfDay && !leave.halfDayType) {
+      leave.halfDayType = 'morning'; // Default to morning if not set
+    }
+
     console.log('Saving leave...');
     await leave.save();
     console.log('Leave saved successfully');
@@ -434,6 +439,11 @@ router.put('/:id/reject', protect, authorize('admin'), async (req, res) => {
     leave.approvedAt = new Date();
     const reason = typeof req.body?.rejectionReason === 'string' ? req.body.rejectionReason.trim() : '';
     leave.rejectionReason = (reason || 'Rejected by admin').slice(0, 500);
+
+    // Ensure halfDayType is set if isHalfDay is true to prevent validation errors
+    if (leave.isHalfDay && !leave.halfDayType) {
+      leave.halfDayType = 'morning'; // Default to morning if not set
+    }
 
     await leave.save();
 

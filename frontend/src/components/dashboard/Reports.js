@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import { toast } from 'react-toastify';
 import { FiDownload, FiFileText, FiBarChart2, FiUsers, FiCalendar } from 'react-icons/fi';
 import './Reports.css';
@@ -76,7 +76,7 @@ const Reports = () => {
           throw new Error('Invalid report type');
       }
 
-      const response = await axios.get(endpoint, {
+      const response = await api.get(endpoint, {
         responseType: 'blob'
       });
 
@@ -131,7 +131,7 @@ const Reports = () => {
           throw new Error('Invalid report type');
       }
 
-      const response = await axios.get(endpoint, {
+      const response = await api.get(endpoint, {
         responseType: 'blob'
       });
 

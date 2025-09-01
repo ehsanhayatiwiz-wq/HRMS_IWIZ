@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts';
+import { useAuth } from '../contexts/AuthContext';
 import { FiUser, FiMail, FiLock, FiChevronDown, FiEye, FiEyeOff } from 'react-icons/fi';
 import './Login.css';
 import Button from '../components/common/Button';
