@@ -38,7 +38,8 @@ const employeeSchema = new mongoose.Schema({
   phone: {
     type: String,
     required: [true, 'Phone number is required'],
-    match: [/^[\+]?[1-9][\d]{0,15}$/, 'Please enter a valid phone number']
+    // Allow local numbers starting with 0 (e.g., Pakistan), or international with optional +, total 10-15 digits
+    match: [/^(\+?\d{10,15}|0\d{10,14})$/, 'Please enter a valid phone number']
   },
   address: {
     street: { type: String, required: false },

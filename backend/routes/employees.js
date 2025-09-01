@@ -278,6 +278,13 @@ router.put('/:id', protect, authorize('admin'), [
       }
     }
 
+    // Remove empty optional fields to avoid triggering validators unnecessarily
+    ['dateOfBirth', 'phone', 'address', 'salary'].forEach((field) => {
+      if (updateData[field] === '' || updateData[field] === null) {
+        delete updateData[field];
+      }
+    });
+
     const updatedEmployee = await Employee.findByIdAndUpdate(
       req.params.id,
       updateData,

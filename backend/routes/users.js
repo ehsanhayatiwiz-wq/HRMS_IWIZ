@@ -69,8 +69,8 @@ router.put('/profile', protect, [
   body('phone')
     .optional()
     .trim()
-    .notEmpty()
-    .withMessage('Phone number is required'),
+    .isLength({ min: 10, max: 15 })
+    .withMessage('Phone number must be between 10 and 15 characters'),
   body('address.street')
     .optional()
     .trim()
@@ -139,9 +139,15 @@ router.put('/profile', protect, [
     }
 
     // Update user profile
+    // Clean empty optional fields to avoid unnecessary validation errors
+    const payload = { ...req.body };
+    ['phone', 'dateOfBirth'].forEach((k) => {
+      if (payload[k] === '' || payload[k] === null) delete payload[k];
+    });
+
     const updatedUser = await (userType === 'admin' ? Admin : Employee).findByIdAndUpdate(
       req.user.id,
-      req.body,
+      payload,
       { new: true, runValidators: true }
     ).select('-password');
 
@@ -172,6 +178,10 @@ router.put('/profile', protect, [
 
   } catch (error) {
     console.error('Update profile error:', error);
+    if (error && error.name === 'ValidationError') {
+      const details = Object.values(error.errors).map(e => e.message);
+      return res.status(400).json({ message: 'Validation failed', errors: details });
+    }
     res.status(500).json({ message: 'Server error during profile update' });
   }
 });
