@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FiDownload, FiCalendar, FiEye } from 'react-icons/fi';
 import Button from '../components/common/Button';
 import api from '../services/api';
@@ -18,7 +18,7 @@ const EmployeePayroll = () => {
   
   const { user } = useAuth();
 
-  const fetchPayrollData = async () => {
+  const fetchPayrollData = useCallback(async () => {
     try {
       setLoading(true);
       // Add cache-busting to ensure fresh data
@@ -32,11 +32,11 @@ const EmployeePayroll = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user.id, currentPage]);
 
   useEffect(() => {
     fetchPayrollData();
-  }, [user.id, currentPage, fetchPayrollData]);
+  }, [fetchPayrollData]);
 
   const downloadSalarySlip = async (payrollId) => {
     try {

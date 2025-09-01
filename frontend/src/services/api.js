@@ -1,14 +1,8 @@
 import axios from 'axios';
 import { handleApiError } from '../utils/errorHandler';
 
-// Resolve API base URL with env first, then sensible fallbacks
-const resolvedBaseURL =
-  process.env.REACT_APP_API_URL ||
-  (typeof window !== 'undefined'
-    ? (window.location.hostname.endsWith('vercel.app')
-        ? 'https://hrms-iwiz.onrender.com/api'
-        : '/api')
-    : '/api');
+// Force local backend for development
+const resolvedBaseURL = 'http://localhost:5000/api';
 
 // Create axios instance with default config
 const api = axios.create({

@@ -5,6 +5,7 @@ const { protect, authorize } = require('../middleware/auth');
 const Employee = require('../models/Employee');
 const Attendance = require('../models/Attendance');
 const Leave = require('../models/Leave');
+const ReportGenerator = require('../utils/reportGenerator');
 
 // Middleware to ensure only admins (or HR) can access reports
 router.use(protect, authorize('admin', 'hr'));
@@ -13,8 +14,9 @@ router.use(protect, authorize('admin', 'hr'));
 router.get('/employees', protect, authorize('admin', 'hr'), async (req, res) => {
   try {
     const employees = await Employee.find({}).sort({ createdAt: -1 });
+    const reportGen = new ReportGenerator();
 
-    const doc = new PDFDocument();
+    const doc = new PDFDocument({ size: 'A4', margin: 40 });
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename=employee-report.pdf');
     res.setHeader('Cache-Control', 'no-cache');
@@ -37,39 +39,57 @@ router.get('/employees', protect, authorize('admin', 'hr'), async (req, res) => 
       doc.destroy();
     });
 
-    doc.fontSize(24).text('Employee Report', { align: 'center' });
-    doc.moveDown();
-    doc.fontSize(12).text(`Generated on: ${new Date().toLocaleDateString()}`, { align: 'center' });
-    doc.moveDown(2);
+    // Create professional header
+    reportGen.createHeader(doc, 'Employee Report', `Total Employees: ${employees.length}`);
 
-    doc.fontSize(14).text('Employee Details', { underline: true });
-    doc.moveDown();
+    // Summary metrics
+    const totalEmployees = employees.length;
+    const activeEmployees = employees.filter(emp => emp.status === 'active').length;
+    const departments = [...new Set(employees.map(emp => emp.department))].length;
+    const avgLeaveBalance = employees.reduce((sum, emp) => sum + (emp.leaveBalance || 0), 0) / totalEmployees;
 
-    employees.forEach((employee, index) => {
-      doc.fontSize(10).text(`${index + 1}. ${employee.fullName}`, { continued: true });
-      doc.text(` - ${employee.employeeId}`, { continued: true });
-      doc.text(` - ${employee.department}`, { continued: true });
-      doc.text(` - ${employee.position}`, { continued: true });
-      doc.text(` - ${employee.status}`, { continued: true });
-      doc.text(` - ${employee.leaveBalance} days leave`, { align: 'right' });
-      doc.moveDown(0.5);
-    });
+    const summaryMetrics = [
+      { label: 'Total Employees', value: totalEmployees, color: reportGen.colors.primary },
+      { label: 'Active Employees', value: activeEmployees, color: reportGen.colors.success },
+      { label: 'Departments', value: departments, color: reportGen.colors.info },
+      { label: 'Average Leave Balance', value: `${avgLeaveBalance.toFixed(1)} days`, color: reportGen.colors.warning }
+    ];
+
+    reportGen.createSummarySection(doc, 'Summary', summaryMetrics);
+
+    // Employee table
+    const tableHeaders = ['Name', 'Employee ID', 'Department', 'Position', 'Status', 'Leave Balance', 'Join Date'];
+    const tableData = employees.map(emp => [
+      emp.fullName || 'N/A',
+      emp.employeeId || 'N/A',
+      emp.department || 'N/A',
+      emp.position || 'N/A',
+      emp.status || 'N/A',
+      `${emp.leaveBalance || 0} days`,
+      reportGen.formatDate(emp.dateOfJoining)
+    ]);
+
+    const columnWidths = [120, 80, 100, 100, 60, 80, 80];
+    reportGen.createTable(doc, tableHeaders, tableData, { columnWidths });
+
+    // Create footer
+    reportGen.createFooter(doc);
 
     // Finalize PDF
     doc.end();
     
     // Ensure response is properly closed
     res.on('finish', () => {
-      console.log('PDF report generated successfully');
+      console.log('PDF employee report generated successfully');
     });
     
     res.on('error', (error) => {
-      console.error('PDF report error:', error);
+      console.error('PDF employee report error:', error);
     });
     
     // Handle stream end
     doc.on('end', () => {
-      console.log('PDF stream ended successfully');
+      console.log('PDF employee report stream ended successfully');
     });
   } catch (error) {
     console.error('Error generating employee report:', error);
@@ -92,11 +112,14 @@ router.get('/attendance', protect, authorize('admin', 'hr'), async (req, res) =>
       date: { $gte: new Date(startDate), $lte: new Date(endDate) }
     }).populate('userId', 'fullName employeeId department');
 
+    const reportGen = new ReportGenerator();
     const doc = new PDFDocument({ size: 'A4', margin: 40 });
-    res.setHeader('Content-Type', 'application/pdf');
+    
     // Sanitize filename to prevent issues
     const sanitizedStartDate = startDate.replace(/[^a-zA-Z0-9]/g, '-');
     const sanitizedEndDate = endDate.replace(/[^a-zA-Z0-9]/g, '-');
+    
+    res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=attendance-report-${sanitizedStartDate}-to-${sanitizedEndDate}.pdf`);
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Pragma', 'no-cache');
@@ -118,70 +141,46 @@ router.get('/attendance', protect, authorize('admin', 'hr'), async (req, res) =>
       doc.destroy();
     });
 
-    // Header with brand bar, optional logo, and title
-    doc.rect(doc.page.margins.left, doc.y, doc.page.width - doc.page.margins.left - doc.page.margins.right, 28)
-      .fill('#4A90E2');
-    const fs = require('fs');
-    const path = require('path');
-    const logoPath = path.join(__dirname, '../public/logo.png');
-    let x = doc.page.margins.left + 12;
-    try {
-      if (fs.existsSync(logoPath)) {
-        doc.image(logoPath, x, doc.y - 20, { width: 24, height: 24 });
-        x += 32;
-      }
-    } catch (_) {}
-    doc.fill('#FFFFFF').fontSize(14).text('IWIZ HRMS Attendance Report', x, doc.y - 22, { align: 'left' });
-    doc.moveDown(2);
-    doc.fill('#2C3E50');
-    doc.fontSize(11).text(`Period: ${startDate} to ${endDate}`);
-    doc.text(`Generated on: ${new Date().toLocaleDateString()}`);
-    doc.moveDown(1.5);
+    // Create professional header
+    reportGen.createHeader(doc, 'Attendance Report', `Period: ${startDate} to ${endDate}`);
 
+    // Summary metrics
     const totalRecords = attendanceRecords.length;
     const presentCount = attendanceRecords.filter(r => r.status === 'present').length;
     const absentCount = attendanceRecords.filter(r => r.status === 'absent').length;
     const lateCount = attendanceRecords.filter(r => r.status === 'late').length;
+    const totalHours = attendanceRecords.reduce((sum, r) => sum + (r.totalHours || 0), 0);
+    const avgHoursPerDay = totalRecords > 0 ? totalHours / totalRecords : 0;
 
-    doc.fontSize(14).text('Summary', { underline: true });
-    doc.moveDown();
-    doc.fontSize(10).text(`Total Records: ${totalRecords}`);
-    doc.fontSize(10).text(`Present: ${presentCount}`);
-    doc.fontSize(10).text(`Absent: ${absentCount}`);
-    doc.fontSize(10).text(`Late: ${lateCount}`);
-    doc.moveDown(2);
+    const summaryMetrics = [
+      { label: 'Total Records', value: totalRecords, color: reportGen.colors.primary },
+      { label: 'Present', value: presentCount, color: reportGen.colors.success },
+      { label: 'Absent', value: absentCount, color: reportGen.colors.danger },
+      { label: 'Late', value: lateCount, color: reportGen.colors.warning },
+      { label: 'Total Hours', value: `${totalHours.toFixed(2)}h`, color: reportGen.colors.info },
+      { label: 'Average Hours/Day', value: `${avgHoursPerDay.toFixed(2)}h`, color: reportGen.colors.secondary }
+    ];
 
-    // Table header
-    const tableTop = doc.y;
-    const col = [doc.page.margins.left, 170, 260, 360, 430, 500];
-    const drawRow = (y, row, isHeader = false) => {
-      const fill = isHeader ? '#F4F6F8' : '#FFFFFF';
-      doc.rect(doc.page.margins.left, y - 12, doc.page.width - doc.page.margins.left - doc.page.margins.right, 24).fill(fill).stroke('#E5E7EB');
-      doc.fill('#2C3E50').font(isHeader ? 'Helvetica-Bold' : 'Helvetica').fontSize(10);
-      doc.text(row[0], col[0] + 8, y - 8, { width: col[1] - col[0] - 16 });
-      doc.text(row[1], col[1] + 8, y - 8, { width: col[2] - col[1] - 16 });
-      doc.text(row[2], col[2] + 8, y - 8, { width: col[3] - col[2] - 16 });
-      doc.text(row[3], col[3] + 8, y - 8, { width: col[4] - col[3] - 16 });
-      doc.text(row[4], col[4] + 8, y - 8, { width: col[5] - col[4] - 16 });
-    };
-    drawRow(tableTop + 14, ['Employee', 'Emp ID', 'Department', 'Date', 'Hours'], true);
+    reportGen.createSummarySection(doc, 'Summary', summaryMetrics);
 
-    let y = tableTop + 42;
-    attendanceRecords.forEach((record) => {
-      if (y > doc.page.height - doc.page.margins.bottom - 24) {
-        doc.addPage();
-        drawRow(doc.y + 14, ['Employee', 'Emp ID', 'Department', 'Date', 'Hours'], true);
-        y = doc.y + 42;
-      }
-      drawRow(y, [
-        record.userId?.fullName || 'Unknown',
-        record.userId?.employeeId || 'N/A',
-        record.userId?.department || 'N/A',
-        new Date(record.date).toLocaleDateString(),
-        `${(record.totalHours || 0).toFixed(2)}h`
-      ]);
-      y += 26;
-    });
+    // Attendance table
+    const tableHeaders = ['Employee', 'Employee ID', 'Department', 'Date', 'Check In', 'Check Out', 'Hours', 'Status'];
+    const tableData = attendanceRecords.map(record => [
+      record.userId?.fullName || 'Unknown',
+      record.userId?.employeeId || 'N/A',
+      record.userId?.department || 'N/A',
+      reportGen.formatDate(record.date),
+      reportGen.formatTime(record.checkIn?.time),
+      reportGen.formatTime(record.checkOut?.time),
+      `${(record.totalHours || 0).toFixed(2)}h`,
+      record.status || 'N/A'
+    ]);
+
+    const columnWidths = [100, 80, 80, 70, 70, 70, 50, 60];
+    reportGen.createTable(doc, tableHeaders, tableData, { columnWidths });
+
+    // Create footer
+    reportGen.createFooter(doc);
 
     // Finalize PDF
     doc.end();
@@ -197,7 +196,7 @@ router.get('/attendance', protect, authorize('admin', 'hr'), async (req, res) =>
     
     // Handle stream end
     doc.on('end', () => {
-      console.log('PDF attendance stream ended successfully');
+      console.log('PDF attendance report stream ended successfully');
     });
   } catch (error) {
     console.error('Error generating attendance report:', error);
@@ -220,44 +219,87 @@ router.get('/leaves', protect, authorize('admin', 'hr'), async (req, res) => {
       fromDate: { $gte: new Date(startDate), $lte: new Date(endDate) }
     }).populate('userId', 'fullName employeeId department');
 
-    const doc = new PDFDocument();
+    const reportGen = new ReportGenerator();
+    const doc = new PDFDocument({ size: 'A4', margin: 40 });
+    
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=leave-report-${startDate}-to-${endDate}.pdf`);
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Pragma', 'no-cache');
+    
     doc.pipe(res);
 
-    doc.fontSize(24).text('Leave Report', { align: 'center' });
-    doc.moveDown();
-    doc.fontSize(12).text(`Period: ${startDate} to ${endDate}`, { align: 'center' });
-    doc.fontSize(12).text(`Generated on: ${new Date().toLocaleDateString()}`, { align: 'center' });
-    doc.moveDown(2);
+    // Handle PDF errors
+    doc.on('error', (error) => {
+      console.error('PDF generation error:', error);
+      if (!res.headersSent) {
+        res.status(500).json({ message: 'PDF generation failed' });
+      }
+    });
+    
+    // Handle response errors
+    res.on('error', (error) => {
+      console.error('Response error during PDF generation:', error);
+      doc.destroy();
+    });
 
+    // Create professional header
+    reportGen.createHeader(doc, 'Leave Report', `Period: ${startDate} to ${endDate}`);
+
+    // Summary metrics
     const totalLeaves = leaves.length;
     const pendingLeaves = leaves.filter(l => l.status === 'pending').length;
     const approvedLeaves = leaves.filter(l => l.status === 'approved').length;
     const rejectedLeaves = leaves.filter(l => l.status === 'rejected').length;
+    const totalDays = leaves.reduce((sum, l) => sum + (l.totalDays || 0), 0);
+    const avgDaysPerLeave = totalLeaves > 0 ? totalDays / totalLeaves : 0;
 
-    doc.fontSize(14).text('Summary', { underline: true });
-    doc.moveDown();
-    doc.fontSize(10).text(`Total Leave Requests: ${totalLeaves}`);
-    doc.fontSize(10).text(`Pending: ${pendingLeaves}`);
-    doc.fontSize(10).text(`Approved: ${approvedLeaves}`);
-    doc.fontSize(10).text(`Rejected: ${rejectedLeaves}`);
-    doc.moveDown(2);
+    const summaryMetrics = [
+      { label: 'Total Leave Requests', value: totalLeaves, color: reportGen.colors.primary },
+      { label: 'Pending', value: pendingLeaves, color: reportGen.colors.warning },
+      { label: 'Approved', value: approvedLeaves, color: reportGen.colors.success },
+      { label: 'Rejected', value: rejectedLeaves, color: reportGen.colors.danger },
+      { label: 'Total Days Requested', value: `${totalDays.toFixed(1)} days`, color: reportGen.colors.info },
+      { label: 'Average Days/Leave', value: `${avgDaysPerLeave.toFixed(1)} days`, color: reportGen.colors.secondary }
+    ];
 
-    doc.fontSize(14).text('Leave Details', { underline: true });
-    doc.moveDown();
+    reportGen.createSummarySection(doc, 'Summary', summaryMetrics);
 
-    leaves.forEach((leave, index) => {
-      doc.fontSize(10).text(`${index + 1}. ${leave.userId?.fullName || 'Unknown'}`, { continued: true });
-      doc.text(` - ${leave.userId?.employeeId || 'N/A'}`, { continued: true });
-      doc.text(` - ${leave.leaveType}`, { continued: true });
-      doc.text(` - ${leave.fromDate.toLocaleDateString()} to ${leave.toDate.toLocaleDateString()}`, { continued: true });
-      doc.text(` - ${leave.totalDays} days`, { continued: true });
-      doc.text(` - ${leave.status}`, { align: 'right' });
-      doc.moveDown(0.5);
-    });
+    // Leave table
+    const tableHeaders = ['Employee', 'Employee ID', 'Department', 'Leave Type', 'From Date', 'To Date', 'Days', 'Status', 'Reason'];
+    const tableData = leaves.map(leave => [
+      leave.userId?.fullName || 'Unknown',
+      leave.userId?.employeeId || 'N/A',
+      leave.userId?.department || 'N/A',
+      leave.leaveType || 'N/A',
+      reportGen.formatDate(leave.fromDate),
+      reportGen.formatDate(leave.toDate),
+      `${leave.totalDays || 0} days`,
+      leave.status || 'N/A',
+      leave.reason || 'N/A'
+    ]);
+
+    const columnWidths = [90, 70, 70, 60, 70, 70, 50, 60, 100];
+    reportGen.createTable(doc, tableHeaders, tableData, { columnWidths });
+
+    // Create footer
+    reportGen.createFooter(doc);
 
     doc.end();
+    
+    // Ensure response is properly closed
+    res.on('finish', () => {
+      console.log('PDF leave report generated successfully');
+    });
+    
+    res.on('error', (error) => {
+      console.error('PDF leave report error:', error);
+    });
+    
+    // Handle stream end
+    doc.on('end', () => {
+      console.log('PDF leave report stream ended successfully');
+    });
   } catch (error) {
     console.error('Error generating leave report:', error);
     res.status(500).json({ 
@@ -279,28 +321,51 @@ router.get('/performance', protect, authorize('admin', 'hr'), async (req, res) =
       date: { $gte: new Date(startDate), $lte: new Date(endDate) }
     }).populate('userId', 'fullName employeeId department');
 
-    const doc = new PDFDocument();
+    const reportGen = new ReportGenerator();
+    const doc = new PDFDocument({ size: 'A4', margin: 40 });
+    
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=performance-report-${startDate}-to-${endDate}.pdf`);
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Pragma', 'no-cache');
+    
     doc.pipe(res);
 
-    doc.fontSize(24).text('Performance Report', { align: 'center' });
-    doc.moveDown();
-    doc.fontSize(12).text(`Period: ${startDate} to ${endDate}`, { align: 'center' });
-    doc.fontSize(12).text(`Generated on: ${new Date().toLocaleDateString()}`, { align: 'center' });
-    doc.moveDown(2);
+    // Handle PDF errors
+    doc.on('error', (error) => {
+      console.error('PDF generation error:', error);
+      if (!res.headersSent) {
+        res.status(500).json({ message: 'PDF generation failed' });
+      }
+    });
+    
+    // Handle response errors
+    res.on('error', (error) => {
+      console.error('Response error during PDF generation:', error);
+      doc.destroy();
+    });
 
+    // Create professional header
+    reportGen.createHeader(doc, 'Performance Report', `Period: ${startDate} to ${endDate}`);
+
+    // Summary metrics
     const totalHours = attendanceRecords.reduce((sum, record) => sum + (record.totalHours || 0), 0);
-    const avgHoursPerDay = totalHours / attendanceRecords.length || 0;
+    const avgHoursPerDay = attendanceRecords.length > 0 ? totalHours / attendanceRecords.length : 0;
     const totalRecords = attendanceRecords.length;
+    const uniqueEmployees = new Set(attendanceRecords.map(r => r.userId?._id?.toString())).size;
+    const avgHoursPerEmployee = uniqueEmployees > 0 ? totalHours / uniqueEmployees : 0;
 
-    doc.fontSize(14).text('Performance Summary', { underline: true });
-    doc.moveDown();
-    doc.fontSize(10).text(`Total Attendance Records: ${totalRecords}`);
-    doc.fontSize(10).text(`Total Hours Worked: ${totalHours.toFixed(2)}h`);
-    doc.fontSize(10).text(`Average Hours Per Day: ${avgHoursPerDay.toFixed(2)}h`);
-    doc.moveDown(2);
+    const summaryMetrics = [
+      { label: 'Total Records', value: totalRecords, color: reportGen.colors.primary },
+      { label: 'Unique Employees', value: uniqueEmployees, color: reportGen.colors.info },
+      { label: 'Total Hours Worked', value: `${totalHours.toFixed(2)}h`, color: reportGen.colors.success },
+      { label: 'Average Hours/Day', value: `${avgHoursPerDay.toFixed(2)}h`, color: reportGen.colors.warning },
+      { label: 'Average Hours/Employee', value: `${avgHoursPerEmployee.toFixed(2)}h`, color: reportGen.colors.secondary }
+    ];
 
+    reportGen.createSummarySection(doc, 'Performance Summary', summaryMetrics);
+
+    // Employee performance table
     const employeeStats = {};
     attendanceRecords.forEach(record => {
       const eId = record.userId?._id;
@@ -317,16 +382,47 @@ router.get('/performance', protect, authorize('admin', 'hr'), async (req, res) =
       employeeStats[eId].daysPresent += 1;
     });
 
-    Object.values(employeeStats).forEach((stats, index) => {
-      doc.fontSize(10).text(`${index + 1}. ${stats.name}`, { continued: true });
-      doc.text(` - ${stats.employeeId}`, { continued: true });
-      doc.text(` - ${stats.department}`, { continued: true });
-      doc.text(` - ${stats.daysPresent} days`, { continued: true });
-      doc.text(` - ${stats.totalHours.toFixed(2)}h total`, { align: 'right' });
-      doc.moveDown(0.5);
+    const tableHeaders = ['Employee', 'Employee ID', 'Department', 'Days Present', 'Total Hours', 'Average Hours/Day', 'Performance Rating'];
+    const tableData = Object.values(employeeStats).map(stats => {
+      const avgHours = stats.daysPresent > 0 ? stats.totalHours / stats.daysPresent : 0;
+      let rating = 'Good';
+      if (avgHours >= 8) rating = 'Excellent';
+      else if (avgHours >= 7) rating = 'Good';
+      else if (avgHours >= 6) rating = 'Average';
+      else rating = 'Below Average';
+      
+      return [
+        stats.name,
+        stats.employeeId,
+        stats.department,
+        stats.daysPresent,
+        `${stats.totalHours.toFixed(2)}h`,
+        `${avgHours.toFixed(2)}h`,
+        rating
+      ];
     });
 
+    const columnWidths = [100, 80, 80, 70, 80, 90, 80];
+    reportGen.createTable(doc, tableHeaders, tableData, { columnWidths });
+
+    // Create footer
+    reportGen.createFooter(doc);
+
     doc.end();
+    
+    // Ensure response is properly closed
+    res.on('finish', () => {
+      console.log('PDF performance report generated successfully');
+    });
+    
+    res.on('error', (error) => {
+      console.error('PDF performance report error:', error);
+    });
+    
+    // Handle stream end
+    doc.on('end', () => {
+      console.log('PDF performance report stream ended successfully');
+    });
   } catch (error) {
     console.error('Error generating performance report:', error);
     res.status(500).json({ 
@@ -340,14 +436,27 @@ router.get('/performance', protect, authorize('admin', 'hr'), async (req, res) =
 router.get('/employees/csv', protect, authorize('admin', 'hr'), async (req, res) => {
   try {
     const employees = await Employee.find({}).sort({ createdAt: -1 });
+    const reportGen = new ReportGenerator();
 
-    let csv = 'Name,Employee ID,Email,Department,Position,Phone,Status,Leave Balance,Date of Joining\n';
-    employees.forEach(employee => {
-      csv += `"${employee.fullName}","${employee.employeeId}","${employee.email}","${employee.department}","${employee.position}","${employee.phone}","${employee.status}","${employee.leaveBalance}","${employee.dateOfJoining.toLocaleDateString()}"\n`;
-    });
+    const headers = ['Name', 'Employee ID', 'Email', 'Department', 'Position', 'Phone', 'Status', 'Leave Balance', 'Date of Joining'];
+    const data = employees.map(employee => [
+      employee.fullName || 'N/A',
+      employee.employeeId || 'N/A',
+      employee.email || 'N/A',
+      employee.department || 'N/A',
+      employee.position || 'N/A',
+      employee.phone || 'N/A',
+      employee.status || 'N/A',
+      employee.leaveBalance || 0,
+      reportGen.formatDate(employee.dateOfJoining)
+    ]);
+
+    const csv = reportGen.generateCSV(headers, data);
 
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename=employee-report.csv');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Pragma', 'no-cache');
     res.send(csv);
   } catch (error) {
     console.error('Error exporting employee CSV:', error);
@@ -369,13 +478,26 @@ router.get('/attendance/csv', protect, authorize('admin', 'hr'), async (req, res
       date: { $gte: new Date(startDate), $lte: new Date(endDate) }
     }).populate('userId', 'fullName employeeId department');
 
-    let csv = 'Employee Name,Employee ID,Department,Date,Check In,Check Out,Total Hours,Status\n';
-    attendanceRecords.forEach(record => {
-      csv += `"${record.userId?.fullName || 'Unknown'}","${record.userId?.employeeId || 'N/A'}","${record.userId?.department || 'N/A'}","${record.date.toLocaleDateString()}","${record.checkIn?.time ? record.checkIn.time.toLocaleTimeString() : '-'}","${record.checkOut?.time ? record.checkOut.time.toLocaleTimeString() : '-'}","${record.totalHours || 0}","${record.status}"\n`;
-    });
+    const reportGen = new ReportGenerator();
+
+    const headers = ['Employee Name', 'Employee ID', 'Department', 'Date', 'Check In', 'Check Out', 'Total Hours', 'Status'];
+    const data = attendanceRecords.map(record => [
+      record.userId?.fullName || 'Unknown',
+      record.userId?.employeeId || 'N/A',
+      record.userId?.department || 'N/A',
+      reportGen.formatDate(record.date),
+      reportGen.formatTime(record.checkIn?.time),
+      reportGen.formatTime(record.checkOut?.time),
+      record.totalHours || 0,
+      record.status || 'N/A'
+    ]);
+
+    const csv = reportGen.generateCSV(headers, data);
 
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename=attendance-report-${startDate}-to-${endDate}.csv`);
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Pragma', 'no-cache');
     res.send(csv);
   } catch (error) {
     console.error('Error exporting attendance CSV:', error);
@@ -397,13 +519,27 @@ router.get('/leaves/csv', protect, authorize('admin', 'hr'), async (req, res) =>
       fromDate: { $gte: new Date(startDate), $lte: new Date(endDate) }
     }).populate('userId', 'fullName employeeId department');
 
-    let csv = 'Employee Name,Employee ID,Department,Leave Type,From Date,To Date,Total Days,Status,Reason\n';
-    leaves.forEach(leave => {
-      csv += `"${leave.userId?.fullName || 'Unknown'}","${leave.userId?.employeeId || 'N/A'}","${leave.userId?.department || 'N/A'}","${leave.leaveType}","${leave.fromDate.toLocaleDateString()}","${leave.toDate.toLocaleDateString()}","${leave.totalDays}","${leave.status}","${leave.reason}"\n`;
-    });
+    const reportGen = new ReportGenerator();
+
+    const headers = ['Employee Name', 'Employee ID', 'Department', 'Leave Type', 'From Date', 'To Date', 'Total Days', 'Status', 'Reason'];
+    const data = leaves.map(leave => [
+      leave.userId?.fullName || 'Unknown',
+      leave.userId?.employeeId || 'N/A',
+      leave.userId?.department || 'N/A',
+      leave.leaveType || 'N/A',
+      reportGen.formatDate(leave.fromDate),
+      reportGen.formatDate(leave.toDate),
+      leave.totalDays || 0,
+      leave.status || 'N/A',
+      leave.reason || 'N/A'
+    ]);
+
+    const csv = reportGen.generateCSV(headers, data);
 
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename=leave-report-${startDate}-to-${endDate}.csv`);
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Pragma', 'no-cache');
     res.send(csv);
   } catch (error) {
     console.error('Error exporting leave CSV:', error);
@@ -441,14 +577,34 @@ router.get('/performance/csv', protect, authorize('admin', 'hr'), async (req, re
       employeeStats[eId].daysPresent += 1;
     });
 
-    let csv = 'Employee Name,Employee ID,Department,Days Present,Total Hours,Average Hours Per Day\n';
-    Object.values(employeeStats).forEach(stats => {
+    const reportGen = new ReportGenerator();
+
+    const headers = ['Employee Name', 'Employee ID', 'Department', 'Days Present', 'Total Hours', 'Average Hours Per Day', 'Performance Rating'];
+    const data = Object.values(employeeStats).map(stats => {
       const avgHours = stats.daysPresent > 0 ? stats.totalHours / stats.daysPresent : 0;
-      csv += `"${stats.name}","${stats.employeeId}","${stats.department}","${stats.daysPresent}","${stats.totalHours.toFixed(2)}","${avgHours.toFixed(2)}"\n`;
+      let rating = 'Good';
+      if (avgHours >= 8) rating = 'Excellent';
+      else if (avgHours >= 7) rating = 'Good';
+      else if (avgHours >= 6) rating = 'Average';
+      else rating = 'Below Average';
+      
+      return [
+        stats.name,
+        stats.employeeId,
+        stats.department,
+        stats.daysPresent,
+        stats.totalHours.toFixed(2),
+        avgHours.toFixed(2),
+        rating
+      ];
     });
+
+    const csv = reportGen.generateCSV(headers, data);
 
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename=performance-report-${startDate}-to-${endDate}.csv`);
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Pragma', 'no-cache');
     res.send(csv);
   } catch (error) {
     console.error('Error exporting performance CSV:', error);

@@ -37,9 +37,9 @@ const employeeSchema = new mongoose.Schema({
   },
   phone: {
     type: String,
-    required: [true, 'Phone number is required'],
-    // Allow local numbers starting with 0 (e.g., Pakistan), or international with optional +, total 10-15 digits
-    match: [/^(\+?\d{10,15}|0\d{10,14})$/, 'Please enter a valid phone number']
+    required: false, // Made optional for profile updates
+    // Temporarily disabled regex validation for profile updates
+    // match: [/^(\+?\d{10,15}|0\d{10,14})$/, 'Please enter a valid phone number']
   },
   address: {
     street: { type: String, required: false },
@@ -50,7 +50,7 @@ const employeeSchema = new mongoose.Schema({
   },
   dateOfBirth: {
     type: Date,
-    required: [true, 'Date of birth is required']
+    required: false // Made optional for profile updates
   },
   dateOfJoining: {
     type: Date,

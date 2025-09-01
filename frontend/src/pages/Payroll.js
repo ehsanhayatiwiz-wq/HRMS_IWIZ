@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FiDownload, FiCalendar, FiUsers, FiBarChart2, FiCheck, FiRefreshCw } from 'react-icons/fi';
 import Button from '../components/common/Button';
 import api from '../services/api';
@@ -18,7 +18,7 @@ const Payroll = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const fetchPayrollData = async () => {
+  const fetchPayrollData = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -56,11 +56,11 @@ const Payroll = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab, selectedMonth, selectedYear, currentPage]);
 
   useEffect(() => {
     fetchPayrollData();
-  }, [activeTab, selectedMonth, selectedYear, currentPage, fetchPayrollData]);
+  }, [fetchPayrollData]);
 
   const generatePayroll = async () => {
     try {

@@ -410,36 +410,59 @@ router.get('/me', protect, async (req, res) => {
 const updateProfileValidators = [
   body('fullName')
     .optional()
-    .trim()
-    .isLength({ min: 1, max: 50 })
+    .custom((val) => {
+      if (val === undefined || val === null) return true;
+      const trimmed = String(val).trim();
+      if (trimmed === '') return true; // allow empty
+      return trimmed.length >= 1 && trimmed.length <= 50;
+    })
     .withMessage('Full name must be between 1 and 50 characters'),
   body('phone')
     .optional()
-    .trim()
     .custom((val) => {
-      if (!val || val === '') return true; // allow empty
-      return val.length >= 10 && val.length <= 15;
+      if (val === undefined || val === null) return true;
+      const trimmed = String(val).trim();
+      if (trimmed === '') return true; // allow empty
+      // Only validate length if there's actual content
+      if (trimmed.length > 0) {
+        return trimmed.length >= 10 && trimmed.length <= 15;
+      }
+      return true;
     })
     .withMessage('Phone number must be between 10 and 15 characters'),
   body('dateOfBirth')
     .optional()
     .custom((val) => {
-      if (!val || val === '') return true; // allow empty
+      if (val === undefined || val === null || val === '') return true;
       // validate ISO date
       return !isNaN(Date.parse(val));
     })
     .withMessage('Please provide a valid date of birth'),
   body('address')
     .optional()
-    .trim()
-    .isLength({ max: 200 })
+    .custom((val) => {
+      if (val === undefined || val === null) return true;
+      if (typeof val === 'string') {
+        const trimmed = val.trim();
+        if (trimmed === '') return true; // allow empty
+        return trimmed.length <= 200;
+      }
+      return true; // allow object or other types
+    })
     .withMessage('Address must be less than 200 characters')
 ];
 
 const updateProfileHandler = async (req, res) => {
   try {
+    console.log('Profile update request received:', {
+      body: req.body,
+      userId: req.user.id,
+      userRole: req.user.role
+    });
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('Profile update validation errors:', errors.array());
       return res.status(400).json({ 
         message: 'Validation failed',
         errors: errors.array() 
@@ -447,6 +470,7 @@ const updateProfileHandler = async (req, res) => {
     }
 
     const { fullName, phone, dateOfBirth, address } = req.body;
+    console.log('Profile update data:', { fullName, phone, dateOfBirth, address });
 
     // Try to find user in Admin collection
     let user = await Admin.findById(req.user.id);
@@ -460,25 +484,70 @@ const updateProfileHandler = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Update profile fields
+    // Update profile fields with better null/undefined handling
+    console.log('Updating profile fields...');
+    
     if (fullName !== undefined && fullName !== null) {
-      user.fullName = fullName.trim() || '';
+      const newFullName = String(fullName).trim() || '';
+      console.log('Setting fullName:', newFullName);
+      user.fullName = newFullName;
     }
+    
     if (phone !== undefined && phone !== null) {
-      user.phone = phone.trim() || '';
+      const newPhone = String(phone).trim() || '';
+      console.log('Setting phone:', newPhone);
+      user.phone = newPhone;
     }
+    
     if (dateOfBirth !== undefined && dateOfBirth !== null && dateOfBirth !== '') {
-      user.dateOfBirth = new Date(dateOfBirth);
-    }
-    if (address !== undefined && address !== null) {
-      if (typeof address === 'string') {
-        user.address = address.trim();
-      } else {
-        user.address = address;
+      try {
+        const newDate = new Date(dateOfBirth);
+        if (!isNaN(newDate.getTime())) {
+          console.log('Setting dateOfBirth:', newDate);
+          user.dateOfBirth = newDate;
+        }
+      } catch (error) {
+        console.log('Invalid date provided, skipping date update');
       }
     }
+    
+    if (address !== undefined && address !== null) {
+      if (typeof address === 'string') {
+        const newAddress = address.trim() || '';
+        console.log('Setting address (string):', newAddress);
+        user.address = newAddress;
+      } else if (typeof address === 'object') {
+        console.log('Setting address (object):', address);
+        user.address = address;
+      } else {
+        const newAddress = String(address).trim() || '';
+        console.log('Setting address (converted):', newAddress);
+        user.address = newAddress;
+      }
+    }
+    
+    console.log('Profile data before save:', {
+      fullName: user.fullName,
+      phone: user.phone,
+      dateOfBirth: user.dateOfBirth,
+      address: user.address
+    });
 
-    await user.save();
+    try {
+      console.log('Attempting to save user...');
+      await user.save();
+      console.log('User saved successfully');
+    } catch (saveError) {
+      console.error('Error saving user:', saveError);
+      if (saveError.name === 'ValidationError') {
+        console.error('Validation errors:', saveError.errors);
+        return res.status(400).json({
+          message: 'Profile validation failed',
+          errors: Object.values(saveError.errors).map(err => err.message)
+        });
+      }
+      throw saveError; // Re-throw to be caught by outer catch
+    }
 
     res.json({
       success: true,

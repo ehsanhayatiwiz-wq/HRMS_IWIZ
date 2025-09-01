@@ -38,8 +38,9 @@ const adminSchema = new mongoose.Schema({
   },
   phone: {
     type: String,
-    required: [true, 'Phone number is required'],
-    match: [/^[\+]?[1-9][\d]{0,15}$/, 'Please enter a valid phone number']
+    required: false, // Made optional for profile updates
+    // Temporarily disabled regex validation for profile updates
+    // match: [/^[\+]?[1-9][\d]{0,15}$/, 'Please enter a valid phone number']
   },
   address: {
     street: { type: String, required: false },
@@ -50,7 +51,7 @@ const adminSchema = new mongoose.Schema({
   },
   dateOfBirth: {
     type: Date,
-    required: [true, 'Date of birth is required']
+    required: false // Made optional for profile updates
   },
   dateOfJoining: {
     type: Date,

@@ -1,18 +1,18 @@
-/* Elegant Sidebar Styles */
+/* Sleek Sidebar Styles */
 .sidebar {
   width: 280px;
   height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--primary-800);
+  border-right: 1px solid var(--primary-700);
   display: flex;
   flex-direction: column;
   position: fixed;
   left: 0;
   top: 0;
   z-index: 2000;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-elegant);
 }
 
 .sidebar.collapsed {
@@ -47,15 +47,14 @@
   margin-left: 80px !important;
 }
 
-/* Elegant Sidebar Header */
+/* Sleek Sidebar Header */
 .sidebar-header {
   padding: 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 1px solid var(--primary-700);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  background: var(--primary-700);
 }
 
 .brand {
@@ -164,27 +163,27 @@
   align-items: center;
   gap: 1rem;
   padding: 1rem 1.5rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.8);
   text-decoration: none;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border-radius: 12px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: var(--radius-md);
   margin: 0.25rem 1rem;
   position: relative;
   overflow: hidden;
 }
 
 .nav-link:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.1);
   color: white;
-  transform: translateX(8px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  transform: translateX(4px);
+  box-shadow: var(--shadow-medium);
 }
 
 .nav-link.active {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
   color: white;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-  transform: translateX(8px);
+  box-shadow: var(--shadow-medium);
+  transform: translateX(4px);
 }
 
 .nav-link::before {

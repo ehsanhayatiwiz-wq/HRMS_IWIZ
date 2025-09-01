@@ -50,8 +50,14 @@ const securityConfig = {
         .map(s => s.trim())
         .filter(Boolean);
 
+      console.log('CORS: Checking origin:', origin);
+      console.log('CORS: Allowed origins:', envList);
+
       // Allow requests without origin (e.g., curl, server-to-server)
-      if (!origin) return callback(null, true);
+      if (!origin) {
+        console.log('CORS: Allowing request without origin');
+        return callback(null, true);
+      }
 
       try {
         const url = new URL(origin);
@@ -80,14 +86,17 @@ const securityConfig = {
           return false;
         });
 
+        console.log('CORS: Origin allowed:', allowed);
         return allowed ? callback(null, true) : callback(new Error('Not allowed by CORS'));
       } catch (e) {
+        console.log('CORS: Error parsing origin:', e.message);
         return callback(new Error('Invalid Origin'));
       }
     },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cache-Control', 'Pragma']
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cache-Control', 'Pragma', 'Accept'],
+    optionsSuccessStatus: 200
   },
 
   // JWT configuration

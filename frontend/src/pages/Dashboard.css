@@ -3,7 +3,7 @@
 /* Elegant Dashboard Container */
 .dashboard-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f0f4ff 0%, #e0edff 30%, #f9fafb 100%);
+  background: var(--gray-50);
   padding: var(--space-6, 1.5rem);
   max-width: 1400px;
   margin: 0 auto;

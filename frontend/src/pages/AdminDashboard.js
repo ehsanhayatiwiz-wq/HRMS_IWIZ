@@ -74,17 +74,6 @@ const AdminDashboard = () => {
           onLeaveToday: s.onLeaveEmployees || 0
         });
         setEmployees(employeesRes.data?.data?.employees || []);
-        
-        // Debug: Log the leave requests data for dashboard (normalized to employeeId)
-        console.log('Dashboard leaves API response:', leavesRes.data);
-        console.log('Dashboard leave records:', leavesRes.data?.data?.leaves);
-        if (leavesRes.data?.data?.leaves?.length > 0) {
-          const first = leavesRes.data.data.leaves[0];
-          console.log('First dashboard leave record:', first);
-          console.log('First record employeeName:', first.employeeName);
-          console.log('First record employeeId:', first.employeeId);
-        }
-        
         setLeaveRequests(leavesRes.data?.data?.leaves || []);
       } else if (activeSection === 'employees') {
         try {
@@ -100,11 +89,6 @@ const AdminDashboard = () => {
       } else if (activeSection === 'attendance') {
         try {
           const response = await api.get(`/attendance/all?page=${currentPage}&limit=20&date=${selectedDate}`);
-          console.log('Attendance API response:', response.data);
-          console.log('Attendance records:', response.data?.data?.attendance);
-          if (response.data?.data?.attendance?.length > 0) {
-            console.log('First attendance record:', response.data.data.attendance[0]);
-          }
           setAttendanceRecords(response.data?.data?.attendance || []);
           setTotalPages(response.data?.data?.pagination?.totalPages || 1);
         } catch (error) {
@@ -115,14 +99,8 @@ const AdminDashboard = () => {
         }
       } else if (activeSection === 'leaves') {
         try {
-          // Add cache-busting parameter to ensure fresh data
           const timestamp = new Date().getTime();
           const response = await api.get(`/leaves/all?page=${currentPage}&limit=20&status=${filterStatus}&_t=${timestamp}`);
-          console.log('Leaves API response:', response.data);
-          console.log('Leave records:', response.data?.data?.leaves);
-          if (response.data?.data?.leaves?.length > 0) {
-            console.log('First leave record:', response.data.data.leaves[0]);
-          }
           setLeaveRequests(response.data?.data?.leaves || []);
           setTotalPages(response.data?.data?.pagination?.totalPages || 1);
         } catch (error) {
@@ -169,9 +147,10 @@ const AdminDashboard = () => {
     }
   }, [filterStatus, activeSection, fetchDashboardData]);
 
+  // Initial data fetch when component mounts or activeSection changes
   useEffect(() => {
     fetchDashboardData();
-  }, [fetchDashboardData]);
+  }, [activeSection]); // Only run when activeSection changes, not on every render
 
   // Lightweight polling to keep data fresh while admin is viewing
   useEffect(() => {
@@ -718,7 +697,6 @@ const AdminDashboard = () => {
                 </thead>
                 <tbody>
                   {attendanceRecords.map((record) => {
-                    console.log('Rendering attendance record:', record);
                     return (
                       <tr key={record._id}>
                         <td>
@@ -824,9 +802,8 @@ const AdminDashboard = () => {
                 </thead>
                 <tbody>
                   {leaveRequests.map((leave) => {
-                    console.log('Rendering leave record:', leave);
                     return (
-                      <tr key={leave.id}>
+                      <tr key={leave._id || leave.id}>
                       <td>
                         <div className="employee-info">
                           <div className="employee-avatar">
@@ -856,15 +833,15 @@ const AdminDashboard = () => {
                         {leave.status === 'pending' && (
                           <div className="action-buttons">
                             <button
-                              className="btn btn-success btn-sm"
-                              onClick={() => handleApproveLeave(leave.id)}
+                              className="btn btn-success"
+                              onClick={() => handleApproveLeave(leave._id || leave.id)}
                               title="Approve Leave"
                             >
                               <FiCheck />
                             </button>
                             <button
-                              className="btn btn-danger btn-sm"
-                              onClick={() => handleRejectLeave(leave.id)}
+                              className="btn btn-danger"
+                              onClick={() => handleRejectLeave(leave._id || leave.id)}
                               title="Reject Leave"
                             >
                               <FiX />
@@ -873,7 +850,7 @@ const AdminDashboard = () => {
                         )}
                         {leave.status !== 'pending' && (
                           <button
-                            className="btn btn-info btn-sm"
+                            className="btn btn-info"
                             title="View Details"
                             onClick={() => {
                               setSelectedLeaveRecord(leave);
