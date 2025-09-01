@@ -94,34 +94,56 @@ const { ensureFailsafeAdmin } = require('./utils/failsafeAdmin');
   }
 })();
 
-// Dev landing route for development
+// Development-specific logging
 if (config.server.nodeEnv !== 'production') {
-  app.get('/', (req, res) => {
-    res.json({
-      message: 'IWIZ HRMS API (development)',
-      tryHealth: '/api/health',
-      docs: 'API is running successfully'
-    });
-  });
+  console.log('🔧 Development mode enabled');
+  console.log('📝 API documentation available at /api/health');
 }
 
-// Health check endpoint
+// Health check endpoint (required by Render)
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'OK',
     timestamp: new Date().toISOString(),
     environment: config.server.nodeEnv,
-    database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
+    database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    render: process.env.RENDER === 'true' ? 'Deployed on Render' : 'Local development'
+  });
+});
+
+// Root endpoint for Render health checks
+app.get('/', (req, res) => {
+  res.json({
+    message: 'IWIZ HRMS API Server',
+    status: 'Running',
+    environment: config.server.nodeEnv,
+    timestamp: new Date().toISOString(),
+    health: '/api/health',
+    docs: 'API is operational'
   });
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ 
+  console.error('🚨 Error occurred:', err.message);
+  console.error('Stack trace:', err.stack);
+  
+  // Don't expose internal errors in production
+  const errorResponse = {
     message: 'Something went wrong!',
-    error: config.server.nodeEnv === 'development' ? err.message : 'Internal server error'
-  });
+    timestamp: new Date().toISOString(),
+    path: req.path,
+    method: req.method
+  };
+  
+  if (config.server.nodeEnv === 'development') {
+    errorResponse.error = err.message;
+    errorResponse.stack = err.stack;
+  }
+  
+  res.status(500).json(errorResponse);
 });
 
 // 404 handler
@@ -157,5 +179,14 @@ const PORT = config.server.port;
 app.listen(PORT, () => {
   console.log(`🚀 IWIZ HRMS Server running on port ${PORT}`);
   console.log(`📊 Environment: ${config.server.nodeEnv}`);
-  console.log(`🔗 API URL: http://localhost:${PORT}/api`);
+  
+  // Show proper URL based on environment
+  if (config.server.nodeEnv === 'production' && process.env.RENDER_EXTERNAL_URL) {
+    console.log(`🔗 API URL: ${process.env.RENDER_EXTERNAL_URL}/api`);
+    console.log(`🌐 Render Service: ${process.env.RENDER_EXTERNAL_URL}`);
+  } else {
+    console.log(`🔗 API URL: http://localhost:${PORT}/api`);
+  }
+  
+  console.log(`✅ Server ready to accept requests`);
 }); 
