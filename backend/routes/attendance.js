@@ -398,10 +398,22 @@ router.get('/all', protect, authorize('admin'), async (req, res) => {
     }
 
     const attendance = await Attendance.find(query)
-      .populate('userId', 'fullName employeeId department')
+      .populate('userId', 'fullName employeeId department email')
       .sort({ date: -1, 'checkIn.time': -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
+
+    // Ensure employee data is properly structured
+    const formattedAttendance = attendance.map(record => {
+      const formatted = record.toObject();
+      if (formatted.userId) {
+        formatted.employeeName = formatted.userId.fullName;
+        formatted.employeeEmail = formatted.userId.email;
+        formatted.employeeId = formatted.userId.employeeId;
+        formatted.department = formatted.userId.department;
+      }
+      return formatted;
+    });
 
     const total = await Attendance.countDocuments(query);
 

@@ -409,26 +409,31 @@ router.get('/me', protect, async (req, res) => {
 // @access  Private
 const updateProfileValidators = [
   body('fullName')
-    .optional({ nullable: true, checkFalsy: true })
+    .optional()
     .trim()
-    .isLength({ min: 2, max: 50 })
-    .withMessage('Full name must be between 2 and 50 characters'),
+    .isLength({ min: 1, max: 50 })
+    .withMessage('Full name must be between 1 and 50 characters'),
   body('phone')
-    .optional({ nullable: true, checkFalsy: true })
+    .optional()
     .trim()
     .custom((val) => {
-      if (!val) return true; // allow empty
+      if (!val || val === '') return true; // allow empty
       return val.length >= 10 && val.length <= 15;
     })
     .withMessage('Phone number must be between 10 and 15 characters'),
   body('dateOfBirth')
-    .optional({ nullable: true, checkFalsy: true })
+    .optional()
     .custom((val) => {
-      if (!val) return true; // allow empty
+      if (!val || val === '') return true; // allow empty
       // validate ISO date
       return !isNaN(Date.parse(val));
     })
-    .withMessage('Please provide a valid date of birth')
+    .withMessage('Please provide a valid date of birth'),
+  body('address')
+    .optional()
+    .trim()
+    .isLength({ max: 200 })
+    .withMessage('Address must be less than 200 characters')
 ];
 
 const updateProfileHandler = async (req, res) => {
@@ -456,28 +461,18 @@ const updateProfileHandler = async (req, res) => {
     }
 
     // Update profile fields
-    if (fullName !== undefined) user.fullName = fullName || '';
-    if (phone !== undefined) {
-      // Only update if phone is not empty (since it's required)
-      if (phone && phone.trim()) {
-        user.phone = phone.trim();
-      }
+    if (fullName !== undefined && fullName !== null) {
+      user.fullName = fullName.trim() || '';
     }
-    if (dateOfBirth !== undefined) {
-      // Only update if dateOfBirth is provided (since it's required)
-      if (dateOfBirth) {
-        user.dateOfBirth = new Date(dateOfBirth);
-      }
+    if (phone !== undefined && phone !== null) {
+      user.phone = phone.trim() || '';
     }
-    if (address !== undefined) {
-      // Accept either plain string or structured object
+    if (dateOfBirth !== undefined && dateOfBirth !== null && dateOfBirth !== '') {
+      user.dateOfBirth = new Date(dateOfBirth);
+    }
+    if (address !== undefined && address !== null) {
       if (typeof address === 'string') {
-        user.address = {
-          street: address,
-          city: '',
-          zipCode: '',
-          country: ''
-        };
+        user.address = address.trim();
       } else {
         user.address = address;
       }
