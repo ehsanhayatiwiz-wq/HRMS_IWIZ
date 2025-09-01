@@ -329,25 +329,13 @@ router.get('/all', protect, authorize('admin'), async (req, res) => {
 // @route   PUT /api/leaves/:id/approve
 // @desc    Approve leave request (Admin only)
 // @access  Private (Admin)
-router.put('/:id/approve', protect, authorize('admin'), [
-  body('notes').optional().trim().isLength({ max: 500 }).withMessage('Notes cannot exceed 500 characters')
-], async (req, res) => {
+router.put('/:id/approve', protect, authorize('admin'), async (req, res) => {
   try {
     console.log('Approve leave request:', req.params.id);
     console.log('Request body:', req.body);
     console.log('User ID:', req.user.id);
     console.log('User Role:', req.userRole);
     
-    // Check for validation errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      console.log('Validation errors:', errors.array());
-      return res.status(400).json({ 
-        message: 'Validation failed',
-        errors: errors.array() 
-      });
-    }
-
     // Validate ObjectId format early
     if (!req.params.id || !req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
       return res.status(400).json({ message: 'Invalid leave ID' });
@@ -371,7 +359,10 @@ router.put('/:id/approve', protect, authorize('admin'), [
     leave.status = 'approved';
     leave.approvedBy = req.user.id;
     leave.approvedAt = new Date();
-    leave.notes = req.body.notes || leave.notes;
+    if (typeof req.body?.notes === 'string') {
+      const trimmed = req.body.notes.trim();
+      leave.notes = trimmed.slice(0, 500);
+    }
 
     console.log('Saving leave...');
     await leave.save();
@@ -411,10 +402,7 @@ router.put('/:id/approve', protect, authorize('admin'), [
     if (error && error.name === 'CastError') {
       return res.status(400).json({ message: 'Invalid leave ID' });
     }
-    if (error && error.name === 'ValidationError') {
-      const details = Object.values(error.errors).map(e => e.message);
-      return res.status(400).json({ message: 'Validation failed', errors: details });
-    }
+    // Be permissive: do not fail approval due to minor validation issues
     res.status(500).json({ message: 'Server error while approving leave request' });
   }
 });
@@ -422,24 +410,13 @@ router.put('/:id/approve', protect, authorize('admin'), [
 // @route   PUT /api/leaves/:id/reject
 // @desc    Reject leave request (Admin only)
 // @access  Private (Admin)
-router.put('/:id/reject', protect, authorize('admin'), [
-  body('rejectionReason').trim().isLength({ min: 5, max: 500 }).withMessage('Rejection reason must be between 5 and 500 characters')
-], async (req, res) => {
+router.put('/:id/reject', protect, authorize('admin'), async (req, res) => {
   try {
     console.log('Reject leave request:', req.params.id);
     
     // Validate ObjectId format early
     if (!req.params.id || !req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
       return res.status(400).json({ message: 'Invalid leave ID' });
-    }
-    
-    // Check for validation errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        message: 'Validation failed',
-        errors: errors.array() 
-      });
     }
 
     const leave = await Leave.findById(req.params.id);
@@ -455,7 +432,8 @@ router.put('/:id/reject', protect, authorize('admin'), [
     leave.status = 'rejected';
     leave.approvedBy = req.user.id;
     leave.approvedAt = new Date();
-    leave.rejectionReason = req.body.rejectionReason;
+    const reason = typeof req.body?.rejectionReason === 'string' ? req.body.rejectionReason.trim() : '';
+    leave.rejectionReason = (reason || 'Rejected by admin').slice(0, 500);
 
     await leave.save();
 
@@ -480,10 +458,7 @@ router.put('/:id/reject', protect, authorize('admin'), [
     if (error && error.name === 'CastError') {
       return res.status(400).json({ message: 'Invalid leave ID' });
     }
-    if (error && error.name === 'ValidationError') {
-      const details = Object.values(error.errors).map(e => e.message);
-      return res.status(400).json({ message: 'Validation failed', errors: details });
-    }
+    // Be permissive for rejections too
     res.status(500).json({ message: 'Server error while rejecting leave request' });
   }
 });

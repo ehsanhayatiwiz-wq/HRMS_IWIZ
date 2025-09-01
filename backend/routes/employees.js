@@ -265,6 +265,11 @@ router.put('/:id', protect, authorize('admin'), [
     // Prevent changing immutable identifiers
     if ('employeeId' in updateData) delete updateData.employeeId;
 
+    // Normalize department naming discrepancies from UI (e.g., 'Operation' → 'Operations')
+    if (updateData.department && updateData.department.toLowerCase() === 'operation') {
+      updateData.department = 'Operations';
+    }
+
     // Handle email uniqueness on update
     if (updateData.email) {
       const existing = await Employee.findOne({ email: updateData.email.toLowerCase(), _id: { $ne: req.params.id } });

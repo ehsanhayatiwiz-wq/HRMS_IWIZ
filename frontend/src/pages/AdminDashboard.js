@@ -503,7 +503,7 @@ const AdminDashboard = () => {
                 >
                   <option value="">All Departments</option>
                   <option value="IT">IT</option>
-                  <option value="Operation">Operation</option>
+                  <option value="Operations">Operations</option>
                   <option value="Management">Management</option>
                 </select>
                 <Button variant="primary" onClick={() => { setEditingEmployee(null); setShowEmployeeModal(true); }} icon={<FiUser />}>Add Employee</Button>
@@ -1159,7 +1159,7 @@ const EmployeeModal = ({ employee, onSave, onClose }) => {
               >
                 <option value="">Select Department</option>
                 <option value="IT">IT</option>
-                <option value="Operation">Operation</option>
+                <option value="Operations">Operations</option>
                 <option value="Management">Management</option>
               </select>
               {errors.department && <span className="error-message">{errors.department}</span>}
