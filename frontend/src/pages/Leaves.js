@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts';
 import api from '../services/api';
 import { toast } from 'react-toastify';
-import moment from 'moment';
+// moment.js removed - using native Date methods
 import { FiCalendar, FiFileText, FiPlusCircle, FiSend, FiX } from 'react-icons/fi';
 import Button from '../components/common/Button';
 import './Dashboard.css';
@@ -66,14 +66,16 @@ const Leaves = () => {
     if (!formData.reason) errors.reason = 'Reason is required';
     
     if (formData.fromDate && formData.toDate) {
-      const fromDate = moment(formData.fromDate);
-      const toDate = moment(formData.toDate);
+      const fromDate = new Date(formData.fromDate);
+      const toDate = new Date(formData.toDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
       
-      if (fromDate.isAfter(toDate)) {
+      if (fromDate > toDate) {
         errors.toDate = 'To date cannot be before from date';
       }
       
-      if (fromDate.isBefore(moment(), 'day')) {
+      if (fromDate < today) {
         errors.fromDate = 'From date cannot be in the past';
       }
     }

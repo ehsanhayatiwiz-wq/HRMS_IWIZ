@@ -168,8 +168,20 @@ leaveSchema.methods.calculateSalaryDeduction = function(userSalary, leaveBalance
 
 // Pre-save middleware to calculate total days
 leaveSchema.pre('save', function(next) {
-  if (this.fromDate && this.toDate) {
-    this.totalDays = this.calculateTotalDays();
+  // Recalculate totalDays only when relevant fields change or on creation
+  if (
+    this.isNew ||
+    this.isModified('fromDate') ||
+    this.isModified('toDate') ||
+    this.isModified('isHalfDay')
+  ) {
+    let recalculatedTotal = this.calculateTotalDays();
+
+    // Ensure we never persist below minimum allowed by schema (0.5)
+    if (typeof recalculatedTotal !== 'number' || Number.isNaN(recalculatedTotal)) {
+      recalculatedTotal = 0.5;
+    }
+    this.totalDays = Math.max(0.5, recalculatedTotal);
   }
   next();
 });

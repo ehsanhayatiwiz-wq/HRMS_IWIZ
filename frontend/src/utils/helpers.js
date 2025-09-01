@@ -1,38 +1,42 @@
-import moment from 'moment';
-
 // Format date for display
 export const formatDate = (date, format = 'MMM DD, YYYY') => {
   if (!date) return '-';
-  return moment(date).format(format);
+  const dateObj = new Date(date);
+  if (isNaN(dateObj.getTime())) return '-';
+  
+  // Simple format mapping for common cases
+  if (format === 'MMM DD, YYYY') {
+    return dateObj.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: '2-digit', 
+      year: 'numeric' 
+    });
+  }
+  return dateObj.toLocaleDateString();
 };
 
 // Format time for display
 export const formatTime = (time, format = 'HH:mm') => {
   if (!time) return '-';
-  return moment(time).format(format);
+  const timeObj = new Date(time);
+  if (isNaN(timeObj.getTime())) return '-';
+  
+  return timeObj.toLocaleTimeString('en-US', { 
+    hour: '2-digit', 
+    minute: '2-digit',
+    hour12: false 
+  });
 };
 
-// Calculate time difference in hours
+// Calculate hours between two times
 export const calculateHours = (startTime, endTime) => {
   if (!startTime || !endTime) return 0;
-  const start = moment(startTime);
-  const end = moment(endTime);
-  return end.diff(start, 'hours', true);
-};
-
-// Get status badge class
-export const getStatusClass = (status) => {
-  const statusMap = {
-    pending: 'warning',
-    approved: 'success',
-    rejected: 'danger',
-    active: 'success',
-    inactive: 'warning',
-    present: 'success',
-    absent: 'danger',
-    late: 'warning',
-  };
-  return statusMap[status] || 'default';
+  const start = new Date(startTime);
+  const end = new Date(endTime);
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
+  
+  const diffMs = end.getTime() - start.getTime();
+  return Math.round((diffMs / (1000 * 60 * 60)) * 100) / 100; // Round to 2 decimal places
 };
 
 // Validate email format
@@ -41,54 +45,36 @@ export const isValidEmail = (email) => {
   return emailRegex.test(email);
 };
 
-// Validate phone format
-export const isValidPhone = (phone) => {
-  const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
-  return phoneRegex.test(phone.replace(/\s/g, ''));
+// Format currency
+export const formatCurrency = (amount, currency = 'USD') => {
+  if (typeof amount !== 'number') return '-';
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency
+  }).format(amount);
 };
 
-// Format file size
-export const formatFileSize = (bytes) => {
-  if (bytes === 0) return '0 Bytes';
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+// Capitalize first letter of each word
+export const capitalizeWords = (str) => {
+  if (!str) return '';
+  return str.replace(/\w\S*/g, (txt) => 
+    txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+  );
 };
 
-// Debounce function
-export const debounce = (func, wait) => {
-  let timeout;
-  return function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
+// Get status color class
+export const getStatusColor = (status) => {
+  const colorMap = {
+    'active': 'success',
+    'inactive': 'warning',
+    'pending': 'warning',
+    'approved': 'success',
+    'rejected': 'danger',
+    'present': 'success',
+    'absent': 'danger',
+    'late': 'warning',
+    'on_leave': 'info',
+    'terminated': 'danger'
   };
-};
-
-// Generate unique ID
-export const generateId = () => {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2);
-};
-
-// Check if user has permission
-export const hasPermission = (userRole, requiredRoles) => {
-  if (!userRole || !requiredRoles) return false;
-  if (Array.isArray(requiredRoles)) {
-    return requiredRoles.includes(userRole);
-  }
-  return userRole === requiredRoles;
-};
-
-// Format currency in PKR
-export const formatCurrency = (amount, { withSymbol = true } = {}) => {
-  const numeric = Number(amount || 0);
-  const formatted = numeric.toLocaleString('en-PK', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
-  return withSymbol ? `Rs ${formatted}` : formatted;
+  return colorMap[status] || 'secondary';
 };

@@ -4,7 +4,7 @@ import Button from '../components/common/Button';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 import { formatCurrency } from '../utils/helpers';
-import moment from 'moment';
+// moment.js removed - using native Date methods
 import './Payroll.css';
 
 const Payroll = () => {
@@ -12,8 +12,8 @@ const Payroll = () => {
   const [loading, setLoading] = useState(false);
   const [payrolls, setPayrolls] = useState([]);
   const [summary, setSummary] = useState({});
-  const [selectedMonth, setSelectedMonth] = useState(moment().format('YYYY-MM'));
-  const [selectedYear, setSelectedYear] = useState(moment().year());
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [generating, setGenerating] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -183,11 +183,17 @@ const Payroll = () => {
               onChange={(e) => setSelectedMonth(e.target.value)}
               className="month-select"
             >
-              {Array.from({ length: 12 }, (_, i) => (
-                <option key={i + 1} value={moment().month(i).format('YYYY-MM')}>
-                  {moment().month(i).format('MMMM')}
-                </option>
-              ))}
+              {Array.from({ length: 12 }, (_, i) => {
+                const date = new Date();
+                date.setMonth(i);
+                const yearMonth = `${date.getFullYear()}-${String(i + 1).padStart(2, '0')}`;
+                const monthName = date.toLocaleDateString('en-US', { month: 'long' });
+                return (
+                  <option key={i + 1} value={yearMonth}>
+                    {monthName}
+                  </option>
+                );
+              })}
             </select>
             <select
               value={selectedYear}
@@ -195,7 +201,7 @@ const Payroll = () => {
               className="year-select"
             >
               {Array.from({ length: 5 }, (_, i) => {
-                const year = moment().year() - 2 + i;
+                const year = new Date().getFullYear() - 2 + i;
                 return (
                   <option key={year} value={year}>
                     {year}
@@ -293,11 +299,17 @@ const Payroll = () => {
                 onChange={(e) => setSelectedMonth(e.target.value)}
                 className="month-select"
               >
-                {Array.from({ length: 12 }, (_, i) => (
-                  <option key={i + 1} value={moment().month(i).format('YYYY-MM')}>
-                    {moment().month(i).format('MMMM')}
-                  </option>
-                ))}
+                {Array.from({ length: 12 }, (_, i) => {
+                  const date = new Date();
+                  date.setMonth(i);
+                  const yearMonth = `${date.getFullYear()}-${String(i + 1).padStart(2, '0')}`;
+                  const monthName = date.toLocaleDateString('en-US', { month: 'long' });
+                  return (
+                    <option key={i + 1} value={yearMonth}>
+                      {monthName}
+                    </option>
+                  );
+                })}
               </select>
               <select
                 value={selectedYear}
@@ -305,7 +317,7 @@ const Payroll = () => {
                 className="year-select"
               >
                 {Array.from({ length: 5 }, (_, i) => {
-                  const year = moment().year() - 2 + i;
+                  const year = new Date().getFullYear() - 2 + i;
                   return (
                     <option key={year} value={year}>
                       {year}
@@ -323,7 +335,7 @@ const Payroll = () => {
             variant="primary"
             icon={generating ? <FiRefreshCw className="spinning" /> : <FiCalendar />}
           >
-            {generating ? 'Generating Payroll...' : `Generate Payroll for ${moment(selectedMonth).format('MMMM YYYY')}`}
+            {generating ? 'Generating Payroll...' : `Generate Payroll for ${new Date(selectedMonth + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`}
           </Button>
         </div>
       </div>
@@ -353,7 +365,7 @@ const Payroll = () => {
                       {payroll.status}
                     </span>
                   </td>
-                  <td>{moment(payroll.generatedAt).format('MMM DD, YYYY')}</td>
+                  <td>{new Date(payroll.generatedAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</td>
                 </tr>
               ))}
             </tbody>

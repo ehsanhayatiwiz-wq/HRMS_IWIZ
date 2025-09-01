@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { handleApiError } from '../utils/errorHandler';
 
 // Resolve API base URL with env first, then sensible fallbacks
 const resolvedBaseURL =
@@ -37,10 +38,9 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    // Redirect to login on unauthorized
+    // Handle authentication errors
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
-      // Only redirect if not already on login page
       if (window.location.pathname !== '/login') {
         window.location.href = '/login';
       }
@@ -58,35 +58,19 @@ api.interceptors.response.use(
       config.__retryCount = config.__retryCount || 0;
       if (config.__retryCount < 2) {
         config.__retryCount += 1;
-        const delayMs = 1000 * Math.pow(2, config.__retryCount - 1); // 1s, 2s
+        const delayMs = 1000 * Math.pow(2, config.__retryCount - 1);
         await new Promise((r) => setTimeout(r, delayMs));
         return api(config);
       }
     }
 
-    // Friendly error normalization
-    const message = (() => {
-      if (error.code === 'ECONNABORTED' || error.message?.toLowerCase().includes('timeout')) {
-        return 'Server is taking too long to respond.';
-      }
-      if (error.message === 'Network Error') {
-        return 'Unable to connect. Please check your internet or contact admin.';
-      }
-      if (error.response?.status >= 500) {
-        return 'Server error, please try again later.';
-      }
-      if (error.response?.status === 404) {
-        return 'The requested resource was not found.';
-      }
-      if (error.response?.status === 403) {
-        return 'You do not have permission to access this resource.';
-      }
-      if (error.response?.status === 400) {
-        return error.response?.data?.message || 'Invalid request. Please check your input.';
-      }
-      return error.response?.data?.message || error.message || 'An unexpected error occurred.';
-    })();
-    error.userMessage = message;
+    // Add user-friendly message for backward compatibility
+    const parsedError = handleApiError(error, { 
+      showToast: false, // Don't show toast here, let components handle it
+      logError: true 
+    });
+    error.userMessage = parsedError.message;
+    
     return Promise.reject(error);
   }
 );
