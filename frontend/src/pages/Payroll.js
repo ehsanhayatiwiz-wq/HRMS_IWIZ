@@ -60,7 +60,7 @@ const Payroll = () => {
 
   useEffect(() => {
     fetchPayrollData();
-  }, [activeTab, selectedMonth, selectedYear, currentPage]);
+  }, [activeTab, selectedMonth, selectedYear, currentPage, fetchPayrollData]);
 
   const generatePayroll = async () => {
     try {

@@ -497,7 +497,31 @@ const updateProfileHandler = async (req, res) => {
 
   } catch (error) {
     console.error('Update profile error:', error);
-    res.status(500).json({ message: 'Server error during profile update' });
+    console.error('Error details:', {
+      message: error.message,
+      name: error.name,
+      code: error.code,
+      stack: error.stack
+    });
+    
+    if (error.name === 'ValidationError') {
+      const validationErrors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ 
+        message: 'Validation failed',
+        errors: validationErrors
+      });
+    }
+    
+    if (error.name === 'CastError') {
+      return res.status(400).json({ 
+        message: 'Invalid data format provided'
+      });
+    }
+    
+    res.status(500).json({ 
+      message: 'Server error during profile update',
+      error: error.message || 'Unknown error occurred'
+    });
   }
 };
 

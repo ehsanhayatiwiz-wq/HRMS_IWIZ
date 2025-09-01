@@ -112,11 +112,17 @@ leaveSchema.methods.calculateTotalDays = function() {
     currentDate.setDate(currentDate.getDate() + 1);
   }
   
+  // Ensure minimum of 0.5 days for any leave
+  if (totalDays === 0) {
+    totalDays = 0.5;
+  }
+  
   if (this.isHalfDay) {
     totalDays = totalDays * 0.5;
   }
   
-  return totalDays;
+  // Ensure we never return less than 0.5
+  return Math.max(0.5, totalDays);
 };
 
 // Check for overlapping leaves
@@ -178,33 +184,43 @@ leaveSchema.methods.calculateSalaryDeduction = function(userSalary, leaveBalance
 
 // Pre-save middleware to calculate total days and validate fields
 leaveSchema.pre('save', function(next) {
-  // Recalculate totalDays only when relevant fields change or on creation
-  if (
-    this.isNew ||
-    this.isModified('fromDate') ||
-    this.isModified('toDate') ||
-    this.isModified('isHalfDay')
-  ) {
-    let recalculatedTotal = this.calculateTotalDays();
+  try {
+    // Recalculate totalDays only when relevant fields change or on creation
+    if (
+      this.isNew ||
+      this.isModified('fromDate') ||
+      this.isModified('toDate') ||
+      this.isModified('isHalfDay')
+    ) {
+      let recalculatedTotal = this.calculateTotalDays();
 
-    // Ensure we never persist below minimum allowed by schema (0.5)
-    if (typeof recalculatedTotal !== 'number' || Number.isNaN(recalculatedTotal)) {
-      recalculatedTotal = 0.5;
+      // Ensure we never persist below minimum allowed by schema (0.5)
+      if (typeof recalculatedTotal !== 'number' || Number.isNaN(recalculatedTotal) || recalculatedTotal < 0.5) {
+        recalculatedTotal = 0.5;
+      }
+      this.totalDays = recalculatedTotal;
     }
-    this.totalDays = Math.max(0.5, recalculatedTotal);
-  }
 
-  // Ensure halfDayType is set if isHalfDay is true
-  if (this.isHalfDay === true && !this.halfDayType) {
-    this.halfDayType = 'morning'; // Default to morning
-  }
+    // Ensure halfDayType is set if isHalfDay is true
+    if (this.isHalfDay === true && !this.halfDayType) {
+      this.halfDayType = 'morning'; // Default to morning
+    }
 
-  // Clear halfDayType if isHalfDay is false
-  if (this.isHalfDay === false) {
-    this.halfDayType = undefined;
-  }
+    // Clear halfDayType if isHalfDay is false
+    if (this.isHalfDay === false) {
+      this.halfDayType = undefined;
+    }
 
-  next();
+    next();
+  } catch (error) {
+    console.error('Pre-save hook error:', error);
+    // Set safe defaults if calculation fails
+    this.totalDays = 0.5;
+    if (this.isHalfDay === true && !this.halfDayType) {
+      this.halfDayType = 'morning';
+    }
+    next();
+  }
 });
 
 // Static method to get leaves by date range

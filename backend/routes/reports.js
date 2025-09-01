@@ -10,7 +10,7 @@ const Leave = require('../models/Leave');
 router.use(protect, authorize('admin', 'hr'));
 
 // Generate Employee Report PDF
-router.get('/employees', async (req, res) => {
+router.get('/employees', protect, authorize('admin', 'hr'), async (req, res) => {
   try {
     const employees = await Employee.find({}).sort({ createdAt: -1 });
 
@@ -81,7 +81,7 @@ router.get('/employees', async (req, res) => {
 });
 
 // Generate Attendance Report PDF
-router.get('/attendance', async (req, res) => {
+router.get('/attendance', protect, authorize('admin', 'hr'), async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
     if (!startDate || !endDate) {
@@ -209,7 +209,7 @@ router.get('/attendance', async (req, res) => {
 });
 
 // Generate Leave Report PDF
-router.get('/leaves', async (req, res) => {
+router.get('/leaves', protect, authorize('admin', 'hr'), async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
     if (!startDate || !endDate) {
@@ -268,7 +268,7 @@ router.get('/leaves', async (req, res) => {
 });
 
 // Generate Performance Report PDF
-router.get('/performance', async (req, res) => {
+router.get('/performance', protect, authorize('admin', 'hr'), async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
     if (!startDate || !endDate) {
@@ -337,7 +337,7 @@ router.get('/performance', async (req, res) => {
 });
 
 // CSV Export Routes
-router.get('/employees/csv', async (req, res) => {
+router.get('/employees/csv', protect, authorize('admin', 'hr'), async (req, res) => {
   try {
     const employees = await Employee.find({}).sort({ createdAt: -1 });
 
@@ -358,7 +358,7 @@ router.get('/employees/csv', async (req, res) => {
   }
 });
 
-router.get('/attendance/csv', async (req, res) => {
+router.get('/attendance/csv', protect, authorize('admin', 'hr'), async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
     if (!startDate || !endDate) {
@@ -386,7 +386,7 @@ router.get('/attendance/csv', async (req, res) => {
   }
 });
 
-router.get('/leaves/csv', async (req, res) => {
+router.get('/leaves/csv', protect, authorize('admin', 'hr'), async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
     if (!startDate || !endDate) {
@@ -414,7 +414,7 @@ router.get('/leaves/csv', async (req, res) => {
   }
 });
 
-router.get('/performance/csv', async (req, res) => {
+router.get('/performance/csv', protect, authorize('admin', 'hr'), async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
     if (!startDate || !endDate) {

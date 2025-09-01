@@ -380,6 +380,11 @@ router.put('/:id/approve', protect, authorize('admin'), async (req, res) => {
       console.log('Leave balance updated successfully');
     } catch (balanceError) {
       console.error('Error updating leave balance:', balanceError);
+      console.error('Balance error details:', {
+        message: balanceError.message,
+        name: balanceError.name,
+        stack: balanceError.stack
+      });
       // Don't fail the approval if balance update fails
     }
 
@@ -404,11 +409,26 @@ router.put('/:id/approve', protect, authorize('admin'), async (req, res) => {
     console.error('Error message:', error.message);
     console.error('Error stack:', error.stack);
     console.error('Error name:', error.name);
+    console.error('Error code:', error.code);
+    console.error('Error details:', error);
+    
     if (error && error.name === 'CastError') {
       return res.status(400).json({ message: 'Invalid leave ID' });
     }
+    
+    if (error && error.name === 'ValidationError') {
+      console.error('Validation errors:', error.errors);
+      return res.status(400).json({ 
+        message: 'Validation failed',
+        errors: Object.values(error.errors).map(err => err.message)
+      });
+    }
+    
     // Be permissive: do not fail approval due to minor validation issues
-    res.status(500).json({ message: 'Server error while approving leave request' });
+    res.status(500).json({ 
+      message: 'Server error while approving leave request',
+      error: error.message || 'Unknown error occurred'
+    });
   }
 });
 
