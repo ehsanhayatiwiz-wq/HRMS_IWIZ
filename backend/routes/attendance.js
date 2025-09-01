@@ -4,6 +4,20 @@ const Attendance = require('../models/Attendance');
 const { protect, authorize } = require('../middleware/auth');
 const moment = require('moment');
 
+// Helper: get Pakistan day range in UTC instants
+function getPakistanDayRangeUtc(referenceDate) {
+  const FIVE_HOURS_MS = 5 * 60 * 60 * 1000; // UTC+5
+  const ref = new Date(referenceDate.getTime());
+  const pkNow = new Date(ref.getTime() + FIVE_HOURS_MS);
+  const pkStart = new Date(pkNow);
+  pkStart.setHours(0, 0, 0, 0);
+  const pkEnd = new Date(pkStart);
+  pkEnd.setDate(pkEnd.getDate() + 1);
+  const startUtc = new Date(pkStart.getTime() - FIVE_HOURS_MS);
+  const endUtc = new Date(pkEnd.getTime() - FIVE_HOURS_MS);
+  return { startUtc, endUtc };
+}
+
 const router = express.Router();
 
 // @route   POST /api/attendance/checkin
@@ -15,17 +29,13 @@ router.post('/checkin', protect, async (req, res) => {
     
     const userId = req.user.id;
     const userType = req.userRole;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const { startUtc: todayStart, endUtc: todayEnd } = getPakistanDayRangeUtc(new Date());
 
     // Check if already checked in today
     const existingAttendance = await Attendance.findOne({
       userId,
       userType,
-      date: {
-        $gte: today,
-        $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
-      }
+      date: { $gte: todayStart, $lt: todayEnd }
     });
 
     if (existingAttendance && existingAttendance.checkIn.time) {
@@ -43,7 +53,7 @@ router.post('/checkin', protect, async (req, res) => {
       attendance = new Attendance({ 
         userId, 
         userType,
-        date: today 
+        date: todayStart 
       });
     }
 
@@ -84,17 +94,13 @@ router.post('/checkout', protect, async (req, res) => {
     
     const userId = req.user.id;
     const userType = req.userRole;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const { startUtc: todayStart, endUtc: todayEnd } = getPakistanDayRangeUtc(new Date());
 
     // Find today's attendance
     const attendance = await Attendance.findOne({
       userId,
       userType,
-      date: {
-        $gte: today,
-        $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
-      }
+      date: { $gte: todayStart, $lt: todayEnd }
     });
 
     if (!attendance || !attendance.checkIn.time) {
@@ -197,17 +203,13 @@ router.post('/re-checkout', protect, async (req, res) => {
     
     const userId = req.user.id;
     const userType = req.userRole;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const { startUtc: todayStart, endUtc: todayEnd } = getPakistanDayRangeUtc(new Date());
 
     // Find today's attendance
     const attendance = await Attendance.findOne({
       userId,
       userType,
-      date: {
-        $gte: today,
-        $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
-      }
+      date: { $gte: todayStart, $lt: todayEnd }
     });
 
     if (!attendance || !attendance.reCheckIn || !attendance.reCheckIn.time) {
@@ -325,10 +327,9 @@ router.get('/history', protect, async (req, res) => {
     const query = { userId, userType };
     
     if (startDate && endDate) {
-      query.date = {
-        $gte: new Date(startDate),
-        $lte: new Date(endDate)
-      };
+      const { startUtc: startUtcRange } = getPakistanDayRangeUtc(new Date(startDate));
+      const { endUtc: endUtcRange } = getPakistanDayRangeUtc(new Date(endDate));
+      query.date = { $gte: startUtcRange, $lte: endUtcRange };
     }
 
     const attendance = await Attendance.find(query)
@@ -384,11 +385,8 @@ router.get('/all', protect, authorize('admin'), async (req, res) => {
     const query = { userType: 'employee' };
     
     if (date) {
-      const searchDate = new Date(date);
-      searchDate.setHours(0, 0, 0, 0);
-      const nextDate = new Date(searchDate);
-      nextDate.setDate(nextDate.getDate() + 1);
-      query.date = { $gte: searchDate, $lt: nextDate };
+      const { startUtc, endUtc } = getPakistanDayRangeUtc(new Date(date));
+      query.date = { $gte: startUtc, $lt: endUtc };
     }
     
     if (employeeId) {
@@ -465,18 +463,11 @@ router.get('/stats', protect, authorize('admin'), async (req, res) => {
     let query = { userType: 'employee' };
     
     if (date) {
-      const searchDate = new Date(date);
-      searchDate.setHours(0, 0, 0, 0);
-      const nextDate = new Date(searchDate);
-      nextDate.setDate(nextDate.getDate() + 1);
-      query.date = { $gte: searchDate, $lt: nextDate };
+      const { startUtc, endUtc } = getPakistanDayRangeUtc(new Date(date));
+      query.date = { $gte: startUtc, $lt: endUtc };
     } else {
-      // Default to today
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      query.date = { $gte: today, $lt: tomorrow };
+      const { startUtc, endUtc } = getPakistanDayRangeUtc(new Date());
+      query.date = { $gte: startUtc, $lt: endUtc };
     }
 
     const totalRecords = await Attendance.countDocuments(query);

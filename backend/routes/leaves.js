@@ -348,6 +348,11 @@ router.put('/:id/approve', protect, authorize('admin'), [
       });
     }
 
+    // Validate ObjectId format early
+    if (!req.params.id || !req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ message: 'Invalid leave ID' });
+    }
+
     console.log('Finding leave by ID:', req.params.id);
     const leave = await Leave.findById(req.params.id);
     if (!leave) {
@@ -403,6 +408,13 @@ router.put('/:id/approve', protect, authorize('admin'), [
     console.error('Error message:', error.message);
     console.error('Error stack:', error.stack);
     console.error('Error name:', error.name);
+    if (error && error.name === 'CastError') {
+      return res.status(400).json({ message: 'Invalid leave ID' });
+    }
+    if (error && error.name === 'ValidationError') {
+      const details = Object.values(error.errors).map(e => e.message);
+      return res.status(400).json({ message: 'Validation failed', errors: details });
+    }
     res.status(500).json({ message: 'Server error while approving leave request' });
   }
 });
@@ -415,6 +427,11 @@ router.put('/:id/reject', protect, authorize('admin'), [
 ], async (req, res) => {
   try {
     console.log('Reject leave request:', req.params.id);
+    
+    // Validate ObjectId format early
+    if (!req.params.id || !req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ message: 'Invalid leave ID' });
+    }
     
     // Check for validation errors
     const errors = validationResult(req);
@@ -460,6 +477,13 @@ router.put('/:id/reject', protect, authorize('admin'), [
 
   } catch (error) {
     console.error('Reject leave error:', error);
+    if (error && error.name === 'CastError') {
+      return res.status(400).json({ message: 'Invalid leave ID' });
+    }
+    if (error && error.name === 'ValidationError') {
+      const details = Object.values(error.errors).map(e => e.message);
+      return res.status(400).json({ message: 'Validation failed', errors: details });
+    }
     res.status(500).json({ message: 'Server error while rejecting leave request' });
   }
 });

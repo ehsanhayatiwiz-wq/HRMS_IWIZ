@@ -249,6 +249,11 @@ router.put('/:id', protect, authorize('admin'), [
       });
     }
 
+    // Validate ObjectId format early
+    if (!req.params.id || !req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ message: 'Invalid employee ID' });
+    }
+
     const employee = await Employee.findById(req.params.id);
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found' });
@@ -257,6 +262,16 @@ router.put('/:id', protect, authorize('admin'), [
     // Never require password on update unless explicitly changing it
     const updateData = { ...req.body };
     if (updateData.password === '') delete updateData.password;
+    // Prevent changing immutable identifiers
+    if ('employeeId' in updateData) delete updateData.employeeId;
+
+    // Handle email uniqueness on update
+    if (updateData.email) {
+      const existing = await Employee.findOne({ email: updateData.email.toLowerCase(), _id: { $ne: req.params.id } });
+      if (existing) {
+        return res.status(400).json({ message: 'Email already registered by another employee' });
+      }
+    }
 
     const updatedEmployee = await Employee.findByIdAndUpdate(
       req.params.id,
@@ -285,6 +300,16 @@ router.put('/:id', protect, authorize('admin'), [
 
   } catch (error) {
     console.error('Update employee error:', error);
+    if (error && error.name === 'ValidationError') {
+      const details = Object.values(error.errors).map(e => e.message);
+      return res.status(400).json({ message: 'Validation failed', errors: details });
+    }
+    if (error && error.code === 11000) {
+      return res.status(400).json({ message: 'Duplicate value detected', key: error.keyValue });
+    }
+    if (error && error.name === 'CastError') {
+      return res.status(400).json({ message: 'Invalid employee ID' });
+    }
     res.status(500).json({ message: 'Server error while updating employee' });
   }
 });
@@ -345,6 +370,11 @@ router.delete('/:id', protect, authorize('admin'), async (req, res) => {
   try {
     console.log('Delete employee request:', req.params.id);
     
+    // Validate ObjectId format early
+    if (!req.params.id || !req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ message: 'Invalid employee ID' });
+    }
+
     const employee = await Employee.findById(req.params.id);
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found' });
@@ -395,6 +425,9 @@ router.delete('/:id', protect, authorize('admin'), async (req, res) => {
 
   } catch (error) {
     console.error('Delete employee error:', error);
+    if (error && error.name === 'CastError') {
+      return res.status(400).json({ message: 'Invalid employee ID' });
+    }
     res.status(500).json({ message: 'Server error while deleting employee' });
   }
 });

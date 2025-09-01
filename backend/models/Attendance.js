@@ -120,13 +120,14 @@ attendanceSchema.index({ userId: 1, date: 1 }, { unique: true });
 attendanceSchema.index({ date: 1 });
 attendanceSchema.index({ userType: 1 });
 
-// Virtual properties for formatted times
+// Virtual properties for formatted times (Pakistan Time: Asia/Karachi UTC+5)
 attendanceSchema.virtual('checkInTimeFormatted').get(function() {
   if (!this.checkIn || !this.checkIn.time) return null;
   return new Date(this.checkIn.time).toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit',
-    hour12: false
+    hour12: false,
+    timeZone: 'Asia/Karachi'
   });
 });
 
@@ -135,7 +136,8 @@ attendanceSchema.virtual('checkOutTimeFormatted').get(function() {
   return new Date(this.checkOut.time).toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit',
-    hour12: false
+    hour12: false,
+    timeZone: 'Asia/Karachi'
   });
 });
 
@@ -144,7 +146,8 @@ attendanceSchema.virtual('reCheckInTimeFormatted').get(function() {
   return new Date(this.reCheckIn.time).toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit',
-    hour12: false
+    hour12: false,
+    timeZone: 'Asia/Karachi'
   });
 });
 
@@ -153,7 +156,8 @@ attendanceSchema.virtual('reCheckOutTimeFormatted').get(function() {
   return new Date(this.reCheckOut.time).toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit',
-    hour12: false
+    hour12: false,
+    timeZone: 'Asia/Karachi'
   });
 });
 
@@ -184,16 +188,27 @@ attendanceSchema.pre('save', function(next) {
 });
 
 // Static method to check if user can re-check-in
+// Helper: get start/end of day in Pakistan time (converted to UTC instants)
+function getPakistanDayRangeUtc(referenceDate) {
+  const FIVE_HOURS_MS = 5 * 60 * 60 * 1000; // UTC+5, no DST
+  const ref = new Date(referenceDate.getTime());
+  const pkNow = new Date(ref.getTime() + FIVE_HOURS_MS);
+  const pkStart = new Date(pkNow);
+  pkStart.setHours(0, 0, 0, 0);
+  const pkEnd = new Date(pkStart);
+  pkEnd.setDate(pkEnd.getDate() + 1);
+  const startUtc = new Date(pkStart.getTime() - FIVE_HOURS_MS);
+  const endUtc = new Date(pkEnd.getTime() - FIVE_HOURS_MS);
+  return { startUtc, endUtc };
+}
+
 attendanceSchema.statics.canReCheckIn = async function(userId, userType, date) {
-  const today = new Date(date);
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  const { startUtc, endUtc } = getPakistanDayRangeUtc(new Date(date));
 
   const attendance = await this.findOne({
     userId,
     userType,
-    date: { $gte: today, $lt: tomorrow }
+    date: { $gte: startUtc, $lt: endUtc }
   });
 
   if (!attendance) {
@@ -213,15 +228,12 @@ attendanceSchema.statics.canReCheckIn = async function(userId, userType, date) {
 
 // Static method to get today's attendance
 attendanceSchema.statics.getTodayAttendance = async function(userId, userType) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  const { startUtc, endUtc } = getPakistanDayRangeUtc(new Date());
 
   return await this.findOne({
     userId,
     userType,
-    date: { $gte: today, $lt: tomorrow }
+    date: { $gte: startUtc, $lt: endUtc }
   });
 };
 
