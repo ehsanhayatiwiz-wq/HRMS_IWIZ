@@ -1,8 +1,17 @@
 import axios from 'axios';
 import { handleApiError } from '../utils/errorHandler';
 
-// Force local backend for development
-const resolvedBaseURL = 'http://localhost:5000/api';
+// Use environment variable for API URL, fallback to localhost for development
+const resolvedBaseURL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+
+// Log API configuration only in development
+if (process.env.NODE_ENV === 'development') {
+  console.log('🔧 API Configuration:', {
+    REACT_APP_API_URL: process.env.REACT_APP_API_URL,
+    resolvedBaseURL,
+    NODE_ENV: process.env.NODE_ENV
+  });
+}
 
 // Create axios instance with default config
 const api = axios.create({

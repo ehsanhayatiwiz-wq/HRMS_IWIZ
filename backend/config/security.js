@@ -42,7 +42,8 @@ const securityConfig = {
       const defaultOrigins = [
         'http://localhost:3000',  // Local development
         'http://localhost:3001',  // Alternative local port
-        'https://hrms-iwiz-frontend.vercel.app'  // Production frontend
+        'https://hrms-iwiz-frontend.vercel.app',  // Production frontend
+        'https://hrms-iwiz-frontend.vercel.app'   // Ensure HTTPS version is included
       ];
       
       const envList = (process.env.CORS_ORIGINS || process.env.CORS_ORIGIN || defaultOrigins.join(','))

@@ -665,8 +665,33 @@ const changePasswordHandler = async (req, res) => {
 // Profile update route
 router.put('/profile', protect, updateProfileValidators, updateProfileHandler);
 
-// Support both PUT and POST to accommodate clients
+// Change password routes - support both PUT and POST
 router.put('/change-password', protect, changePasswordValidators, changePasswordHandler);
 router.post('/change-password', protect, changePasswordValidators, changePasswordHandler);
+
+// Get current user profile
+router.get('/me', protect, async (req, res) => {
+  try {
+    // Try to find user in Admin collection
+    let user = await Admin.findById(req.user.id);
+    
+    // If not found in Admin, try Employee collection
+    if (!user) {
+      user = await Employee.findById(req.user.id);
+    }
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    res.json({
+      success: true,
+      data: { user }
+    });
+  } catch (error) {
+    console.error('Get current user error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 module.exports = router; 

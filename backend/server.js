@@ -12,6 +12,13 @@ const app = express();
 // Trust proxy to fix express-rate-limit error
 app.set('trust proxy', 1);
 
+// Add request ID middleware for better debugging
+app.use((req, res, next) => {
+  req.headers['x-request-id'] = req.headers['x-request-id'] || `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  res.header('X-Request-ID', req.headers['x-request-id']);
+  next();
+});
+
 // Import routes
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
@@ -128,14 +135,21 @@ app.get('/', (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('🚨 Error occurred:', err.message);
-  console.error('Stack trace:', err.stack);
+  console.error('📍 Path:', req.path);
+  console.error('🔧 Method:', req.method);
+  console.error('📅 Timestamp:', new Date().toISOString());
+  
+  if (config.server.nodeEnv === 'development') {
+    console.error('📚 Stack trace:', err.stack);
+  }
   
   // Don't expose internal errors in production
   const errorResponse = {
     message: 'Something went wrong!',
     timestamp: new Date().toISOString(),
     path: req.path,
-    method: req.method
+    method: req.method,
+    requestId: req.headers['x-request-id'] || 'unknown'
   };
   
   if (config.server.nodeEnv === 'development') {
@@ -176,17 +190,38 @@ if (config.server.nodeEnv === 'production') {
 
 const PORT = config.server.port;
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 IWIZ HRMS Server running on port ${PORT}`);
   console.log(`📊 Environment: ${config.server.nodeEnv}`);
   
   // Show proper URL based on environment
-  if (config.server.nodeEnv === 'production' && process.env.RENDER_EXTERNAL_URL) {
-    console.log(`🔗 API URL: ${process.env.RENDER_EXTERNAL_URL}/api`);
-    console.log(`🌐 Render Service: ${process.env.RENDER_EXTERNAL_URL}`);
+  if (config.server.nodeEnv === 'production') {
+    if (process.env.RENDER_EXTERNAL_URL) {
+      console.log(`🔗 API URL: ${process.env.RENDER_EXTERNAL_URL}/api`);
+      console.log(`🌐 Render Service: ${process.env.RENDER_EXTERNAL_URL}`);
+    } else {
+      console.log(`🔗 API URL: https://your-app-name.onrender.com/api (set RENDER_EXTERNAL_URL)`);
+    }
   } else {
     console.log(`🔗 API URL: http://localhost:${PORT}/api`);
   }
   
   console.log(`✅ Server ready to accept requests`);
+});
+
+// Graceful shutdown handling
+process.on('SIGTERM', () => {
+  console.log('🔄 SIGTERM received, shutting down gracefully...');
+  server.close(() => {
+    console.log('✅ Server closed');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('🔄 SIGINT received, shutting down gracefully...');
+  server.close(() => {
+    console.log('✅ Server closed');
+    process.exit(0);
+  });
 }); 

@@ -2,7 +2,7 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const Attendance = require('../models/Attendance');
 const { protect, authorize } = require('../middleware/auth');
-const moment = require('moment');
+// moment.js removed - using native Date methods
 
 // Helper: get Pakistan day range in UTC instants
 function getPakistanDayRangeUtc(referenceDate) {
