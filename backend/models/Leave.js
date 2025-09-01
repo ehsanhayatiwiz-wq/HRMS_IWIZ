@@ -3,13 +3,8 @@ const mongoose = require('mongoose');
 const leaveSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    refPath: 'userModel',
+    ref: 'Employee',
     required: [true, 'User ID is required']
-  },
-  userModel: {
-    type: String,
-    required: true,
-    enum: ['Admin', 'Employee']
   },
   userType: {
     type: String,
@@ -94,111 +89,69 @@ leaveSchema.index({ userType: 1 });
 
 // Calculate total days excluding weekends
 leaveSchema.methods.calculateTotalDays = function() {
-  try {
-    const startDate = new Date(this.fromDate);
-    const endDate = new Date(this.toDate);
-    let totalDays = 0;
-    
-    const currentDate = new Date(startDate);
-    while (currentDate <= endDate) {
-      const dayOfWeek = currentDate.getDay();
-      if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Exclude Sunday (0) and Saturday (6)
-        totalDays++;
-      }
-      currentDate.setDate(currentDate.getDate() + 1);
+  const startDate = new Date(this.fromDate);
+  const endDate = new Date(this.toDate);
+  let totalDays = 0;
+  
+  const currentDate = new Date(startDate);
+  while (currentDate <= endDate) {
+    const dayOfWeek = currentDate.getDay();
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Exclude Sunday (0) and Saturday (6)
+      totalDays++;
     }
-    
-    if (this.isHalfDay) {
-      totalDays = totalDays * 0.5;
-    }
-    
-    return totalDays;
-  } catch (error) {
-    return 1; // Return 1 day as fallback
+    currentDate.setDate(currentDate.getDate() + 1);
   }
-};
-
-// Static method to calculate total days (for use in routes)
-leaveSchema.statics.calculateTotalDays = function(fromDate, toDate, isHalfDay = false) {
-  try {
-    const startDate = new Date(fromDate);
-    const endDate = new Date(toDate);
-    let totalDays = 0;
-    
-    const currentDate = new Date(startDate);
-    while (currentDate <= endDate) {
-      const dayOfWeek = currentDate.getDay();
-      if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Exclude Sunday (0) and Saturday (6)
-        totalDays++;
-      }
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-    
-    if (isHalfDay) {
-      totalDays = totalDays * 0.5;
-    }
-    
-    return totalDays;
-  } catch (error) {
-    return 1; // Return 1 day as fallback
+  
+  if (this.isHalfDay) {
+    totalDays = totalDays * 0.5;
   }
+  
+  return totalDays;
 };
 
 // Check for overlapping leaves
 leaveSchema.statics.checkLeaveOverlap = async function(userId, fromDate, toDate, excludeId = null) {
-  try {
-    const query = {
-      userId,
-      fromDate: { $lte: toDate },
-      toDate: { $gte: fromDate },
-      status: { $in: ['pending', 'approved'] }
-    };
-    
-    if (excludeId) {
-      query._id = { $ne: excludeId };
-    }
-    
-    const overlappingLeave = await this.findOne(query);
-    return !!overlappingLeave;
-  } catch (error) {
-    return false; // Return false as fallback
+  const query = {
+    userId,
+    fromDate: { $lte: toDate },
+    toDate: { $gte: fromDate },
+    status: { $in: ['pending', 'approved'] }
+  };
+  
+  if (excludeId) {
+    query._id = { $ne: excludeId };
   }
+  
+  const overlappingLeave = await this.findOne(query);
+  return !!overlappingLeave;
 };
 
 // Get user's leave balance
 leaveSchema.statics.getUserLeaveBalance = async function(userId, userType) {
-  try {
-    if (userType === 'admin') {
-      const admin = await mongoose.model('Admin').findById(userId);
-      return admin ? 0 : 0; // Admins typically don't have leave balance
-    } else {
-      const employee = await mongoose.model('Employee').findById(userId);
-      return employee ? employee.leaveBalance : 0;
-    }
-  } catch (error) {
-    return 0; // Return 0 as fallback
+  if (userType === 'admin') {
+    const admin = await mongoose.model('Admin').findById(userId);
+    return admin ? 0 : 0; // Admins typically don't have leave balance
+  } else {
+    const employee = await mongoose.model('Employee').findById(userId);
+    return employee ? employee.leaveBalance : 0;
   }
 };
 
 // Update user's leave balance after approval/rejection
 leaveSchema.statics.updateUserLeaveBalance = async function(userId, userType, leaveDays, action) {
-  try {
-    if (userType === 'employee') {
-      const Employee = mongoose.model('Employee');
-      const employee = await Employee.findById(userId);
-      
-      if (employee) {
-        if (action === 'approve') {
-          employee.leaveBalance = Math.max(0, employee.leaveBalance - leaveDays);
-        } else if (action === 'reject' || action === 'cancel') {
-          employee.leaveBalance += leaveDays;
-        }
-        
-        await employee.save();
+  if (userType === 'employee') {
+    const Employee = mongoose.model('Employee');
+    const employee = await Employee.findById(userId);
+    
+    if (employee) {
+      if (action === 'approve') {
+        employee.leaveBalance = Math.max(0, employee.leaveBalance - leaveDays);
+      } else if (action === 'reject' || action === 'cancel') {
+        employee.leaveBalance += leaveDays;
       }
+      
+      await employee.save();
     }
-  } catch (error) {
-    throw error; // Re-throw to be handled by the calling function
   }
 };
 
@@ -215,14 +168,10 @@ leaveSchema.methods.calculateSalaryDeduction = function(userSalary, leaveBalance
 
 // Pre-save middleware to calculate total days
 leaveSchema.pre('save', function(next) {
-  try {
-    if (this.fromDate && this.toDate) {
-      this.totalDays = this.calculateTotalDays();
-    }
-    next();
-  } catch (error) {
-    next(error);
+  if (this.fromDate && this.toDate) {
+    this.totalDays = this.calculateTotalDays();
   }
+  next();
 });
 
 // Static method to get leaves by date range

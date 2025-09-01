@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import api from '../../services/api';
+import axios from 'axios';
 import { toast } from 'react-toastify';
 import { FiDownload, FiFileText, FiBarChart2, FiUsers, FiCalendar } from 'react-icons/fi';
 import './Reports.css';
@@ -19,36 +19,28 @@ const Reports = () => {
       title: 'Attendance Report',
       description: 'Monthly attendance summary for all employees',
       icon: <FiCalendar />,
-      color: 'primary',
-      endpoint: '/reports/attendance',
-      csvEndpoint: '/reports/attendance/csv'
+      color: 'primary'
     },
     {
       id: 'leave',
       title: 'Leave Summary',
       description: 'Leave usage and balance report',
       icon: <FiFileText />,
-      color: 'success',
-      endpoint: '/reports/leaves',
-      csvEndpoint: '/reports/leaves/csv'
+      color: 'success'
     },
     {
       id: 'employee',
       title: 'Employee Report',
       description: 'Complete employee information and statistics',
       icon: <FiUsers />,
-      color: 'info',
-      endpoint: '/reports/employees',
-      csvEndpoint: '/reports/employees/csv'
+      color: 'info'
     },
     {
       id: 'performance',
       title: 'Performance Trends',
       description: 'Employee performance analysis and trends',
       icon: <FiBarChart2 />,
-      color: 'warning',
-      endpoint: '/reports/performance',
-      csvEndpoint: '/reports/performance/csv'
+      color: 'warning'
     }
   ];
 
@@ -59,19 +51,32 @@ const Reports = () => {
     }
 
     setLoading(true);
-    
     try {
-      const endpoint = reportTypes.find(r => r.id === type)?.endpoint;
-      if (!endpoint) {
-        toast.error('Invalid report type');
-        return;
+      let endpoint = '';
+      let filename = '';
+
+      switch (type) {
+        case 'attendance':
+          endpoint = `/api/reports/attendance?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
+          filename = `attendance-report-${dateRange.startDate}-to-${dateRange.endDate}.pdf`;
+          break;
+        case 'leave':
+          endpoint = `/api/reports/leaves?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
+          filename = `leave-report-${dateRange.startDate}-to-${dateRange.endDate}.pdf`;
+          break;
+        case 'employee':
+          endpoint = `/api/reports/employees`;
+          filename = `employee-report-${new Date().toISOString().split('T')[0]}.pdf`;
+          break;
+        case 'performance':
+          endpoint = `/api/reports/performance?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
+          filename = `performance-report-${dateRange.startDate}-to-${dateRange.endDate}.pdf`;
+          break;
+        default:
+          throw new Error('Invalid report type');
       }
 
-      const response = await api.get(endpoint, {
-        params: {
-          startDate: dateRange.startDate,
-          endDate: dateRange.endDate
-        },
+      const response = await axios.get(endpoint, {
         responseType: 'blob'
       });
 
@@ -79,7 +84,7 @@ const Reports = () => {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `${type}_report.pdf`);
+      link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -87,8 +92,8 @@ const Reports = () => {
 
       toast.success(`${reportTypes.find(r => r.id === type)?.title} generated successfully!`);
     } catch (error) {
-      // Error generating report
-      toast.error('Failed to generate report');
+      console.error('Error generating report:', error);
+      toast.error('Failed to generate report. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -101,20 +106,32 @@ const Reports = () => {
     }
 
     setLoading(true);
-    
     try {
-      const endpoint = reportTypes.find(r => r.id === type)?.csvEndpoint;
-      if (!endpoint) {
-        toast.error('Invalid report type');
-        return;
+      let endpoint = '';
+      let filename = '';
+
+      switch (type) {
+        case 'attendance':
+          endpoint = `/api/reports/attendance/csv?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
+          filename = `attendance-report-${dateRange.startDate}-to-${dateRange.endDate}.csv`;
+          break;
+        case 'leave':
+          endpoint = `/api/reports/leaves/csv?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
+          filename = `leave-report-${dateRange.startDate}-to-${dateRange.endDate}.csv`;
+          break;
+        case 'employee':
+          endpoint = `/api/reports/employees/csv`;
+          filename = `employee-report-${new Date().toISOString().split('T')[0]}.csv`;
+          break;
+        case 'performance':
+          endpoint = `/api/reports/performance/csv?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
+          filename = `performance-report-${dateRange.startDate}-to-${dateRange.endDate}.csv`;
+          break;
+        default:
+          throw new Error('Invalid report type');
       }
 
-      const response = await api.get(endpoint, {
-        params: {
-          startDate: dateRange.startDate,
-          endDate: dateRange.endDate,
-          format: 'csv'
-        },
+      const response = await axios.get(endpoint, {
         responseType: 'blob'
       });
 
@@ -122,16 +139,16 @@ const Reports = () => {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `${type}_report.csv`);
+      link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
 
-      toast.success(`${reportTypes.find(r => r.id === type)?.title} exported successfully!`);
+      toast.success(`${reportTypes.find(r => r.id === type)?.title} exported as CSV successfully!`);
     } catch (error) {
-      // Error exporting CSV
-      toast.error('Failed to export CSV');
+      console.error('Error exporting CSV:', error);
+      toast.error('Failed to export CSV. Please try again.');
     } finally {
       setLoading(false);
     }

@@ -10,12 +10,6 @@ async function ensureFailsafeAdmin(options = {}) {
   }
 
   try {
-    // Check if database is connected
-    const mongoose = require('mongoose');
-    if (mongoose.connection.readyState !== 1) {
-      return { executed: false, reason: 'Database not connected' };
-    }
-
     let admin = await Admin.findOne({ email }).select('+password');
 
     if (admin) {

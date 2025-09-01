@@ -4,7 +4,7 @@ import Button from '../components/common/Button';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
-import { useNotifications } from '../contexts/NotificationContext';
+import { useNotifications } from '../contexts';
 import './Dashboard.css';
 
 const EmployeeDashboard = () => {
@@ -59,7 +59,7 @@ const EmployeeDashboard = () => {
         }
       });
     } catch (error) {
-      // Error fetching dashboard data
+      console.error('Error fetching dashboard data:', error);
       toast.error('Failed to load dashboard data');
     } finally {
       setLoading(false);

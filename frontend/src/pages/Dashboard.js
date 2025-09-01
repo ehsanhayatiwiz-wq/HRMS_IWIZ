@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts';
 import { Navigate } from 'react-router-dom';
 import EmployeeDashboard from './EmployeeDashboard';
 import AdminDashboard from './AdminDashboard';

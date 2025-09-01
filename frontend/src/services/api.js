@@ -1,7 +1,13 @@
 import axios from 'axios';
 
-// Force local API URL for development
-const resolvedBaseURL = 'http://localhost:5000/api';
+// Resolve API base URL with env first, then sensible fallbacks
+const resolvedBaseURL =
+  process.env.REACT_APP_API_URL ||
+  (typeof window !== 'undefined'
+    ? (window.location.hostname.endsWith('vercel.app')
+        ? 'https://hrms-iwiz.onrender.com/api'
+        : '/api')
+    : '/api');
 
 // Create axios instance with default config
 const api = axios.create({
@@ -11,8 +17,6 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  // Add withCredentials for CORS
-  withCredentials: false
 });
 
 // Request interceptor to add auth token
@@ -40,12 +44,6 @@ api.interceptors.response.use(
       if (window.location.pathname !== '/login') {
         window.location.href = '/login';
       }
-      return Promise.reject(error);
-    }
-
-    // Handle CORS errors specifically
-    if (error.message === 'Network Error' || error.code === 'ERR_NETWORK') {
-      error.userMessage = 'Network error. Please check your connection and try again.';
       return Promise.reject(error);
     }
 

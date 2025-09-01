@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { FiDownload, FiCalendar, FiUsers, FiBarChart2, FiCheck, FiRefreshCw } from 'react-icons/fi';
-
+import Button from '../components/common/Button';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 import { formatCurrency } from '../utils/helpers';
-// Using native Date methods instead of moment.js for better performance
+import moment from 'moment';
 import './Payroll.css';
 
 const Payroll = () => {
@@ -12,128 +12,105 @@ const Payroll = () => {
   const [loading, setLoading] = useState(false);
   const [payrolls, setPayrolls] = useState([]);
   const [summary, setSummary] = useState({});
-  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(moment().format('YYYY-MM'));
+  const [selectedYear, setSelectedYear] = useState(moment().year());
   const [generating, setGenerating] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [fetchInProgress] = useState(false);
-
-  // Helper function to safely parse month and year
-  const parseMonthYear = (monthStr, yearStr) => {
-    try {
-      const month = parseInt(monthStr.split('-')[1]); // Extract month from YYYY-MM format
-      const year = parseInt(yearStr);
-      
-      if (isNaN(month) || month < 1 || month > 12) {
-        toast.info('Invalid month, using current month');
-        return { month: new Date().getMonth() + 1, year: new Date().getFullYear() };
-      }
-      
-      if (isNaN(year) || year < 2020 || year > 2030) {
-        toast.info('Invalid year, using current year');
-        return { month, year: new Date().getFullYear() };
-      }
-      
-      return { month, year };
-    } catch (error) {
-      // Error parsing month/year
-      return { month: new Date().getMonth() + 1, year: new Date().getFullYear() };
-    }
-  };
 
   const fetchPayrollData = async () => {
-    if (fetchInProgress.current) {
-      return;
-    }
-
     try {
-      fetchInProgress.current = true;
       setLoading(true);
-
-      const month = selectedMonth;
-      const year = selectedYear;
-
-      if (!month || !year) {
-        toast.error('Please select both month and year');
-        return;
+      
+      if (activeTab === 'overview') {
+        // Fix month/year handling - ensure we get the correct month (1-12) and year
+        const month = parseInt(selectedMonth.split('-')[1]); // Extract month from YYYY-MM format
+        const year = parseInt(selectedYear);
+        
+        console.log('Fetching payroll data for month:', month, 'year:', year);
+        
+        // Add cache-busting to ensure fresh data
+        const timestamp = new Date().getTime();
+        const [payrollsRes, summaryRes] = await Promise.all([
+          api.get(`/payroll/all?page=${currentPage}&limit=10&month=${month}&year=${year}&_t=${timestamp}`),
+          api.get(`/payroll/reports/summary?month=${month}&year=${year}&_t=${timestamp}`)
+        ]);
+        
+        console.log('Payrolls response:', payrollsRes.data);
+        console.log('Summary response:', summaryRes.data);
+        
+        setPayrolls(payrollsRes.data?.data?.payrolls || []);
+        setTotalPages(payrollsRes.data?.data?.pagination?.totalPages || 1);
+        setSummary(summaryRes.data?.data?.summary || {});
+        
+        console.log('Summary data set:', summaryRes.data?.data?.summary);
+      } else if (activeTab === 'generate') {
+        // Fetch recent payrolls for reference
+        const response = await api.get('/payroll/all?page=1&limit=5');
+        setPayrolls(response.data?.data?.payrolls || []);
       }
-
-      const [payrollsRes, summaryRes] = await Promise.all([
-        api.get(`/payroll?month=${month}&year=${year}`),
-        api.get(`/payroll/summary?month=${month}&year=${year}`)
-      ]);
-
-      setPayrolls(payrollsRes.data?.data?.payrolls || []);
-      setSummary(summaryRes.data?.data?.summary || {});
-      setTotalPages(payrollsRes.data?.data?.pagination?.totalPages || 1);
     } catch (error) {
-      // Error fetching payroll data
+      console.error('Error fetching payroll data:', error);
+      console.error('Error details:', error.response?.data);
       toast.error('Failed to load payroll data');
-      setPayrolls([]);
-      setSummary({});
     } finally {
       setLoading(false);
-      fetchInProgress.current = false;
     }
   };
 
   useEffect(() => {
     fetchPayrollData();
-  }, [activeTab, selectedMonth, selectedYear, currentPage, fetchPayrollData]);
+  }, [activeTab, selectedMonth, selectedYear, currentPage]);
 
-  const handleGeneratePayroll = async () => {
+  const generatePayroll = async () => {
     try {
       setGenerating(true);
+      const month = parseInt(selectedMonth.split('-')[1]); // Extract month from YYYY-MM format
+      const year = parseInt(selectedYear);
       
-      const month = selectedMonth;
-      const year = selectedYear;
-
-      if (!month || !year) {
-        toast.error('Please select both month and year');
-        return;
-      }
-
-      await api.post('/payroll/generate', { month, year });
-      toast.success('Payroll generated successfully');
+      console.log('Generating payroll for month:', month, 'year:', year);
+      
+      const response = await api.post('/payroll/generate', { month, year });
+      
+      toast.success(response.data.message);
       fetchPayrollData();
     } catch (error) {
-      // Error generating payroll
+      console.error('Error generating payroll:', error);
       toast.error(error.response?.data?.message || 'Failed to generate payroll');
     } finally {
       setGenerating(false);
     }
   };
 
-  const handleDownloadSalarySlip = async (payrollId) => {
+  const downloadSalarySlip = async (payrollId) => {
     try {
       const response = await api.get(`/payroll/${payrollId}/download`, {
         responseType: 'blob'
       });
-
+      
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `salary-slip-${payrollId}.pdf`);
+      link.setAttribute('download', `salary_slip_${payrollId}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
-      window.URL.revokeObjectURL(url);
-
+      
       toast.success('Salary slip downloaded successfully');
     } catch (error) {
-      // Error downloading salary slip
+      console.error('Error downloading salary slip:', error);
       toast.error('Failed to download salary slip');
     }
   };
 
-  const handleUpdateStatus = async (payrollId, status) => {
+  const updatePayrollStatus = async (payrollId, status) => {
     try {
       await api.put(`/payroll/${payrollId}/status`, { status });
       toast.success('Payroll status updated successfully');
       fetchPayrollData();
     } catch (error) {
-      // Error updating payroll status
+      console.error('Error updating payroll status:', error);
+      console.error('Error response:', error.response?.data);
       toast.error('Failed to update payroll status');
     }
   };
@@ -206,14 +183,11 @@ const Payroll = () => {
               onChange={(e) => setSelectedMonth(e.target.value)}
               className="month-select"
             >
-              {Array.from({ length: 12 }, (_, i) => {
-                const date = new Date(2024, i, 1);
-                return (
-                  <option key={i + 1} value={date.toISOString().slice(0, 7)}>
-                    {date.toLocaleDateString('en-US', { month: 'long' })}
-                  </option>
-                );
-              })}
+              {Array.from({ length: 12 }, (_, i) => (
+                <option key={i + 1} value={moment().month(i).format('YYYY-MM')}>
+                  {moment().month(i).format('MMMM')}
+                </option>
+              ))}
             </select>
             <select
               value={selectedYear}
@@ -221,7 +195,7 @@ const Payroll = () => {
               className="year-select"
             >
               {Array.from({ length: 5 }, (_, i) => {
-                const year = new Date().getFullYear() - 2 + i;
+                const year = moment().year() - 2 + i;
                 return (
                   <option key={year} value={year}>
                     {year}
@@ -269,12 +243,8 @@ const Payroll = () => {
                     </td>
                     <td>
                       <div className="action-buttons" style={{ display: 'flex', gap: 8 }}>
-                                        <button className="btn-secondary" onClick={() => handleDownloadSalarySlip(payroll.id || payroll._id)}>
-                  <FiDownload />
-                </button>
-                <button className="btn-primary" onClick={() => handleUpdateStatus(payroll.id || payroll._id, 'paid')} disabled={payroll.status === 'paid'}>
-                  <FiCheck />
-                </button>
+                        <Button variant="secondary" onClick={() => downloadSalarySlip(payroll.id || payroll._id)} icon={<FiDownload />} />
+                        <Button variant="primary" onClick={() => updatePayrollStatus(payroll.id || payroll._id, 'paid')} disabled={payroll.status === 'paid'} icon={<FiCheck />} />
                       </div>
                     </td>
                   </tr>
@@ -287,21 +257,21 @@ const Payroll = () => {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="pagination" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-            <button
-              className="btn-secondary"
+            <Button
+              variant="secondary"
               disabled={currentPage === 1}
               onClick={() => setCurrentPage(prev => prev - 1)}
             >
               Previous
-            </button>
+            </Button>
             <span>Page {currentPage} of {totalPages}</span>
-            <button
-              className="btn-secondary"
+            <Button
+              variant="secondary"
               disabled={currentPage === totalPages}
               onClick={() => setCurrentPage(prev => prev + 1)}
             >
               Next
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -323,14 +293,11 @@ const Payroll = () => {
                 onChange={(e) => setSelectedMonth(e.target.value)}
                 className="month-select"
               >
-                {Array.from({ length: 12 }, (_, i) => {
-                  const date = new Date(2024, i, 1);
-                  return (
-                    <option key={i + 1} value={date.toISOString().slice(0, 7)}>
-                      {date.toLocaleDateString('en-US', { month: 'long' })}
-                    </option>
-                  );
-                })}
+                {Array.from({ length: 12 }, (_, i) => (
+                  <option key={i + 1} value={moment().month(i).format('YYYY-MM')}>
+                    {moment().month(i).format('MMMM')}
+                  </option>
+                ))}
               </select>
               <select
                 value={selectedYear}
@@ -338,7 +305,7 @@ const Payroll = () => {
                 className="year-select"
               >
                 {Array.from({ length: 5 }, (_, i) => {
-                  const year = new Date().getFullYear() - 2 + i;
+                  const year = moment().year() - 2 + i;
                   return (
                     <option key={year} value={year}>
                       {year}
@@ -349,14 +316,15 @@ const Payroll = () => {
             </div>
           </div>
           
-          <button
-            className="btn-primary generate-btn"
-            onClick={handleGeneratePayroll}
+          <Button
+            className="generate-btn"
+            onClick={generatePayroll}
             disabled={generating}
+            variant="primary"
+            icon={generating ? <FiRefreshCw className="spinning" /> : <FiCalendar />}
           >
-            {generating ? <FiRefreshCw className="spinning" /> : <FiCalendar />}
-            {generating ? 'Generating Payroll...' : `Generate Payroll for ${new Date(selectedMonth + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`}
-          </button>
+            {generating ? 'Generating Payroll...' : `Generate Payroll for ${moment(selectedMonth).format('MMMM YYYY')}`}
+          </Button>
         </div>
       </div>
 
@@ -385,7 +353,7 @@ const Payroll = () => {
                       {payroll.status}
                     </span>
                   </td>
-                  <td>{new Date(payroll.generatedAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</td>
+                  <td>{moment(payroll.generatedAt).format('MMM DD, YYYY')}</td>
                 </tr>
               ))}
             </tbody>
@@ -398,18 +366,8 @@ const Payroll = () => {
   return (
     <div className="payroll-page">
       <div className="page-header">
-        <div>
-          <h2>Payroll Management</h2>
-          <p>Manage employee payroll, generate salary slips, and track payments</p>
-        </div>
-        <button
-          className="btn-secondary"
-          onClick={fetchPayrollData}
-          disabled={loading || fetchInProgress}
-        >
-          <FiRefreshCw />
-          {loading ? 'Refreshing...' : 'Refresh Data'}
-        </button>
+        <h2>Payroll Management</h2>
+        <p>Manage employee payroll, generate salary slips, and track payments</p>
       </div>
 
       <div className="payroll-tabs">

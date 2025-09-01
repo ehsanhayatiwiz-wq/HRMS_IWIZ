@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import { FiUser, FiMail, FiPhone, FiMapPin, FiCalendar, FiEdit2, FiSave, FiX, FiKey } from 'react-icons/fi';
@@ -11,37 +11,13 @@ const Profile = () => {
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   
-  // Profile form state - update when user data changes
+  // Profile form state
   const [profileData, setProfileData] = useState({
     fullName: user?.fullName || '',
     phone: user?.phone || '',
-    address: user?.address || {
-      street: '',
-      city: '',
-      state: '',
-      zipCode: '',
-      country: ''
-    },
+    address: user?.address || '',
     dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().slice(0, 10) : ''
   });
-
-  // Update profileData when user data changes
-  useEffect(() => {
-    if (user) {
-      setProfileData({
-        fullName: user.fullName || '',
-        phone: user.phone || '',
-        address: user.address || {
-          street: '',
-          city: '',
-          state: '',
-          zipCode: '',
-          country: ''
-        },
-        dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().slice(0, 10) : ''
-      });
-    }
-  }, [user]);
 
   // Password form state
   const [passwordData, setPasswordData] = useState({
@@ -81,8 +57,8 @@ const Profile = () => {
         toast.error(result.error);
       }
     } catch (error) {
-      // Error updating profile
-      toast.error(error.response?.data?.message || 'Failed to update profile');
+      console.error('Error updating profile:', error);
+      toast.error('Failed to update profile. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -117,7 +93,7 @@ const Profile = () => {
       });
       setShowPasswordForm(false);
     } catch (error) {
-      // Error changing password
+      console.error('Error changing password:', error);
       toast.error(error.response?.data?.message || 'Failed to change password');
     } finally {
       setSubmitting(false);
@@ -128,13 +104,7 @@ const Profile = () => {
     setProfileData({
       fullName: user?.fullName || '',
       phone: user?.phone || '',
-      address: user?.address || {
-        street: '',
-        city: '',
-        state: '',
-        zipCode: '',
-        country: ''
-      },
+      address: user?.address || '',
       dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().slice(0, 10) : ''
     });
     setEditing(false);
@@ -224,13 +194,9 @@ const Profile = () => {
                   <textarea
                     id="address"
                     name="address"
-                    value={typeof profileData.address === 'string' ? profileData.address : 
-                      [profileData.address?.street, profileData.address?.city, profileData.address?.state, profileData.address?.zipCode, profileData.address?.country]
-                        .filter(Boolean)
-                        .join(', ')}
+                    value={profileData.address}
                     onChange={handleProfileInputChange}
                     rows="3"
-                    placeholder="Enter your full address"
                   />
                 </div>
               </form>

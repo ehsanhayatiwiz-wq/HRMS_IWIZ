@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { toast } from 'react-toastify';
-
 // moment.js removed - using native Date methods
-import { FiCheckCircle, FiXCircle, FiCalendar, FiTrendingUp, FiRefreshCw, FiClock } from 'react-icons/fi';
+import { FiClock, FiCheckCircle, FiXCircle, FiCalendar, FiTrendingUp, FiRefreshCw } from 'react-icons/fi';
 import Button from '../components/common/Button';
 import './Dashboard.css';
 
@@ -17,8 +16,8 @@ const Attendance = () => {
   const [reCheckingOut, setReCheckingOut] = useState(false);
   const [canCheckIn, setCanCheckIn] = useState(true);
   const [canCheckOut, setCanCheckOut] = useState(false);
-  const [canReCheckIn] = useState(false);
-  const [canReCheckOut] = useState(false);
+  const [canReCheckIn, setCanReCheckIn] = useState(false);
+  const [canReCheckOut, setCanReCheckOut] = useState(false);
 
   useEffect(() => {
     fetchAttendanceData();
@@ -27,23 +26,20 @@ const Attendance = () => {
   const fetchAttendanceData = async () => {
     try {
       setLoading(true);
-      
       const [todayRes, historyRes] = await Promise.all([
         api.get('/attendance/today'),
-        api.get('/attendance/history')
+        api.get('/attendance/history?page=1&limit=10')
       ]);
 
-      if (todayRes.data.success) {
-        setTodayAttendance(todayRes.data.data.attendance);
-        setCanCheckIn(todayRes.data.data.canCheckIn);
-        setCanCheckOut(todayRes.data.data.canCheckOut);
-      }
-
-      if (historyRes.data.success) {
-        setAttendanceHistory(historyRes.data.data.attendance);
-      }
+      const todayData = todayRes.data.data;
+      setTodayAttendance(todayData.attendance);
+      setCanCheckIn(todayData.canCheckIn);
+      setCanCheckOut(todayData.canCheckOut);
+      setCanReCheckIn(todayData.canReCheckIn);
+      setCanReCheckOut(todayData.canReCheckOut);
+      setAttendanceHistory(historyRes.data.data.attendance);
     } catch (error) {
-      // Error fetching attendance data
+      console.error('Error fetching attendance data:', error);
       toast.error('Failed to load attendance data');
     } finally {
       setLoading(false);
@@ -57,7 +53,7 @@ const Attendance = () => {
       toast.success('Check-in successful!');
       fetchAttendanceData();
     } catch (error) {
-      // Check-in error
+      console.error('Check-in error:', error);
       toast.error(error.response?.data?.message || 'Check-in failed');
     } finally {
       setCheckingIn(false);
@@ -71,7 +67,7 @@ const Attendance = () => {
       toast.success('Check-out successful!');
       fetchAttendanceData();
     } catch (error) {
-      // Check-out error
+      console.error('Check-out error:', error);
       toast.error(error.response?.data?.message || 'Check-out failed');
     } finally {
       setCheckingOut(false);
@@ -85,7 +81,7 @@ const Attendance = () => {
       toast.success('Re-check-in successful!');
       fetchAttendanceData();
     } catch (error) {
-      // Re-check-in error
+      console.error('Re-check-in error:', error);
       toast.error(error.response?.data?.message || 'Re-check-in failed');
     } finally {
       setReCheckingIn(false);
@@ -99,7 +95,7 @@ const Attendance = () => {
       toast.success('Re-check-out successful!');
       fetchAttendanceData();
     } catch (error) {
-      // Re-check-out error
+      console.error('Re-check-out error:', error);
       toast.error(error.response?.data?.message || 'Re-check-out failed');
     } finally {
       setReCheckingOut(false);
@@ -148,27 +144,6 @@ const Attendance = () => {
         <div>
           <h1 className="page-title">Attendance Management</h1>
           <p className="page-subtitle">Track your daily attendance and view history</p>
-          <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-            Timezone: Pakistan (UTC+5) • Current time: {new Date(new Date().getTime() + 5 * 60 * 60 * 1000).toLocaleString('en-PK', { 
-              year: 'numeric', 
-              month: '2-digit', 
-              day: '2-digit',
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit'
-            })} • 
-            Day boundaries: 00:00 - 23:59 Pakistan time
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <Button
-            variant="neutral"
-            onClick={fetchAttendanceData}
-            disabled={loading}
-            icon={<FiRefreshCw />}
-          >
-            {loading ? 'Refreshing...' : 'Refresh'}
-          </Button>
         </div>
       </div>
 
@@ -218,7 +193,7 @@ const Attendance = () => {
                 <div className="status-item">
                   <span className="status-label">First Session</span>
                   <span className="status-value">
-                    {todayAttendance.firstSessionHoursFormatted || (todayAttendance.firstSessionHours ? `${todayAttendance.firstSessionHours.toFixed(2)} hours` : '-')}
+                    {todayAttendance.firstSessionHours ? `${todayAttendance.firstSessionHours.toFixed(2)} hours` : '-'}
                   </span>
                 </div>
                 
@@ -226,7 +201,7 @@ const Attendance = () => {
                   <div className="status-item">
                     <span className="status-label">Second Session</span>
                     <span className="status-value">
-                      {todayAttendance.secondSessionHoursFormatted || `${todayAttendance.secondSessionHours.toFixed(2)} hours`}
+                      {todayAttendance.secondSessionHours.toFixed(2)} hours
                     </span>
                   </div>
                 )}
@@ -234,7 +209,7 @@ const Attendance = () => {
                 <div className="status-item">
                   <span className="status-label">Total Hours</span>
                   <span className="status-value">
-                    {todayAttendance.totalHoursFormatted || (todayAttendance.totalHours ? `${todayAttendance.totalHours.toFixed(2)} hours` : '-')}
+                    {todayAttendance.totalHours ? `${todayAttendance.totalHours.toFixed(2)} hours` : '-'}
                   </span>
                 </div>
                 
@@ -317,11 +292,8 @@ const Attendance = () => {
             {attendanceHistory.filter(att => {
               const attDate = new Date(att.date);
               const now = new Date();
-              // Convert both dates to Karachi timezone for comparison
-              const attKarachiDate = new Date(attDate.getTime() + 5 * 60 * 60 * 1000);
-              const nowKarachiDate = new Date(now.getTime() + 5 * 60 * 60 * 1000);
-              return attKarachiDate.getMonth() === nowKarachiDate.getMonth() && 
-                     attKarachiDate.getFullYear() === nowKarachiDate.getFullYear() && 
+              return attDate.getMonth() === now.getMonth() && 
+                     attDate.getFullYear() === now.getFullYear() && 
                      (att.status === 'present' || att.status === 'late');
             }).length}
           </div>
@@ -351,16 +323,11 @@ const Attendance = () => {
               <tbody>
                 {attendanceHistory.map((attendance, index) => (
                   <tr key={attendance.id || attendance._id || `attendance-${index}`}>
-                    <td>{new Date(attendance.date).toLocaleDateString('en-PK', { 
-                      weekday: 'long',
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: '2-digit' 
-                    })}</td>
+                    <td>{new Date(attendance.date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</td>
                     <td>{attendance.checkInTime || '-'}</td>
                     <td>{attendance.checkOutTime || '-'}</td>
                     <td>
-                      {attendance.totalHoursFormatted || (attendance.totalHours ? `${attendance.totalHours.toFixed(2)}h` : '-')}
+                      {attendance.totalHours ? `${attendance.totalHours.toFixed(2)}h` : '-'}
                     </td>
                     <td>
                       {getStatusBadge(attendance.status || 'pending')}

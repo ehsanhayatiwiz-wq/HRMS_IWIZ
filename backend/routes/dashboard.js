@@ -10,101 +10,117 @@ const router = express.Router();
 // @route   GET /api/dashboard/employee
 // @desc    Get employee dashboard data
 // @access  Private
-router.get('/employee', protect, authorize('employee'), async (req, res) => {
+router.get('/employee', protect, async (req, res) => {
   try {
+    console.log('Get employee dashboard for user:', req.user.id);
+    
     const userId = req.user.id;
     const userType = req.userRole;
 
-    // Get employee's basic info
-    const employee = await Employee.findById(userId).select('-password');
-    if (!employee) {
-      return res.status(404).json({ message: 'Employee not found' });
-    }
-
     // Get today's attendance
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    const todayAttendance = await Attendance.getTodayAttendance(userId, userType);
 
-    const todayAttendance = await Attendance.findOne({
-      userId,
-      userType,
-      date: {
-        $gte: today,
-        $lt: tomorrow
-      }
-    });
-
-    // Get attendance stats for current month
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    // Get attendance summary for current month
+    const currentMonth = new Date();
+    currentMonth.setDate(1);
+    currentMonth.setHours(0, 0, 0, 0);
+    
+    const nextMonth = new Date(currentMonth);
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
 
     const monthlyAttendance = await Attendance.find({
       userId,
       userType,
-      date: {
-        $gte: startOfMonth,
-        $lte: endOfMonth
-      }
+      date: { $gte: currentMonth, $lt: nextMonth }
     });
 
-    const presentDays = monthlyAttendance.filter(att => att.status === 'present').length;
-    const absentDays = monthlyAttendance.filter(att => att.status === 'absent').length;
-    const totalWorkingDays = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-    const attendanceRate = totalWorkingDays > 0 ? Math.round((presentDays / totalWorkingDays) * 100) : 0;
+    const presentDays = monthlyAttendance.filter(att => 
+      att.status === 'present' || att.status === 'late' || att.status === 're-checked-in'
+    ).length;
 
-    // Get leave stats
-    const pendingLeaves = await Leave.countDocuments({
-      userId,
-      userType,
-      status: 'pending'
-    });
+    // Get recent activity (last 10 attendance records)
+    const recentActivity = await Attendance.find({ userId, userType })
+      .sort({ date: -1 })
+      .limit(10);
 
-    const approvedLeaves = await Leave.countDocuments({
-      userId,
-      userType,
-      status: 'approved'
-    });
+    // Get user's leave balance
+    let user;
+    let leaveBalance = 0;
+    
+    if (userType === 'admin') {
+      user = await Admin.findById(userId);
+    } else {
+      user = await Employee.findById(userId);
+      leaveBalance = user.leaveBalance;
+    }
 
-    const totalLeaves = await Leave.countDocuments({
-      userId,
-      userType
-    });
+    // Get recent leaves
+    const recentLeaves = await Leave.find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    console.log('Employee dashboard data retrieved successfully');
 
     res.json({
       success: true,
       data: {
-        employee: {
-          id: employee._id,
-          employeeId: employee.employeeId,
-          fullName: employee.fullName,
-          department: employee.department,
-          position: employee.position,
-          leaveBalance: employee.leaveBalance
-        },
         todayAttendance: todayAttendance ? {
-          id: todayAttendance._id,
+          checkInTime: todayAttendance.checkInTimeFormatted,
+          checkOutTime: todayAttendance.checkOutTimeFormatted,
+          reCheckInTime: todayAttendance.reCheckInTimeFormatted,
+          reCheckOutTime: todayAttendance.reCheckOutTimeFormatted,
+          totalHours: todayAttendance.totalHours,
+          firstSessionHours: todayAttendance.firstSessionHours,
+          secondSessionHours: todayAttendance.secondSessionHours,
           status: todayAttendance.status,
-          checkInTime: todayAttendance.checkInTime,
-          checkOutTime: todayAttendance.checkOutTime,
-          totalHours: todayAttendance.totalHours
+          checkInCount: todayAttendance.checkInCount
         } : null,
-        stats: {
+        monthlyStats: {
           presentDays,
-          absentDays,
-          totalWorkingDays,
-          attendanceRate,
-          pendingLeaves,
-          approvedLeaves,
-          totalLeaves
-        }
+          totalDays: new Date().getDate(),
+          attendanceRate: Math.round((presentDays / new Date().getDate()) * 100)
+        },
+        leaveBalance,
+        recentActivity: recentActivity.map(activity => ({
+          date: new Date(activity.date).toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }),
+          checkInTime: activity.checkInTimeFormatted,
+          checkOutTime: activity.checkOutTimeFormatted,
+          reCheckInTime: activity.reCheckInTimeFormatted,
+          reCheckOutTime: activity.reCheckOutTimeFormatted,
+          totalHours: activity.totalHours,
+          firstSessionHours: activity.firstSessionHours,
+          secondSessionHours: activity.secondSessionHours,
+          status: activity.status,
+          checkInCount: activity.checkInCount
+        })),
+        recentLeaves: recentLeaves.map(leave => ({
+          id: leave._id,
+          leaveType: leave.leaveType,
+          fromDate: new Date(leave.fromDate).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }),
+          toDate: new Date(leave.toDate).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }),
+          totalDays: leave.totalDays,
+          status: leave.status,
+          reason: leave.reason
+        }))
       }
     });
 
   } catch (error) {
     console.error('Get employee dashboard error:', error);
-    res.status(500).json({ message: 'Server error while fetching employee dashboard' });
+    res.status(500).json({ message: 'Server error while fetching dashboard data' });
   }
 });
 
@@ -113,74 +129,100 @@ router.get('/employee', protect, authorize('employee'), async (req, res) => {
 // @access  Private (Admin)
 router.get('/admin', protect, authorize('admin'), async (req, res) => {
   try {
+    console.log('Get admin dashboard for user:', req.user.id);
+    
     const userId = req.user.id;
+    const userType = req.userRole;
 
-    // Get total employees count
+    // Get today's attendance
+    const todayAttendance = await Attendance.getTodayAttendance(userId, userType);
+
+    // Get employee statistics
     const totalEmployees = await Employee.countDocuments({ isActive: true });
+    const activeEmployees = await Employee.countDocuments({ isActive: true, status: 'active' });
+    const onLeaveEmployees = await Employee.countDocuments({ isActive: true, status: 'on_leave' });
 
-    // Get today's attendance stats
+    // Get today's attendance summary
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
+    const todayAttendanceCount = await Attendance.countDocuments({
+      userType: 'employee',
+      date: { $gte: today, $lt: tomorrow }
+    });
+
     const presentToday = await Attendance.countDocuments({
       userType: 'employee',
-      date: {
-        $gte: today,
-        $lt: tomorrow
-      },
-      status: 'present'
+      date: { $gte: today, $lt: tomorrow },
+      status: { $in: ['present', 'late', 're-checked-in'] }
     });
 
-    const absentToday = await Attendance.countDocuments({
-      userType: 'employee',
-      date: {
-        $gte: today,
-        $lt: tomorrow
-      },
-      status: 'absent'
-    });
+    // Get recent leaves with cache-busting
+    const recentLeaves = await Leave.find({})
+      .populate('userId', 'fullName employeeId department')
+      .sort({ createdAt: -1 })
+      .limit(10);
 
-    // Get leave stats
-    const pendingLeaves = await Leave.countDocuments({
-      userType: 'employee',
-      status: 'pending'
-    });
+    // Count of pending leave requests (for dashboard card)
+    const pendingLeaves = await Leave.countDocuments({ status: 'pending' });
 
-    const totalLeaves = await Leave.countDocuments({
-      userType: 'employee'
-    });
+    console.log('Admin dashboard data retrieved successfully');
 
-    // Calculate attendance rate
-    const attendanceRate = totalEmployees > 0 ? Math.round((presentToday / totalEmployees) * 100) : 0;
-
-    // Get employees on leave today
-    const onLeaveEmployees = await Leave.countDocuments({
-      userType: 'employee',
-      status: 'approved',
-      fromDate: { $lte: today },
-      toDate: { $gte: today }
-    });
+    // Add cache control headers to prevent caching
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
 
     res.json({
       success: true,
       data: {
+        todayAttendance: todayAttendance ? {
+          checkInTime: todayAttendance.checkInTimeFormatted,
+          checkOutTime: todayAttendance.checkOutTimeFormatted,
+          reCheckInTime: todayAttendance.reCheckInTimeFormatted,
+          reCheckOutTime: todayAttendance.reCheckOutTimeFormatted,
+          totalHours: todayAttendance.totalHours,
+          firstSessionHours: todayAttendance.firstSessionHours,
+          secondSessionHours: todayAttendance.secondSessionHours,
+          status: todayAttendance.status,
+          checkInCount: todayAttendance.checkInCount
+        } : null,
         employeeStats: {
           totalEmployees,
+          activeEmployees,
+          onLeaveEmployees,
           presentToday,
-          absentToday,
           pendingLeaves,
-          totalLeaves,
-          attendanceRate,
-          onLeaveEmployees
-        }
+          attendanceRate: totalEmployees > 0 ? Math.round((presentToday / totalEmployees) * 100) : 0
+        },
+        recentLeaves: recentLeaves.map(leave => ({
+          id: leave._id,
+          employeeName: leave.userId?.fullName || 'Unknown',
+          employeeId: leave.userId?.employeeId || 'N/A',
+          department: leave.userId?.department || 'N/A',
+          leaveType: leave.leaveType,
+          fromDate: new Date(leave.fromDate).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }),
+          toDate: new Date(leave.toDate).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }),
+          totalDays: leave.totalDays,
+          status: leave.status,
+          reason: leave.reason
+        }))
       }
     });
 
   } catch (error) {
     console.error('Get admin dashboard error:', error);
-    res.status(500).json({ message: 'Server error while fetching admin dashboard' });
+    res.status(500).json({ message: 'Server error while fetching admin dashboard data' });
   }
 });
 

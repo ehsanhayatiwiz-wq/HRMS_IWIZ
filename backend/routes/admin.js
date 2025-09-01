@@ -18,29 +18,37 @@ router.post('/add-employee', protect, authorize('admin'), [
     .isEmail()
     .normalizeEmail()
     .withMessage('Please provide a valid email'),
-  body('password')
-    .isLength({ min: 6 })
-    .withMessage('Password must be at least 6 characters long'),
   body('department')
-    .trim()
-    .isLength({ min: 2, max: 50 })
-    .withMessage('Department must be between 2 and 50 characters'),
+    .isIn(['IT', 'HR', 'Finance', 'Marketing', 'Sales', 'Operations', 'Design', 'Management'])
+    .withMessage('Please select a valid department'),
   body('position')
     .trim()
-    .isLength({ min: 2, max: 50 })
-    .withMessage('Position must be between 2 and 50 characters'),
+    .notEmpty()
+    .withMessage('Position is required'),
   body('phone')
     .trim()
-    .isLength({ min: 10, max: 15 })
-    .withMessage('Phone number must be between 10 and 15 characters'),
+    .notEmpty()
+    .withMessage('Phone number is required'),
+  body('dateOfBirth')
+    .optional()
+    .isISO8601()
+    .withMessage('Please provide a valid date of birth'),
   body('salary')
-    .isNumeric()
-    .withMessage('Salary must be a number')
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage('Salary must be a positive number'),
+  body('dateOfJoining')
+    .optional()
+    .isISO8601()
+    .withMessage('Please provide a valid joining date')
 ], async (req, res) => {
   try {
+    console.log('Admin adding employee:', req.body);
+    
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('Validation errors:', errors.array());
       return res.status(400).json({ 
         message: 'Validation failed',
         errors: errors.array() 
@@ -50,76 +58,101 @@ router.post('/add-employee', protect, authorize('admin'), [
     const { 
       fullName, 
       email, 
-      password, 
       department, 
       position, 
       phone, 
-      salary 
+      dateOfBirth, 
+      address,
+      salary,
+      dateOfJoining,
+      leaveBalance = 25
     } = req.body;
 
     // Check if employee already exists
     const existingEmployee = await Employee.findOne({ email });
     if (existingEmployee) {
-      return res.status(400).json({ message: 'Employee with this email already exists' });
+      return res.status(400).json({ 
+        message: 'Employee with this email already exists' 
+      });
     }
 
-    // Generate unique employee ID
-    let employeeId;
-    let attempts = 0;
-    const maxAttempts = 10;
+    // Generate temporary password
+    const tempPassword = crypto.randomBytes(8).toString('hex');
     
-    do {
-      attempts++;
-      const year = new Date().getFullYear();
-      const suffix = Math.random().toString().slice(2, 6);
-      employeeId = `IWIZ${year}${suffix}`;
-      
-      if (attempts > maxAttempts) {
-        return res.status(500).json({ message: 'Failed to generate unique employee ID' });
-      }
-    } while (await Employee.findOne({ employeeId }));
+    // Generate employee ID
+    const employeeId = await Employee.generateEmployeeId();
 
-    // Create employee
-    const employee = new Employee({
-      employeeId,
+    // Create employee with temporary password
+    const employee = await Employee.create({
       fullName,
       email,
-      password,
+      password: tempPassword, // Will be hashed by pre-save middleware
+      employeeId,
       department,
       position,
       phone,
-      salary: Number(salary),
-      role: 'employee'
+      dateOfBirth,
+      dateOfJoining: dateOfJoining ? new Date(dateOfJoining) : new Date(),
+      address,
+      salary,
+      leaveBalance,
+      status: 'active',
+      isActive: true,
+      isFirstLogin: true,
+      passwordResetRequired: true
     });
 
-    await employee.save();
+    console.log('Employee created successfully:', employee.employeeId);
+
+    // Email service removed for simplicity
+    console.log('Employee created successfully. Email service disabled.');
 
     res.status(201).json({
       success: true,
-      message: 'Employee added successfully',
+      message: 'Employee added successfully.',
       data: {
-        id: employee._id,
-        employeeId: employee.employeeId,
-        fullName: employee.fullName,
-        email: employee.email,
-        department: employee.department,
-        position: employee.position,
-        phone: employee.phone,
-        salary: employee.salary,
-        leaveBalance: employee.leaveBalance
+        employee: {
+          id: employee._id,
+          fullName: employee.fullName,
+          email: employee.email,
+          employeeId: employee.employeeId,
+          department: employee.department,
+          position: employee.position,
+          phone: employee.phone,
+          dateOfBirth: employee.dateOfBirth,
+          dateOfJoining: employee.dateOfJoining,
+          salary: employee.salary,
+          leaveBalance: employee.leaveBalance,
+          status: employee.status,
+          isActive: employee.isActive
+        }
       }
     });
 
   } catch (error) {
     console.error('Add employee error:', error);
-    if (error && error.name === 'ValidationError') {
-      const details = Object.values(error.errors).map(e => e.message);
-      return res.status(400).json({ message: 'Validation failed', errors: details });
-    }
+    
+    // Handle duplicate key errors
     if (error.code === 11000) {
-      return res.status(400).json({ message: 'Email or Employee ID already exists' });
+      const field = Object.keys(error.keyPattern)[0];
+      const message = field === 'email' 
+        ? 'Employee with this email already exists'
+        : 'Employee ID already exists. Please try again.';
+      return res.status(400).json({ message });
     }
-    res.status(500).json({ message: 'Server error while adding employee' });
+
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      const details = Object.values(error.errors).map(e => e.message);
+      return res.status(400).json({ 
+        message: 'Validation failed', 
+        errors: details 
+      });
+    }
+
+    res.status(500).json({ 
+      message: 'Server error during employee creation' 
+    });
   }
 });
 
@@ -248,7 +281,7 @@ router.post('/employees/:employeeId/reset-password', protect, authorize('admin')
     await employee.save();
 
     // Email service removed for simplicity
-
+    console.log('Password reset completed. Email service disabled.');
 
     res.json({
       success: true,
@@ -325,64 +358,7 @@ router.get('/employees/salary-summary', protect, authorize('admin'), async (req,
   }
 });
 
-// @route   PATCH /api/admin/employees/:employeeId/status
-// @desc    Update employee status (Admin only)
-// @access  Private (Admin)
-router.patch('/employees/:employeeId/status', protect, authorize('admin'), [
-  body('status')
-    .isIn(['active', 'inactive', 'terminated', 'on_leave'])
-    .withMessage('Status must be active, inactive, terminated, or on_leave')
-], async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        message: 'Validation failed',
-        errors: errors.array()
-      });
-    }
-
-    const { employeeId } = req.params;
-    const { status } = req.body;
-
-    const employee = await Employee.findById(employeeId);
-    if (!employee) {
-      return res.status(404).json({
-        message: 'Employee not found'
-      });
-    }
-
-    // Update status
-    employee.status = status;
-    employee.isActive = status === 'active';
-    
-    // If terminated, set termination date
-    if (status === 'terminated') {
-      employee.terminationDate = new Date();
-    }
-
-    await employee.save();
-
-    res.json({
-      success: true,
-      message: 'Employee status updated successfully',
-      data: {
-        employee: {
-          id: employee._id,
-          fullName: employee.fullName,
-          status: employee.status,
-          isActive: employee.isActive
-        }
-      }
-    });
-
-  } catch (error) {
-    console.error('Update employee status error:', error);
-    res.status(500).json({
-      message: 'Server error while updating employee status'
-    });
-  }
-});
+module.exports = router;
 
 // Maintenance: Normalize legacy employee records
 // @route   POST /api/admin/maintenance/activate-legacy
@@ -430,5 +406,3 @@ router.post('/maintenance/activate-legacy', protect, authorize('admin'), async (
     res.status(500).json({ message: 'Server error while normalizing legacy employees' });
   }
 });
-
-module.exports = router;

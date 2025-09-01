@@ -34,9 +34,14 @@ router.post('/request', protect, [
     .withMessage('Half day type must be morning or afternoon')
 ], async (req, res) => {
   try {
+    console.log('Leave request received:', req.body);
+    console.log('User ID:', req.user.id);
+    console.log('User Role:', req.userRole);
+    
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('Validation errors:', errors.array());
       return res.status(400).json({ 
         message: 'Validation failed',
         errors: errors.array() 
@@ -51,6 +56,8 @@ router.post('/request', protect, [
       isHalfDay = false, 
       halfDayType 
     } = req.body;
+
+    console.log('Parsed request data:', { leaveType, fromDate, toDate, reason, isHalfDay, halfDayType });
 
     const userId = req.user.id;
     const userType = req.userRole;
@@ -77,6 +84,8 @@ router.post('/request', protect, [
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    console.log('Date validation:', { fromDateObj, toDateObj, today });
+
     if (fromDateObj < today) {
       return res.status(400).json({ message: 'From date cannot be in the past' });
     }
@@ -86,18 +95,24 @@ router.post('/request', protect, [
     }
 
     // Check for overlapping leaves
+    console.log('Checking for overlapping leaves...');
     const hasOverlap = await Leave.checkLeaveOverlap(userId, fromDateObj, toDateObj);
+    console.log('Overlap check result:', hasOverlap);
+    
     if (hasOverlap) {
-      return res.status(400).json({ message: 'You have overlapping leave requests for these dates' });
+      return res.status(400).json({ message: 'Leave request overlaps with existing approved or pending leaves' });
     }
 
     // Calculate total days
-    const totalDays = Leave.calculateTotalDays(fromDateObj, toDateObj, isHalfDay);
+    const timeDiff = toDateObj.getTime() - fromDateObj.getTime();
+    const dayDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
+    const totalDays = isHalfDay ? 0.5 : dayDiff;
+
+    console.log('Calculated total days:', totalDays);
 
     // Create leave request
     const leaveRequest = new Leave({
       userId,
-      userModel: userType === 'admin' ? 'Admin' : 'Employee',
       userType,
       leaveType,
       fromDate: fromDateObj,
@@ -105,29 +120,31 @@ router.post('/request', protect, [
       totalDays,
       reason,
       isHalfDay,
-      halfDayType
+      halfDayType,
+      status: 'pending'
     });
 
     await leaveRequest.save();
+
+    console.log('Leave request saved successfully');
 
     res.status(201).json({
       success: true,
       message: 'Leave request submitted successfully',
       data: {
-        leave: {
-          id: leaveRequest._id,
-          leaveType: leaveRequest.leaveType,
-          fromDate: leaveRequest.fromDate,
-          toDate: leaveRequest.toDate,
-          totalDays: leaveRequest.totalDays,
-          status: leaveRequest.status
-        }
+        id: leaveRequest._id,
+        leaveType: leaveRequest.leaveType,
+        fromDate: leaveRequest.fromDate,
+        toDate: leaveRequest.toDate,
+        totalDays: leaveRequest.totalDays,
+        status: leaveRequest.status,
+        reason: leaveRequest.reason
       }
     });
 
   } catch (error) {
     console.error('Leave request error:', error);
-    res.status(500).json({ message: 'Server error while submitting leave request' });
+    res.status(500).json({ message: 'Server error during leave request' });
   }
 });
 
@@ -231,6 +248,7 @@ router.get('/pending', protect, authorize('admin', 'hr'), async (req, res) => {
 // @access  Private (Admin)
 router.get('/all', protect, authorize('admin'), async (req, res) => {
   try {
+    console.log('Get all leave requests request from admin:', req.user.id);
     
     const { page = 1, limit = 20, status, leaveType, employeeId } = req.query;
     
@@ -257,7 +275,15 @@ router.get('/all', protect, authorize('admin'), async (req, res) => {
 
     const total = await Leave.countDocuments(query);
 
+    console.log(`Found ${leaves.length} leave requests`);
     
+    // Debug: Log the first record to see the structure
+    if (leaves.length > 0) {
+      console.log('First leave record structure:', JSON.stringify(leaves[0], null, 2));
+      console.log('First record userId:', leaves[0].userId);
+      console.log('First record userId.fullName:', leaves[0].userId?.fullName);
+    }
+
     // Prevent any intermediary/proxy/browser caching of admin lists
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.set('Pragma', 'no-cache');
@@ -307,36 +333,56 @@ router.put('/:id/approve', protect, authorize('admin'), [
   body('notes').optional().trim().isLength({ max: 500 }).withMessage('Notes cannot exceed 500 characters')
 ], async (req, res) => {
   try {
+    console.log('Approve leave request:', req.params.id);
+    console.log('Request body:', req.body);
+    console.log('User ID:', req.user.id);
+    console.log('User Role:', req.userRole);
+    
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('Validation errors:', errors.array());
       return res.status(400).json({ 
         message: 'Validation failed',
         errors: errors.array() 
       });
     }
 
+    console.log('Finding leave by ID:', req.params.id);
     const leave = await Leave.findById(req.params.id);
     if (!leave) {
+      console.log('Leave not found');
       return res.status(404).json({ message: 'Leave request not found' });
     }
+    console.log('Leave found:', leave._id, 'Status:', leave.status);
 
     if (leave.status !== 'pending') {
+      console.log('Leave is not pending, current status:', leave.status);
       return res.status(400).json({ message: 'Leave request is not pending' });
     }
 
+    console.log('Updating leave status to approved...');
     // Update leave status
     leave.status = 'approved';
     leave.approvedBy = req.user.id;
     leave.approvedAt = new Date();
     leave.notes = req.body.notes || leave.notes;
 
-    // Ensure totalDays is calculated
-    if (leave.fromDate && leave.toDate) {
-      leave.totalDays = leave.calculateTotalDays();
+    console.log('Saving leave...');
+    await leave.save();
+    console.log('Leave saved successfully');
+
+    console.log('Updating user leave balance...');
+    // Update employee's leave balance
+    try {
+      await Leave.updateUserLeaveBalance(leave.userId, leave.userType, leave.totalDays, 'approve');
+      console.log('Leave balance updated successfully');
+    } catch (balanceError) {
+      console.error('Error updating leave balance:', balanceError);
+      // Don't fail the approval if balance update fails
     }
 
-    await leave.save();
+    console.log('Leave request approved successfully');
 
     res.json({
       success: true,
@@ -353,6 +399,10 @@ router.put('/:id/approve', protect, authorize('admin'), [
     });
 
   } catch (error) {
+    console.error('Approve leave error details:');
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Error name:', error.name);
     res.status(500).json({ message: 'Server error while approving leave request' });
   }
 });
@@ -364,6 +414,8 @@ router.put('/:id/reject', protect, authorize('admin'), [
   body('rejectionReason').trim().isLength({ min: 5, max: 500 }).withMessage('Rejection reason must be between 5 and 500 characters')
 ], async (req, res) => {
   try {
+    console.log('Reject leave request:', req.params.id);
+    
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -388,12 +440,9 @@ router.put('/:id/reject', protect, authorize('admin'), [
     leave.approvedAt = new Date();
     leave.rejectionReason = req.body.rejectionReason;
 
-    // Ensure totalDays is calculated
-    if (leave.fromDate && leave.toDate) {
-      leave.totalDays = leave.calculateTotalDays();
-    }
-
     await leave.save();
+
+    console.log('Leave request rejected successfully');
 
     res.json({
       success: true,
@@ -410,6 +459,7 @@ router.put('/:id/reject', protect, authorize('admin'), [
     });
 
   } catch (error) {
+    console.error('Reject leave error:', error);
     res.status(500).json({ message: 'Server error while rejecting leave request' });
   }
 });
@@ -419,6 +469,7 @@ router.put('/:id/reject', protect, authorize('admin'), [
 // @access  Private (Admin)
 router.get('/stats', protect, authorize('admin'), async (req, res) => {
   try {
+    console.log('Get leave stats request from admin:', req.user.id);
     
     const { startDate, endDate } = req.query;
     
@@ -488,7 +539,8 @@ router.get('/stats', protect, authorize('admin'), async (req, res) => {
       { $sort: { total: -1 } }
     ]);
 
-    
+    console.log('Leave stats retrieved successfully');
+
     res.json({
       success: true,
       data: {

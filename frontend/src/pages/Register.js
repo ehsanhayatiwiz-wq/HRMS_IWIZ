@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts';
 import { FiUser, FiMail, FiLock, FiMapPin, FiPhone, FiCalendar, FiBriefcase, FiHome, FiShield, FiEye, FiEyeOff } from 'react-icons/fi';
 import './Login.css';
 import { toast } from 'react-toastify';
@@ -29,7 +29,7 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [generalError, setGeneralError] = useState('');
 
-  const { register, user } = useAuth();
+  const { register, user, testBackendConnection } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -40,6 +40,16 @@ const Register = () => {
       navigate(intendedPath, { replace: true });
     }
   }, [user, navigate, location]);
+
+  // Test backend connection
+  const handleTestConnection = async () => {
+    const isConnected = await testBackendConnection();
+    if (isConnected) {
+      toast.success('Backend connection successful!');
+    } else {
+      toast.error('Backend connection failed! Check if server is running.');
+    }
+  };
 
   const departments = [
     'IT', 'HR', 'Finance', 'Marketing', 'Sales', 'Operations', 'Design', 'Management'
@@ -163,9 +173,9 @@ const Register = () => {
         setGeneralError(result.error || 'Registration failed. Please try again.');
       }
     } catch (error) {
-      // Registration error
-      const message = error.response?.data?.message || 'Registration failed';
-      setGeneralError(message);
+      console.error('Registration error:', error);
+      setGeneralError('An unexpected error occurred. Please try again.');
+    } finally {
       setLoading(false);
     }
   };
@@ -187,7 +197,14 @@ const Register = () => {
           <p className="login-subtitle">Create your account</p>
           
           {/* Test Connection Button */}
-          {/* Removed as per edit hint */}
+          <button
+            type="button"
+            onClick={handleTestConnection}
+            className="test-connection-btn"
+            title="Test backend connection"
+          >
+            Test Connection
+          </button>
         </div>
 
         {generalError && (

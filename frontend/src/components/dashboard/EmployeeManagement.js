@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
 import api from '../../services/api';
 import { toast } from 'react-toastify';
 import { 
@@ -47,34 +48,23 @@ const EmployeeManagement = () => {
 
   const statuses = ['active', 'inactive', 'terminated', 'on_leave'];
 
-  const fetchEmployees = async () => {
+  const fetchEmployees = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await api.get('/employees', {
-        params: {
-          page: currentPage,
-          limit: 10, // Assuming itemsPerPage is 10 as in original code
-          search: searchTerm,
-          department: filterDepartment,
-          status: filterStatus
-        }
-      });
-      
-      setEmployees(response.data?.data?.employees || []);
-      setTotalPages(response.data?.data?.pagination?.totalPages || 1);
-      // setTotalEmployees(response.data?.data?.pagination?.totalEmployees || 0); // This line was not in the new_code, so it's removed.
+      const response = await api.get(`/employees?page=${currentPage}&limit=10&search=${searchTerm}&department=${filterDepartment}&status=${filterStatus}`);
+      setEmployees(response.data.data.employees);
+      setTotalPages(response.data.data.pagination.totalPages);
     } catch (error) {
-      // Error fetching employees
+      console.error('Error fetching employees:', error);
       toast.error('Failed to load employees');
-      setEmployees([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, searchTerm, filterDepartment, filterStatus]);
 
   useEffect(() => {
     fetchEmployees();
-  }, [currentPage, searchTerm, filterDepartment, filterStatus, fetchEmployees]);
+  }, [fetchEmployees]);
 
   const handleAddEmployee = async (e) => {
     e.preventDefault();
@@ -93,7 +83,9 @@ const EmployeeManagement = () => {
           dateOfJoining: new Date().toISOString().slice(0,10)
         };
         
-        await api.post('/admin/add-employee', payload);
+        console.log('Adding employee with payload:', payload);
+        const response = await api.post('/admin/add-employee', payload);
+        console.log('Employee added successfully:', response.data);
       } else {
         // Manual password path
         const payload = { ...formData };
@@ -124,12 +116,7 @@ const EmployeeManagement = () => {
   const handleEditEmployee = async (e) => {
     e.preventDefault();
     try {
-      const employeeId = selectedEmployee.id || selectedEmployee._id;
-      if (!employeeId) {
-        toast.error('Employee ID not found');
-        return;
-      }
-      await api.put(`/employees/${employeeId}`, formData);
+      await api.put(`/employees/${selectedEmployee.id}`, formData);
       toast.success('Employee updated successfully!');
       setShowEditModal(false);
       setSelectedEmployee(null);

@@ -13,36 +13,40 @@ const router = express.Router();
 // @desc    Generate monthly payroll for all employees (Admin only)
 // @access  Private (Admin)
 router.post('/generate', protect, authorize('admin'), [
-  body('month').isInt({ min: 1, max: 12 }).withMessage('Month must be between 1 and 12'),
-  body('year').isInt({ min: 2020, max: 2030 }).withMessage('Year must be between 2020 and 2030')
+  body('month')
+    .isInt({ min: 1, max: 12 })
+    .withMessage('Month must be between 1 and 12'),
+  body('year')
+    .isInt({ min: 2020, max: 2030 })
+    .withMessage('Year must be between 2020 and 2030')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: 'Validation failed',
-        errors: errors.array() 
+        errors: errors.array()
       });
     }
 
     const { month, year } = req.body;
 
-    // Check if payroll already exists for this month/year
+    // Check if payroll already exists for this month
     const existingPayrolls = await Payroll.find({ month, year });
     if (existingPayrolls.length > 0) {
-      return res.status(409).json({ 
-        message: `Payroll for ${month}/${year} already exists` 
+      return res.status(400).json({
+        message: `Payroll for ${month}/${year} has already been generated`
       });
     }
 
-    // Generate payroll
-    const generatedPayrolls = await Payroll.generatePayroll(month, year);
+    // Generate payroll for all active employees
+    const payrolls = await Payroll.generateMonthlyPayroll(month, year, req.user.id);
 
     res.json({
       success: true,
-      message: `Payroll generated successfully for ${month}/${year}`,
+      message: `Payroll generated successfully for ${payrolls.length} employees`,
       data: {
-        count: generatedPayrolls.length,
+        generatedCount: payrolls.length,
         month,
         year
       }
@@ -50,58 +54,10 @@ router.post('/generate', protect, authorize('admin'), [
 
   } catch (error) {
     console.error('Payroll generation error:', error);
-    res.status(500).json({ message: 'Server error while generating payroll' });
-  }
-});
-
-// @route   GET /api/payroll/summary
-// @desc    Get payroll summary for a specific month/year (Admin only)
-// @access  Private (Admin)
-router.get('/summary', protect, authorize('admin'), async (req, res) => {
-  try {
-    const { month, year } = req.query;
-    
-    if (!month || !year) {
-      return res.status(400).json({ message: 'Month and year are required' });
-    }
-
-    const payrolls = await Payroll.find({ 
-      month: parseInt(month), 
-      year: parseInt(year) 
-    }).populate('employeeId', 'fullName employeeId department');
-
-    // Calculate summary
-    const summary = {
-      totalEmployees: payrolls.length,
-      totalBasicSalary: 0,
-      totalAllowances: 0,
-      totalDeductions: 0,
-      totalGrossSalary: 0,
-      totalNetPay: 0
-    };
-
-    payrolls.forEach((payroll) => {
-      summary.totalBasicSalary += payroll.basicSalary || 0;
-      summary.totalAllowances += (payroll.allowances?.houseRent || 0) + 
-                                (payroll.allowances?.medical || 0) + 
-                                (payroll.allowances?.conveyance || 0);
-      summary.totalDeductions += (payroll.deductions?.providentFund || 0) + 
-                                (payroll.deductions?.tax || 0) + 
-                                (payroll.deductions?.insurance || 0);
-      summary.totalGrossSalary += payroll.grossSalary || 0;
-      summary.totalNetPay += payroll.netPay || 0;
+    res.status(500).json({
+      message: 'Server error during payroll generation',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
     });
-
-    res.json({
-      success: true,
-      data: {
-        summary
-      }
-    });
-
-  } catch (error) {
-    console.error('Payroll summary error:', error);
-    res.status(500).json({ message: 'Server error while fetching payroll summary' });
   }
 });
 
@@ -317,7 +273,7 @@ router.get('/:payrollId/download', protect, async (req, res) => {
     
     // Ensure response is properly closed
     res.on('finish', () => {
-
+      console.log('PDF download completed successfully');
     });
     
     res.on('error', (error) => {
@@ -326,7 +282,7 @@ router.get('/:payrollId/download', protect, async (req, res) => {
     
     // Handle stream end
     doc.on('end', () => {
-
+      console.log('PDF stream ended successfully');
     });
 
   } catch (error) {
@@ -392,63 +348,96 @@ router.get('/reports/summary', protect, authorize('admin'), async (req, res) => 
   try {
     const { month, year } = req.query;
     
-    if (!month || !year) {
-      return res.status(400).json({ message: 'Month and year are required' });
-    }
+    console.log('Payroll summary request - month:', month, 'year:', year);
 
-    const filter = { month: parseInt(month), year: parseInt(year) };
+    const filter = {};
+    if (month) filter.month = parseInt(month);
+    if (year) filter.year = parseInt(year);
+
+    console.log('Filter applied:', filter);
 
     const payrolls = await Payroll.find(filter)
-      .populate('employeeId', 'fullName employeeId department');
+      .populate('employeeId', 'fullName department');
 
-    if (payrolls.length === 0) {
-      return res.json({
-        success: true,
-        data: {
-          summary: {
-            totalEmployees: 0,
-            totalBasicSalary: 0,
-            totalAllowances: 0,
-            totalDeductions: 0,
-            totalGrossSalary: 0,
-            totalNetPay: 0
-          }
-        }
+    // Also fetch current active employees to keep UI numbers in sync
+    const Employee = require('../models/Employee');
+    const activeEmployeesCount = await Employee.countDocuments({
+      $or: [
+        { status: 'active' },
+        { isActive: true }
+      ]
+    });
+
+    console.log(`Found ${payrolls.length} payroll records`);
+    
+    if (payrolls.length > 0) {
+      console.log('Sample payroll record:', {
+        id: payrolls[0]._id,
+        employee: payrolls[0].employeeId?.fullName,
+        basicSalary: payrolls[0].basicSalary,
+        totalAllowances: payrolls[0].totalAllowances,
+        totalDeductions: payrolls[0].totalDeductions,
+        netPay: payrolls[0].netPay
       });
     }
 
-    // Calculate summary
     const summary = {
-      totalEmployees: payrolls.length,
+      // Show actual active employees rather than number of payroll rows
+      employeesActive: activeEmployeesCount,
+      payrollCount: payrolls.length,
       totalBasicSalary: 0,
       totalAllowances: 0,
+      totalOvertime: 0,
       totalDeductions: 0,
-      totalGrossSalary: 0,
-      totalNetPay: 0
+      totalNetPay: 0,
+      byDepartment: {}
     };
 
     payrolls.forEach((payroll, index) => {
-      summary.totalBasicSalary += payroll.basicSalary || 0;
-      summary.totalAllowances += (payroll.allowances?.houseRent || 0) + 
-                                (payroll.allowances?.medical || 0) + 
-                                (payroll.allowances?.conveyance || 0);
-      summary.totalDeductions += (payroll.deductions?.providentFund || 0) + 
-                                (payroll.deductions?.tax || 0) + 
-                                (payroll.deductions?.insurance || 0);
-      summary.totalGrossSalary += payroll.grossSalary || 0;
-      summary.totalNetPay += payroll.netPay || 0;
+      const basic = Number(payroll.basicSalary) || 0;
+      const allowances = Number(payroll.totalAllowances) || 0;
+      const overtime = Number(payroll.overtime?.amount) || 0;
+      const deductions = Number(payroll.totalDeductions) || 0;
+      const net = Number(payroll.netPay) || 0;
+
+      console.log(`Processing payroll ${index + 1}:`, {
+        employee: payroll.employeeId?.fullName,
+        basic,
+        allowances,
+        overtime,
+        deductions,
+        net
+      });
+
+      summary.totalBasicSalary += basic;
+      summary.totalAllowances += allowances;
+      summary.totalOvertime += overtime;
+      summary.totalDeductions += deductions;
+      summary.totalNetPay += net;
+
+      const dept = payroll.employeeId?.department || 'Unknown';
+      if (!summary.byDepartment[dept]) {
+        summary.byDepartment[dept] = {
+          count: 0,
+          totalNetPay: 0
+        };
+      }
+      summary.byDepartment[dept].count++;
+      summary.byDepartment[dept].totalNetPay += net;
     });
+
+    console.log('Final summary:', summary);
 
     res.json({
       success: true,
-      data: {
-        summary
-      }
+      data: { summary }
     });
 
   } catch (error) {
     console.error('Payroll summary error:', error);
-    res.status(500).json({ message: 'Server error while fetching payroll summary' });
+    res.status(500).json({
+      message: 'Server error while generating summary'
+    });
   }
 });
 
@@ -456,14 +445,14 @@ router.get('/reports/summary', protect, authorize('admin'), async (req, res) => 
 // @desc    Debug route to check payroll data (Admin only)
 // @access  Private (Admin)
 router.get('/debug', protect, authorize('admin'), async (req, res) => {
-  
+  console.log('Payroll debug request');
   const diagnostics = { success: true, data: {}, errors: [] };
 
   // Step 1: Count payrolls
   try {
     const totalPayrolls = await Payroll.countDocuments({});
     diagnostics.data.totalPayrolls = totalPayrolls;
-
+    console.log(`Total payroll records in DB: ${totalPayrolls}`);
   } catch (e) {
     diagnostics.success = false;
     diagnostics.errors.push({ step: 'countPayrolls', message: e?.message || String(e) });
@@ -488,7 +477,7 @@ router.get('/debug', protect, authorize('admin'), async (req, res) => {
       netPay: p.netPay ?? null
     }));
 
-    
+    console.log('Recent payrolls:', diagnostics.data.recentPayrolls);
   } catch (e) {
     diagnostics.success = false;
     diagnostics.errors.push({ step: 'recentPayrolls', message: e?.message || String(e) });
@@ -502,7 +491,7 @@ router.get('/debug', protect, authorize('admin'), async (req, res) => {
       Employee.countDocuments({ $or: [{ status: 'active' }, { isActive: true }] })
     ]);
     diagnostics.data.employeeStats = { total: totalEmployees, active: activeEmployees };
-
+    console.log(`Total employees: ${totalEmployees}, Active: ${activeEmployees}`);
   } catch (e) {
     diagnostics.success = false;
     diagnostics.errors.push({ step: 'employeeStats', message: e?.message || String(e) });

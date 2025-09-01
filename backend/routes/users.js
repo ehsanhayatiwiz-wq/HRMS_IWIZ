@@ -11,19 +11,23 @@ const router = express.Router();
 // @access  Private
 router.get('/profile', protect, async (req, res) => {
   try {
-    const userId = req.user.id;
-    const userType = req.userRole;
+    console.log('Get profile request for user:', req.user.id);
+    
+    // Try to find user in Admin collection first
+    let user = await Admin.findById(req.user.id);
+    let userType = 'admin';
 
-    let user;
-    if (userType === 'admin') {
-      user = await Admin.findById(userId).select('-password');
-    } else {
-      user = await Employee.findById(userId).select('-password');
+    // If not found in Admin, try Employee collection
+    if (!user) {
+      user = await Employee.findById(req.user.id);
+      userType = 'employee';
     }
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+
+    console.log('Profile found for user type:', userType);
 
     res.json({
       success: true,
@@ -33,29 +37,23 @@ router.get('/profile', protect, async (req, res) => {
           fullName: user.fullName,
           email: user.email,
           role: userType,
-          ...(userType === 'admin' ? {
-            adminId: user.adminId,
-            department: user.department,
-            position: user.position
-          } : {
-            employeeId: user.employeeId,
-            department: user.department,
-            position: user.position,
-            phone: user.phone,
-            dateOfBirth: user.dateOfBirth,
-            address: user.address,
-            joiningDate: user.joiningDate,
-            salary: user.salary,
-            status: user.status,
-            leaveBalance: user.leaveBalance
-          })
+          department: user.department,
+          position: user.position,
+          phone: user.phone,
+          address: user.address,
+          dateOfBirth: user.dateOfBirth,
+          dateOfJoining: user.dateOfJoining,
+          salary: user.salary,
+          profilePicture: user.profilePicture,
+          emergencyContact: user.emergencyContact,
+          ...(userType === 'admin' ? { adminId: user.adminId } : { employeeId: user.employeeId, leaveBalance: user.leaveBalance })
         }
       }
     });
 
   } catch (error) {
     console.error('Get profile error:', error);
-    res.status(500).json({ message: 'Server error while fetching profile' });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -115,7 +113,7 @@ router.put('/profile', protect, [
     .withMessage('Emergency contact phone is required')
 ], async (req, res) => {
   try {
-
+    console.log('Update profile request for user:', req.user.id);
     
     // Check for validation errors
     const errors = validationResult(req);
@@ -147,7 +145,7 @@ router.put('/profile', protect, [
       { new: true, runValidators: true }
     ).select('-password');
 
-
+    console.log('Profile updated successfully for user type:', userType);
 
     res.json({
       success: true,

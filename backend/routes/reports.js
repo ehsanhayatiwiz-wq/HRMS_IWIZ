@@ -12,19 +12,13 @@ router.use(protect, authorize('admin', 'hr'));
 // Generate Employee Report PDF
 router.get('/employees', async (req, res) => {
   try {
-
-    
     const employees = await Employee.find({}).sort({ createdAt: -1 });
-    
 
-    const doc = new PDFDocument({ size: 'A4', margin: 40 });
-    
-    // Set proper headers
+    const doc = new PDFDocument();
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename=employee-report.pdf');
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
     
     // Pipe PDF to response
     doc.pipe(res);
@@ -43,7 +37,6 @@ router.get('/employees', async (req, res) => {
       doc.destroy();
     });
 
-    // Generate PDF content
     doc.fontSize(24).text('Employee Report', { align: 'center' });
     doc.moveDown();
     doc.fontSize(12).text(`Generated on: ${new Date().toLocaleDateString()}`, { align: 'center' });
@@ -52,33 +45,38 @@ router.get('/employees', async (req, res) => {
     doc.fontSize(14).text('Employee Details', { underline: true });
     doc.moveDown();
 
-    if (employees.length === 0) {
-      doc.fontSize(12).text('No employees found.', { align: 'center' });
-    } else {
-      employees.forEach((employee, index) => {
-        doc.fontSize(10).text(`${index + 1}. ${employee.fullName || 'Unknown'}`, { continued: true });
-        doc.text(` - ${employee.employeeId || 'N/A'}`, { continued: true });
-        doc.text(` - ${employee.department || 'N/A'}`, { continued: true });
-        doc.text(` - ${employee.position || 'N/A'}`, { continued: true });
-        doc.text(` - ${employee.status || 'N/A'}`, { continued: true });
-        doc.text(` - ${employee.leaveBalance || 0} days leave`, { align: 'right' });
-        doc.moveDown(0.5);
-      });
-    }
+    employees.forEach((employee, index) => {
+      doc.fontSize(10).text(`${index + 1}. ${employee.fullName}`, { continued: true });
+      doc.text(` - ${employee.employeeId}`, { continued: true });
+      doc.text(` - ${employee.department}`, { continued: true });
+      doc.text(` - ${employee.position}`, { continued: true });
+      doc.text(` - ${employee.status}`, { continued: true });
+      doc.text(` - ${employee.leaveBalance} days leave`, { align: 'right' });
+      doc.moveDown(0.5);
+    });
 
     // Finalize PDF
     doc.end();
     
+    // Ensure response is properly closed
+    res.on('finish', () => {
+      console.log('PDF report generated successfully');
+    });
     
+    res.on('error', (error) => {
+      console.error('PDF report error:', error);
+    });
     
+    // Handle stream end
+    doc.on('end', () => {
+      console.log('PDF stream ended successfully');
+    });
   } catch (error) {
     console.error('Error generating employee report:', error);
-    if (!res.headersSent) {
-      res.status(500).json({ 
-        message: 'Failed to generate employee report',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-      });
-    }
+    res.status(500).json({ 
+      message: 'Failed to generate employee report',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
   }
 });
 
@@ -103,7 +101,7 @@ router.get('/attendance', async (req, res) => {
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Pragma', 'no-cache');
     
-    // Pipe PDF to response BEFORE writing content
+    // Pipe PDF to response
     doc.pipe(res);
     
     // Handle PDF errors
@@ -179,18 +177,18 @@ router.get('/attendance', async (req, res) => {
         record.userId?.fullName || 'Unknown',
         record.userId?.employeeId || 'N/A',
         record.userId?.department || 'N/A',
-        new Date(record.date).toLocaleDateString('en-PK', { timeZone: 'Asia/Karachi' }),
+        new Date(record.date).toLocaleDateString(),
         `${(record.totalHours || 0).toFixed(2)}h`
       ]);
       y += 26;
     });
 
-    // Finalize PDF after all writes
+    // Finalize PDF
     doc.end();
     
     // Ensure response is properly closed
     res.on('finish', () => {
-
+      console.log('PDF attendance report generated successfully');
     });
     
     res.on('error', (error) => {
@@ -199,7 +197,7 @@ router.get('/attendance', async (req, res) => {
     
     // Handle stream end
     doc.on('end', () => {
-
+      console.log('PDF attendance stream ended successfully');
     });
   } catch (error) {
     console.error('Error generating attendance report:', error);
@@ -250,12 +248,10 @@ router.get('/leaves', async (req, res) => {
     doc.moveDown();
 
     leaves.forEach((leave, index) => {
-      const fromStr = new Date(leave.fromDate).toLocaleDateString('en-PK', { timeZone: 'Asia/Karachi' });
-      const toStr = new Date(leave.toDate).toLocaleDateString('en-PK', { timeZone: 'Asia/Karachi' });
       doc.fontSize(10).text(`${index + 1}. ${leave.userId?.fullName || 'Unknown'}`, { continued: true });
       doc.text(` - ${leave.userId?.employeeId || 'N/A'}`, { continued: true });
       doc.text(` - ${leave.leaveType}`, { continued: true });
-      doc.text(` - ${fromStr} to ${toStr}`, { continued: true });
+      doc.text(` - ${leave.fromDate.toLocaleDateString()} to ${leave.toDate.toLocaleDateString()}`, { continued: true });
       doc.text(` - ${leave.totalDays} days`, { continued: true });
       doc.text(` - ${leave.status}`, { align: 'right' });
       doc.moveDown(0.5);
@@ -347,8 +343,7 @@ router.get('/employees/csv', async (req, res) => {
 
     let csv = 'Name,Employee ID,Email,Department,Position,Phone,Status,Leave Balance,Date of Joining\n';
     employees.forEach(employee => {
-      const doj = employee.dateOfJoining ? new Date(employee.dateOfJoining).toLocaleDateString('en-PK', { timeZone: 'Asia/Karachi' }) : '';
-      csv += `"${employee.fullName}","${employee.employeeId}","${employee.email}","${employee.department}","${employee.position}","${employee.phone || ''}","${employee.status}","${employee.leaveBalance}","${doj}"\n`;
+      csv += `"${employee.fullName}","${employee.employeeId}","${employee.email}","${employee.department}","${employee.position}","${employee.phone}","${employee.status}","${employee.leaveBalance}","${employee.dateOfJoining.toLocaleDateString()}"\n`;
     });
 
     res.setHeader('Content-Type', 'text/csv');
@@ -376,10 +371,7 @@ router.get('/attendance/csv', async (req, res) => {
 
     let csv = 'Employee Name,Employee ID,Department,Date,Check In,Check Out,Total Hours,Status\n';
     attendanceRecords.forEach(record => {
-      const dateStr = new Date(record.date).toLocaleDateString('en-PK', { timeZone: 'Asia/Karachi' });
-      const inStr = record.checkIn?.time ? new Date(record.checkIn.time).toLocaleTimeString('en-PK', { hour12: false, timeZone: 'Asia/Karachi' }) : '-';
-      const outStr = record.checkOut?.time ? new Date(record.checkOut.time).toLocaleTimeString('en-PK', { hour12: false, timeZone: 'Asia/Karachi' }) : '-';
-      csv += `"${record.userId?.fullName || 'Unknown'}","${record.userId?.employeeId || 'N/A'}","${record.userId?.department || 'N/A'}","${dateStr}","${inStr}","${outStr}","${(record.totalHours || 0).toFixed(2)}","${record.status}"\n`;
+      csv += `"${record.userId?.fullName || 'Unknown'}","${record.userId?.employeeId || 'N/A'}","${record.userId?.department || 'N/A'}","${record.date.toLocaleDateString()}","${record.checkIn?.time ? record.checkIn.time.toLocaleTimeString() : '-'}","${record.checkOut?.time ? record.checkOut.time.toLocaleTimeString() : '-'}","${record.totalHours || 0}","${record.status}"\n`;
     });
 
     res.setHeader('Content-Type', 'text/csv');

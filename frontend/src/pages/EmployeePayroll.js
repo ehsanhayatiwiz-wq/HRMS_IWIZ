@@ -4,7 +4,7 @@ import Button from '../components/common/Button';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 import { formatCurrency } from '../utils/helpers';
-// Using native Date methods instead of moment.js for better performance
+import moment from 'moment';
 import { useAuth } from '../contexts/AuthContext';
 import './EmployeePayroll.css';
 
@@ -27,7 +27,7 @@ const EmployeePayroll = () => {
       setPayrolls(response.data.data.payrolls);
       setTotalPages(response.data.data.pagination.totalPages);
     } catch (error) {
-      // Error fetching payroll data
+      console.error('Error fetching payroll data:', error);
       toast.error('Failed to load payroll data');
     } finally {
       setLoading(false);
@@ -36,7 +36,7 @@ const EmployeePayroll = () => {
 
   useEffect(() => {
     fetchPayrollData();
-  }, [user.id, currentPage, fetchPayrollData]);
+  }, [user.id, currentPage]);
 
   const downloadSalarySlip = async (payrollId) => {
     try {
@@ -54,7 +54,7 @@ const EmployeePayroll = () => {
       
       toast.success('Salary slip downloaded successfully');
     } catch (error) {
-      // Error downloading salary slip
+      console.error('Error downloading salary slip:', error);
       toast.error('Failed to download salary slip');
     }
   };
@@ -70,7 +70,7 @@ const EmployeePayroll = () => {
   };
 
   const getMonthName = (month) => {
-    return new Date(2024, month - 1, 1).toLocaleDateString('en-US', { month: 'long' });
+    return moment().month(month - 1).format('MMMM');
   };
 
   const getStatusColor = (status) => {
