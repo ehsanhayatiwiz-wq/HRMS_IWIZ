@@ -518,7 +518,7 @@
   
   .action-button {
     width: 100%;
-  justify-content: center;
+    justify-content: center;
   }
   
   .button-container {
@@ -564,9 +564,9 @@
   .table th,
   .table td {
     padding: 8px 6px;
-  font-size: 12px;
-}
-
+    font-size: 12px;
+  }
+  
   .action-button {
     padding: 4px 8px;
     font-size: 11px;

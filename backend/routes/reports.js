@@ -166,9 +166,9 @@ router.get('/attendance', protect, authorize('admin', 'hr'), async (req, res) =>
     // Attendance table
     const tableHeaders = ['Employee', 'Employee ID', 'Department', 'Date', 'Check In', 'Check Out', 'Hours', 'Status'];
     const tableData = attendanceRecords.map(record => [
-        record.userId?.fullName || 'Unknown',
-        record.userId?.employeeId || 'N/A',
-        record.userId?.department || 'N/A',
+      record.userId?.fullName || 'Unknown',
+      record.userId?.employeeId || 'N/A',
+      record.userId?.department || 'N/A',
       reportGen.formatDate(record.date),
       reportGen.formatTime(record.checkIn?.time),
       reportGen.formatTime(record.checkOut?.time),
