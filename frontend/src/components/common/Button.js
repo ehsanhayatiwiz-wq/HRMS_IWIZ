@@ -2,74 +2,122 @@ import React from 'react';
 
 const stylesByVariant = {
   primary: {
-    backgroundColor: '#4A90E2',
-    color: '#FFFFFF',
-    border: '2px solid #4A90E2',
-    hoverBg: '#357ABD',
-    hoverBorder: '#357ABD',
-    hoverColor: '#FFFFFF'
+    backgroundColor: 'var(--primary-500)',
+    color: 'var(--text-inverse)',
+    border: '2px solid var(--primary-500)',
+    hoverBg: 'var(--primary-600)',
+    hoverBorder: 'var(--primary-600)',
+    hoverColor: 'var(--text-inverse)',
+    shadow: 'var(--shadow-glow)',
+    hoverShadow: 'var(--shadow-xl)'
   },
   secondary: {
     backgroundColor: 'transparent',
-    color: '#4A90E2',
-    border: '2px solid #4A90E2',
-    hoverBg: 'rgba(74, 144, 226, 0.08)',
-    hoverBorder: '#4A90E2',
-    hoverColor: '#4A90E2'
+    color: 'var(--primary-600)',
+    border: '2px solid var(--primary-500)',
+    hoverBg: 'var(--primary-50)',
+    hoverBorder: 'var(--primary-600)',
+    hoverColor: 'var(--primary-700)',
+    shadow: 'none',
+    hoverShadow: 'var(--shadow-sm)'
   },
   neutral: {
-    backgroundColor: '#F4F6F8',
-    color: '#2C3E50',
-    border: '2px solid #F4F6F8',
-    hoverBg: '#E6EAEE',
-    hoverBorder: '#E6EAEE',
-    hoverColor: '#2C3E50'
+    backgroundColor: 'var(--bg-tertiary)',
+    color: 'var(--text-primary)',
+    border: '2px solid var(--border-light)',
+    hoverBg: 'var(--bg-secondary)',
+    hoverBorder: 'var(--border-medium)',
+    hoverColor: 'var(--text-primary)',
+    shadow: 'var(--shadow-sm)',
+    hoverShadow: 'var(--shadow-md)'
   },
   accent: {
-    backgroundColor: '#F5A623',
-    color: '#FFFFFF',
-    border: '2px solid #F5A623',
-    hoverBg: '#D48806',
-    hoverBorder: '#D48806',
-    hoverColor: '#FFFFFF'
+    backgroundColor: 'var(--accent-500)',
+    color: 'var(--text-inverse)',
+    border: '2px solid var(--accent-500)',
+    hoverBg: 'var(--accent-600)',
+    hoverBorder: 'var(--accent-600)',
+    hoverColor: 'var(--text-inverse)',
+    shadow: 'var(--shadow-glow)',
+    hoverShadow: 'var(--shadow-xl)'
   },
   danger: {
-    backgroundColor: '#FF5A5F',
-    color: '#FFFFFF',
-    border: '2px solid #FF5A5F',
-    hoverBg: '#E0484D',
-    hoverBorder: '#E0484D',
-    hoverColor: '#FFFFFF'
+    backgroundColor: 'var(--error-500)',
+    color: 'var(--text-inverse)',
+    border: '2px solid var(--error-500)',
+    hoverBg: 'var(--error-600)',
+    hoverBorder: 'var(--error-600)',
+    hoverColor: 'var(--text-inverse)',
+    shadow: 'var(--shadow-glow)',
+    hoverShadow: 'var(--shadow-xl)'
+  },
+  success: {
+    backgroundColor: 'var(--success-500)',
+    color: 'var(--text-inverse)',
+    border: '2px solid var(--success-500)',
+    hoverBg: 'var(--success-600)',
+    hoverBorder: 'var(--success-600)',
+    hoverColor: 'var(--text-inverse)',
+    shadow: 'var(--shadow-glow)',
+    hoverShadow: 'var(--shadow-xl)'
   }
 };
 
-const Button = ({ variant = 'primary', icon, children, onClick, disabled, type = 'button', style, title, ariaLabel }) => {
+const Button = ({ variant = 'primary', icon, children, onClick, disabled, type = 'button', style, title, ariaLabel, size = 'medium', fullWidth = false }) => {
   const v = stylesByVariant[variant] || stylesByVariant.primary;
+  
+  const sizeStyles = {
+    small: {
+      padding: 'var(--space-2) var(--space-3)',
+      fontSize: 'var(--text-sm)',
+      borderRadius: 'var(--radius-lg)'
+    },
+    medium: {
+      padding: 'var(--space-3) var(--space-6)',
+      fontSize: 'var(--text-base)',
+      borderRadius: 'var(--radius-xl)'
+    },
+    large: {
+      padding: 'var(--space-4) var(--space-8)',
+      fontSize: 'var(--text-lg)',
+      borderRadius: 'var(--radius-xl)'
+    }
+  };
+
   const baseStyle = {
-    fontFamily: 'Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, "Apple Color Emoji", "Segoe UI Emoji"',
-    fontSize: 14,
-    fontWeight: 500,
-    padding: '10px 20px',
-    borderRadius: 8,
+    fontFamily: 'var(--font-sans)',
+    fontSize: sizeStyles[size].fontSize,
+    fontWeight: 'var(--font-semibold)',
+    padding: sizeStyles[size].padding,
+    borderRadius: sizeStyles[size].borderRadius,
     display: 'inline-flex',
     alignItems: 'center',
-    gap: 8,
-    transition: 'all 0.2s ease',
+    justifyContent: 'center',
+    gap: 'var(--space-2)',
+    transition: 'all var(--transition-normal)',
     cursor: disabled ? 'not-allowed' : 'pointer',
-    opacity: disabled ? 0.7 : 1,
-    backgroundColor: disabled ? '#E6EAEE' : v.backgroundColor,
-    color: disabled ? '#8FA0B3' : v.color,
+    opacity: disabled ? 0.6 : 1,
+    backgroundColor: disabled ? 'var(--neutral-300)' : v.backgroundColor,
+    color: disabled ? 'var(--neutral-500)' : v.color,
     border: v.border,
     outline: 'none',
+    boxShadow: v.shadow,
+    width: fullWidth ? '100%' : 'auto',
+    minHeight: size === 'small' ? '36px' : size === 'medium' ? '44px' : '52px',
+    position: 'relative',
+    overflow: 'hidden',
     ...style
   };
 
   const [hover, setHover] = React.useState(false);
+  
   const computedStyle = hover && !disabled ? {
     ...baseStyle,
     backgroundColor: v.hoverBg,
     color: v.hoverColor,
-    border: `2px solid ${v.hoverBorder}`
+    border: `2px solid ${v.hoverBorder}`,
+    transform: 'translateY(-2px)',
+    boxShadow: v.hoverShadow
   } : baseStyle;
 
   return (
@@ -85,8 +133,39 @@ const Button = ({ variant = 'primary', icon, children, onClick, disabled, type =
       onFocus={() => setHover(true)}
       onBlur={() => setHover(false)}
     >
-      {icon ? <span style={{ display: 'inline-flex' }}>{icon}</span> : null}
-      <span>{children}</span>
+      {/* Shimmer effect */}
+      {hover && !disabled && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: '-100%',
+            width: '100%',
+            height: '100%',
+            background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
+            transition: 'left 0.5s',
+            animation: 'shimmer 0.5s forwards'
+          }}
+        />
+      )}
+      
+      {icon && (
+        <span style={{ 
+          display: 'inline-flex', 
+          alignItems: 'center',
+          fontSize: size === 'small' ? 'var(--text-sm)' : size === 'medium' ? 'var(--text-base)' : 'var(--text-lg)'
+        }}>
+          {icon}
+        </span>
+      )}
+      
+      <span style={{ 
+        display: 'inline-flex',
+        alignItems: 'center',
+        whiteSpace: 'nowrap'
+      }}>
+        {children}
+      </span>
     </button>
   );
 };

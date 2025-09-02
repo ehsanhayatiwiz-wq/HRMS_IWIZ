@@ -31,7 +31,7 @@ const Header = ({ onSidebarToggle, user, onShowNotifications }) => {
   return (
     <header className="header">
       <div className="header-left">
-        <Button variant="secondary" onClick={onSidebarToggle}>Menu</Button>
+        <Button variant="secondary" onClick={onSidebarToggle} size="small">Menu</Button>
       </div>
 
       <div className="header-right">
@@ -41,7 +41,7 @@ const Header = ({ onSidebarToggle, user, onShowNotifications }) => {
         </div>
         {/* Notifications */}
         <div className="header-item">
-          <Button variant="secondary" onClick={handleNotificationClick} icon={<FiBell />}>
+          <Button variant="secondary" onClick={handleNotificationClick} icon={<FiBell />} size="small">
             {unreadCount > 0 && (
               <span className="notification-badge" aria-label={`You have ${unreadCount} unread notifications`}>
                 {unreadCount}
@@ -53,7 +53,7 @@ const Header = ({ onSidebarToggle, user, onShowNotifications }) => {
         {/* User Profile */}
         <div className="header-item">
           <div className="user-profile-dropdown">
-            <Button variant="secondary" onClick={() => setShowProfileMenu(!showProfileMenu)}>
+            <Button variant="secondary" onClick={() => setShowProfileMenu(!showProfileMenu)} size="small">
               <div className="user-avatar">
                 {user?.profilePicture ? (
                   <img src={user.profilePicture} alt={user.fullName} />

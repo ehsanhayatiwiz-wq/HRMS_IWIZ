@@ -87,7 +87,7 @@ const Sidebar = ({ collapsed, onToggle, user }) => {
             {!collapsed && <span className="brand-text">IWIZ</span>}
           </div>
         </div>
-        <Button variant="secondary" onClick={onToggle} icon={collapsed ? <FiMenu /> : <FiX />}></Button>
+        <Button variant="secondary" onClick={onToggle} icon={collapsed ? <FiMenu /> : <FiX />} size="small"></Button>
       </div>
 
       {/* Search Bar */}
@@ -131,7 +131,7 @@ const Sidebar = ({ collapsed, onToggle, user }) => {
 
       {/* Logout Section */}
       <div className="sidebar-footer">
-        <Button variant="neutral" onClick={handleLogout} icon={<FiLogOut />}>
+        <Button variant="danger" onClick={handleLogout} icon={<FiLogOut />} size="medium" fullWidth>
           {!collapsed && 'Logout'}
         </Button>
       </div>

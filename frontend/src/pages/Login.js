@@ -144,7 +144,7 @@ const Login = () => {
           <p className="login-subtitle">Sign in to your account</p>
           
           {/* Test Connection Button */}
-          <Button type="button" onClick={handleTestConnection} variant="secondary">Test Connection</Button>
+          <Button type="button" onClick={handleTestConnection} variant="accent" size="small">Test Connection</Button>
         </div>
 
         {generalError && (
@@ -170,12 +170,14 @@ const Login = () => {
                 onClick={() => setShowRoleDropdown(!showRoleDropdown)}
                 onBlur={() => setTimeout(() => setShowRoleDropdown(false), 200)}
               >
-                <span className="role-icon">
-                  {roles.find(r => r.value === formData.role)?.icon}
-                </span>
-                <span className="role-text">
-                  {roles.find(r => r.value === formData.role)?.label}
-                </span>
+                <div className="role-info">
+                  <span className="role-icon">
+                    {roles.find(r => r.value === formData.role)?.icon}
+                  </span>
+                  <span className="role-text">
+                    {roles.find(r => r.value === formData.role)?.label}
+                  </span>
+                </div>
                 <FiChevronDown className={`dropdown-icon ${showRoleDropdown ? 'rotated' : ''}`} />
               </button>
               
@@ -247,7 +249,7 @@ const Login = () => {
           </div>
 
           {/* Submit Button */}
-          <Button type="submit" variant="primary" disabled={loading || isThrottled}>
+          <Button type="submit" variant="primary" disabled={loading || isThrottled} size="large" fullWidth>
             {loading ? 'Signing in...' : isThrottled ? 'Please wait...' : 'Sign In'}
           </Button>
         </form>

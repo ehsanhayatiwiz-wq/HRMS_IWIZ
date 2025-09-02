@@ -185,7 +185,7 @@ const EmployeeDashboard = () => {
           <div className="notifications-dropdown">
             <div className="notifications-header">
               <h4>Notifications</h4>
-              <Button variant="secondary" onClick={markAllAsRead}>Mark all read</Button>
+              <Button variant="secondary" onClick={markAllAsRead} size="small">Mark all read</Button>
             </div>
             {notifications.length > 0 ? (
               <div className="notifications-list">
@@ -269,22 +269,22 @@ const EmployeeDashboard = () => {
               </div>
             )}
             
-            <div className="attendance-actions" style={{ display: 'flex', gap: 12 }}>
+            <div className="attendance-actions">
               {todayStatus.canCheckIn ? (
-                <Button variant="primary" onClick={handleCheckIn} disabled={checkInLoading} icon={<FiClock />}>
+                <Button variant="primary" onClick={handleCheckIn} disabled={checkInLoading} icon={<FiClock />} size="medium">
                   {checkInLoading ? 'Checking in...' : 'Check In'}
                 </Button>
               ) : todayStatus.canCheckOut ? (
-                <Button variant="primary" onClick={handleCheckOut} disabled={checkOutLoading} icon={<FiClock />}>
+                <Button variant="primary" onClick={handleCheckOut} disabled={checkOutLoading} icon={<FiClock />} size="medium">
                   {checkOutLoading ? 'Checking out...' : 'Check Out'}
                 </Button>
               ) : todayStatus.canReCheckIn ? (
-                <Button variant="secondary" onClick={handleReCheckIn} disabled={reCheckInLoading} icon={<FiClock />}>
+                <Button variant="secondary" onClick={handleReCheckIn} disabled={reCheckInLoading} icon={<FiClock />} size="medium">
                   {reCheckInLoading ? 'Re-checking in...' : 'Re-Check In'}
                 </Button>
               ) : todayStatus.canReCheckOut ? (
-                <Button variant="secondary" onClick={handleReCheckOut} disabled={reCheckOutLoading} icon={<FiClock />}>
-                  {reCheckOutLoading ? 'Re-checking out...' : 'Re-Check Out'}
+                <Button variant="secondary" onClick={handleReCheckOut} disabled={reCheckOutLoading} icon={<FiClock />} size="medium">
+                  {reCheckInLoading ? 'Re-checking out...' : 'Re-Check Out'}
                 </Button>
               ) : (
                 <div className="attendance-complete">
