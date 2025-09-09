@@ -2,6 +2,9 @@
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
+  background: transparent;
+  position: relative;
+  z-index: 1;
 }
 
 .page-header {
@@ -13,6 +16,10 @@
   color: var(--text-primary);
   margin-bottom: 10px;
   font-size: 2rem;
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--secondary-500) 50%, var(--accent-500) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .page-header p {
@@ -49,7 +56,7 @@
 }
 
 .tab.active {
-  background-color: var(--primary-color);
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--secondary-500) 50%, var(--accent-500) 100%);
   color: #fff;
 }
 
@@ -67,14 +74,16 @@
 }
 
 .summary-card {
-  background: var(--bg-primary);
+  background: var(--bg-elevated);
   padding: 24px;
   border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-elegant);
   display: flex;
   align-items: center;
   gap: 16px;
   transition: transform 0.3s ease;
+  border: 1px solid var(--border-light);
+  backdrop-filter: blur(20px);
 }
 
 .summary-card:hover {
@@ -90,7 +99,8 @@
   justify-content: center;
   font-size: 24px;
   color: #fff;
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--secondary-500) 50%, var(--accent-500) 100%);
+  box-shadow: var(--shadow-glow);
 }
 
 .card-content h3 {
@@ -108,11 +118,13 @@
 
 /* Department Breakdown */
 .department-breakdown {
-  background: var(--bg-primary);
+  background: var(--bg-elevated);
   padding: 24px;
   border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-elegant);
   margin-bottom: 30px;
+  border: 1px solid var(--border-light);
+  backdrop-filter: blur(20px);
 }
 
 .department-breakdown h3 {
@@ -131,7 +143,8 @@
   background: var(--bg-secondary);
   padding: 16px;
   border-radius: 8px;
-  border-left: 4px solid #3498db;
+  border-left: 4px solid var(--primary-500);
+  border: 1px solid var(--border-light);
 }
 
 .department-card h4 {
@@ -148,15 +161,17 @@
 
 /* Payroll List */
 .payroll-list {
-  background: var(--bg-primary);
+  background: var(--bg-elevated);
   border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-elegant);
   overflow: hidden;
+  border: 1px solid var(--border-light);
+  backdrop-filter: blur(20px);
 }
 
 .list-header {
   padding: 20px 24px;
-  border-bottom: 1px solid #ecf0f1;
+  border-bottom: 1px solid var(--border-light);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -178,8 +193,9 @@
   padding: 8px 12px;
   border: 1px solid var(--border-light);
   border-radius: 6px;
-  background: var(--bg-primary);
+  background: var(--bg-secondary);
   font-size: 0.9rem;
+  color: var(--text-primary);
 }
 
 .payroll-table {
@@ -192,17 +208,17 @@
 }
 
 .payroll-table th {
-  background: var(--bg-secondary);
+  background: var(--bg-tertiary);
   padding: 16px 12px;
   text-align: left;
   font-weight: 600;
   color: var(--text-primary);
-  border-bottom: 1px solid #ecf0f1;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .payroll-table td {
   padding: 16px 12px;
-  border-bottom: 1px solid #ecf0f1;
+  border-bottom: 1px solid var(--border-light);
   vertical-align: middle;
 }
 
@@ -224,7 +240,7 @@
 
 .net-pay {
   font-weight: 600;
-  color: var(--success-color);
+  color: var(--success-500);
 }
 
 .status-badge {
@@ -241,8 +257,8 @@
 }
 
 .status-badge.generated {
-  background: rgba(108, 99, 255, 0.15);
-  color: var(--primary-dark);
+  background: rgba(6, 182, 212, 0.15);
+  color: var(--primary-700);
 }
 
 .status-badge.paid {
@@ -273,12 +289,12 @@
 }
 
 .btn-primary {
-  background: var(--primary-color);
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--secondary-500) 50%, var(--accent-500) 100%);
   color: #fff;
 }
 
 .btn-primary:hover {
-  background: var(--primary-dark);
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--secondary-600) 50%, var(--accent-600) 100%);
 }
 
 .btn-secondary {
@@ -292,21 +308,21 @@
 }
 
 .btn-info {
-  background: var(--info-color);
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
   color: #fff;
 }
 
 .btn-info:hover {
-  background: #138496;
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
 }
 
 .btn-success {
-  background: var(--success-color);
+  background: linear-gradient(135deg, var(--success-500) 0%, var(--success-600) 100%);
   color: #fff;
 }
 
 .btn-success:hover {
-  background: #218838;
+  background: linear-gradient(135deg, var(--success-600) 0%, var(--success-700) 100%);
 }
 
 .btn:disabled {
@@ -321,7 +337,7 @@
   align-items: center;
   gap: 16px;
   padding: 20px;
-  border-top: 1px solid #ecf0f1;
+  border-top: 1px solid var(--border-light);
 }
 
 .page-info {
@@ -336,10 +352,12 @@
 }
 
 .generate-section {
-  background: var(--bg-primary);
+  background: var(--bg-elevated);
   padding: 30px;
   border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-elegant);
+  border: 1px solid var(--border-light);
+  backdrop-filter: blur(20px);
 }
 
 .generate-section h3 {
@@ -397,10 +415,12 @@
 
 /* Recent Payrolls */
 .recent-payrolls {
-  background: var(--bg-primary);
+  background: var(--bg-elevated);
   padding: 24px;
   border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-elegant);
+  border: 1px solid var(--border-light);
+  backdrop-filter: blur(20px);
 }
 
 .recent-payrolls h3 {

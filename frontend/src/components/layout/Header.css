@@ -13,6 +13,8 @@
   z-index: var(--z-sticky);
   box-shadow: var(--shadow-elegant);
   backdrop-filter: blur(20px);
+  border-left: 4px solid transparent;
+  border-image: linear-gradient(135deg, var(--primary-500) 0%, var(--secondary-500) 50%, var(--accent-500) 100%) 1;
 }
 
 .header-left,
@@ -122,13 +124,13 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--primary-500) 0%, var(--secondary-500) 100%);
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--secondary-500) 50%, var(--accent-500) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   border: 2px solid var(--border-light);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-glow);
 }
 
 .user-avatar img {

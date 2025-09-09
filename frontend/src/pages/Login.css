@@ -5,7 +5,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--primary-900) 0%, var(--primary-800) 50%, var(--secondary-900) 100%);
+  background: linear-gradient(135deg, var(--neutral-950) 0%, var(--neutral-900) 50%, var(--neutral-800) 100%);
   padding: var(--space-5);
   position: relative;
   overflow: hidden;
@@ -78,7 +78,7 @@
   font-weight: var(--font-extrabold);
   color: var(--text-primary);
   margin: 0 0 var(--space-2) 0;
-  background: linear-gradient(135deg, var(--primary-600) 0%, var(--secondary-600) 100%);
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--secondary-500) 50%, var(--accent-500) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -342,7 +342,7 @@
 
 /* Submit Button */
 .submit-button {
-  background: linear-gradient(135deg, var(--primary-500) 0%, var(--secondary-500) 100%);
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--secondary-500) 50%, var(--accent-500) 100%);
   color: white;
   border: none;
   border-radius: var(--radius-xl);

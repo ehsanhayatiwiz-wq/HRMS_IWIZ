@@ -2,11 +2,11 @@ import React from 'react';
 
 const stylesByVariant = {
   primary: {
-    backgroundColor: 'var(--primary-500)',
+    background: 'linear-gradient(135deg, var(--primary-500) 0%, var(--secondary-500) 50%, var(--accent-500) 100%)',
     color: 'var(--text-inverse)',
-    border: '2px solid var(--primary-500)',
-    hoverBg: 'var(--primary-600)',
-    hoverBorder: 'var(--primary-600)',
+    border: '2px solid transparent',
+    hoverBg: 'linear-gradient(135deg, var(--primary-600) 0%, var(--secondary-600) 50%, var(--accent-600) 100%)',
+    hoverBorder: '2px solid transparent',
     hoverColor: 'var(--text-inverse)',
     shadow: 'var(--shadow-glow)',
     hoverShadow: 'var(--shadow-xl)'
@@ -97,7 +97,7 @@ const Button = ({ variant = 'primary', icon, children, onClick, disabled, type =
     transition: 'all var(--transition-normal)',
     cursor: disabled ? 'not-allowed' : 'pointer',
     opacity: disabled ? 0.6 : 1,
-    backgroundColor: disabled ? 'var(--neutral-300)' : v.backgroundColor,
+    background: disabled ? 'var(--neutral-300)' : (v.background || v.backgroundColor),
     color: disabled ? 'var(--neutral-500)' : v.color,
     border: v.border,
     outline: 'none',
@@ -113,9 +113,9 @@ const Button = ({ variant = 'primary', icon, children, onClick, disabled, type =
   
   const computedStyle = hover && !disabled ? {
     ...baseStyle,
-    backgroundColor: v.hoverBg,
+    background: v.hoverBg || v.hoverBackgroundColor,
     color: v.hoverColor,
-    border: `2px solid ${v.hoverBorder}`,
+    border: v.hoverBorder,
     transform: 'translateY(-2px)',
     boxShadow: v.hoverShadow
   } : baseStyle;
