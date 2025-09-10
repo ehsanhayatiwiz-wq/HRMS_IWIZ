@@ -208,7 +208,7 @@ const Login = () => {
                 className="input-icon" 
                 style={{ 
                   display: 'block', 
-                  color: '#6b7280', 
+                  color: '#9ca3af', 
                   fontSize: '1.125rem',
                   position: 'absolute',
                   left: '1rem',
@@ -240,7 +240,7 @@ const Login = () => {
                 className="input-icon" 
                 style={{ 
                   display: 'block', 
-                  color: '#6b7280', 
+                  color: '#9ca3af', 
                   fontSize: '1.125rem',
                   position: 'absolute',
                   left: '1rem',
