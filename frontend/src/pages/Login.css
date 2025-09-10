@@ -272,22 +272,7 @@
   width: 100%;
 }
 
-.input-icon {
-  position: absolute;
-  left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #9ca3af;
-  font-size: 1.125rem;
-  z-index: 10;
-  transition: color 0.15s ease;
-  pointer-events: none;
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  width: 20px;
-  height: 20px;
-}
+/* Icons removed - no longer needed */
 
 .form-input {
   width: 100%;
@@ -315,18 +300,14 @@
   transform: translateY(-1px);
 }
 
-.form-input:focus + .input-icon {
-  color: #8b5cf6;
-}
+/* Icon focus styles removed */
 
 .form-input.error {
   border-color: var(--error-500);
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
 
-.form-input.error + .input-icon {
-  color: #ef4444;
-}
+/* Icon error styles removed */
 
 /* Password Toggle */
 .password-toggle {
@@ -475,10 +456,7 @@
     font-size: var(--text-base);
   }
   
-  .input-icon {
-    left: 0.75rem;
-    font-size: 1rem;
-  }
+  /* Icon styles removed */
   
   .password-toggle {
     right: var(--space-3);
@@ -524,10 +502,7 @@
     font-size: var(--text-sm);
   }
   
-  .input-icon {
-    left: 0.5rem;
-    font-size: 0.875rem;
-  }
+  /* Icon styles removed */
   
   .password-toggle {
     right: var(--space-2);
@@ -582,10 +557,7 @@
     font-size: var(--text-xs);
   }
   
-  .input-icon {
-    left: 0.5rem;
-    font-size: 0.75rem;
-  }
+  /* Icon styles removed */
   
   .password-toggle {
     right: var(--space-2);
@@ -643,10 +615,7 @@
     padding: var(--space-1) var(--space-2);
   }
   
-  .input-icon {
-    left: 0.25rem;
-    font-size: 0.75rem;
-  }
+  /* Icon styles removed */
   
   .password-toggle {
     right: var(--space-1);
