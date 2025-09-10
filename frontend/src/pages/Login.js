@@ -204,19 +204,6 @@ const Login = () => {
           <div className="form-group">
             <label className="form-label">Email Address *</label>
             <div className="input-wrapper">
-              <FiMail 
-                className="input-icon" 
-                style={{ 
-                  display: 'block', 
-                  color: '#9ca3af', 
-                  fontSize: '1.125rem',
-                  position: 'absolute',
-                  left: '1rem',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  zIndex: 10
-                }} 
-              />
               <input
                 type="email"
                 name="email"
@@ -236,19 +223,6 @@ const Login = () => {
           <div className="form-group">
             <label className="form-label">Password *</label>
             <div className="input-wrapper">
-              <FiLock 
-                className="input-icon" 
-                style={{ 
-                  display: 'block', 
-                  color: '#9ca3af', 
-                  fontSize: '1.125rem',
-                  position: 'absolute',
-                  left: '1rem',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  zIndex: 10
-                }} 
-              />
               <input
                 type={showPassword ? 'text' : 'password'}
                 name="password"

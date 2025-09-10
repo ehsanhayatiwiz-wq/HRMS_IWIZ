@@ -291,7 +291,7 @@
 
 .form-input {
   width: 100%;
-  padding: var(--space-4) var(--space-4) var(--space-4) 3rem;
+  padding: var(--space-4);
   border: 1px solid #8b5cf6;
   border-radius: var(--radius-xl);
   font-size: var(--text-base);
@@ -471,7 +471,7 @@
   }
   
   .form-input {
-    padding: var(--space-3) var(--space-3) var(--space-3) 2.5rem;
+    padding: var(--space-3);
     font-size: var(--text-base);
   }
   
@@ -520,7 +520,7 @@
   }
   
   .form-input {
-    padding: var(--space-2) var(--space-3) var(--space-2) 2.25rem;
+    padding: var(--space-2) var(--space-3);
     font-size: var(--text-sm);
   }
   
@@ -578,7 +578,7 @@
   }
   
   .form-input {
-    padding: var(--space-2) var(--space-2) var(--space-2) 2rem;
+    padding: var(--space-2);
     font-size: var(--text-xs);
   }
   
@@ -640,7 +640,7 @@
   }
   
   .form-input {
-    padding: var(--space-1) var(--space-2) var(--space-1) 1.75rem;
+    padding: var(--space-1) var(--space-2);
   }
   
   .input-icon {
@@ -682,7 +682,7 @@
   }
   
   .form-input {
-    padding: var(--space-2) var(--space-3) var(--space-2) 2.25rem;
+    padding: var(--space-2) var(--space-3);
   }
   
   .submit-button {
