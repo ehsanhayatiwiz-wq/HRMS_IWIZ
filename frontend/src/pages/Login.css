@@ -274,16 +274,19 @@
 
 .input-icon {
   position: absolute;
-  left: var(--space-4, 1rem);
+  left: 1rem;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--text-secondary, #6b7280);
-  font-size: var(--text-lg, 1.125rem);
-  z-index: 2;
-  transition: color var(--transition-fast);
+  color: #6b7280;
+  font-size: 1.125rem;
+  z-index: 10;
+  transition: color 0.15s ease;
   pointer-events: none;
   display: block !important;
   visibility: visible !important;
+  opacity: 1 !important;
+  width: 20px;
+  height: 20px;
 }
 
 .form-input {
@@ -297,6 +300,8 @@
   color: var(--text-primary);
   font-family: var(--font-sans);
   font-weight: var(--font-medium);
+  position: relative;
+  z-index: 1;
 }
 
 .form-input:focus {
@@ -467,8 +472,8 @@
   }
   
   .input-icon {
-    left: var(--space-3, 0.75rem);
-    font-size: var(--text-base, 1rem);
+    left: 0.75rem;
+    font-size: 1rem;
   }
   
   .password-toggle {
@@ -516,8 +521,8 @@
   }
   
   .input-icon {
-    left: var(--space-2, 0.5rem);
-    font-size: var(--text-sm, 0.875rem);
+    left: 0.5rem;
+    font-size: 0.875rem;
   }
   
   .password-toggle {
@@ -574,8 +579,8 @@
   }
   
   .input-icon {
-    left: var(--space-2, 0.5rem);
-    font-size: var(--text-xs, 0.75rem);
+    left: 0.5rem;
+    font-size: 0.75rem;
   }
   
   .password-toggle {
@@ -635,8 +640,8 @@
   }
   
   .input-icon {
-    left: var(--space-1, 0.25rem);
-    font-size: var(--text-xs, 0.75rem);
+    left: 0.25rem;
+    font-size: 0.75rem;
   }
   
   .password-toggle {
