@@ -152,7 +152,7 @@
 .form-group label {
   display: block;
   font-weight: var(--font-semibold);
-  color: var(--text-primary);
+  color: #ffffff;
   margin-bottom: var(--space-2);
   font-size: var(--text-sm);
   text-transform: uppercase;
@@ -170,20 +170,20 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-4);
-  border: 2px solid var(--border-light);
+  border: 1px solid #8b5cf6;
   border-radius: var(--radius-xl);
-  background: var(--bg-secondary);
+  background: #1f2937;
   cursor: pointer;
   transition: all var(--transition-normal);
   font-family: var(--font-sans);
   font-size: var(--text-base);
-  color: var(--text-primary);
+  color: #ffffff;
 }
 
 .role-selector-btn:hover,
 .role-selector-btn.active {
-  border-color: var(--primary-500);
-  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
   transform: translateY(-1px);
 }
 
@@ -204,11 +204,11 @@
 
 .role-text {
   font-weight: var(--font-medium);
-  color: var(--text-primary);
+  color: #ffffff;
 }
 
 .dropdown-icon {
-  color: var(--text-secondary);
+  color: #9ca3af;
   transition: transform var(--transition-normal);
   font-size: var(--text-lg);
 }
@@ -222,14 +222,14 @@
   top: 100%;
   left: 0;
   right: 0;
-  background: var(--bg-elevated);
-  border: 2px solid var(--border-light);
+  background: #1f2937;
+  border: 1px solid #8b5cf6;
   border-top: none;
   border-radius: 0 0 var(--radius-xl) var(--radius-xl);
   box-shadow: var(--shadow-xl);
   z-index: 10;
   overflow: hidden;
-  margin-top: -2px;
+  margin-top: -1px;
   backdrop-filter: blur(20px);
 }
 
@@ -246,22 +246,22 @@
   text-align: left;
   font-family: var(--font-sans);
   font-size: var(--text-base);
-  color: var(--text-primary);
+  color: #ffffff;
 }
 
 .role-option:hover {
-  background: var(--bg-tertiary);
+  background: #374151;
   transform: translateX(4px);
 }
 
 .role-option.selected {
-  background: var(--primary-50);
-  color: var(--primary-700);
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
   font-weight: var(--font-semibold);
 }
 
 .role-option:not(:last-child) {
-  border-bottom: 1px solid var(--border-light);
+  border-bottom: 1px solid #374151;
 }
 
 /* Input Fields */
@@ -296,12 +296,16 @@
   border-radius: var(--radius-xl);
   font-size: var(--text-base);
   transition: all var(--transition-normal);
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
+  background: #1f2937;
+  color: #ffffff;
   font-family: var(--font-sans);
   font-weight: var(--font-medium);
   position: relative;
   z-index: 1;
+}
+
+.form-input::placeholder {
+  color: #9ca3af;
 }
 
 .form-input:focus {
