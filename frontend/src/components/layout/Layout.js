@@ -7,10 +7,15 @@ import './Layout.css';
 
 const Layout = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const { user } = useAuth();
 
   const toggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed);
+  };
+
+  const toggleMobileSidebar = () => {
+    setIsMobileOpen(!isMobileOpen);
   };
 
   if (!user) {
@@ -23,10 +28,20 @@ const Layout = () => {
         collapsed={sidebarCollapsed} 
         onToggle={toggleSidebar}
         user={user}
+        isMobileOpen={isMobileOpen}
+        onMobileToggle={toggleMobileSidebar}
       />
+      {isMobileOpen && (
+        <div 
+          className="mobile-overlay" 
+          onClick={toggleMobileSidebar}
+          aria-label="Close sidebar"
+        />
+      )}
       <div className="main-wrapper">
         <Header 
           onSidebarToggle={toggleSidebar}
+          onMobileSidebarToggle={toggleMobileSidebar}
           user={user}
         />
         <main className={`main-content ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>

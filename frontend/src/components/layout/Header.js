@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { FiBell, FiUser, FiLogOut } from 'react-icons/fi';
+import { FiBell, FiUser, FiLogOut, FiMenu } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useNavigate } from 'react-router-dom';
 import './Header.css';
 import Button from '../common/Button';
 
-const Header = ({ onSidebarToggle, user, onShowNotifications }) => {
+const Header = ({ onSidebarToggle, onMobileSidebarToggle, user, onShowNotifications }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -31,7 +31,22 @@ const Header = ({ onSidebarToggle, user, onShowNotifications }) => {
   return (
     <header className="header">
       <div className="header-left">
-        <Button variant="secondary" onClick={onSidebarToggle} size="small">Menu</Button>
+        <Button 
+          variant="secondary" 
+          onClick={onSidebarToggle} 
+          size="small"
+          className="desktop-menu-btn"
+        >
+          Menu
+        </Button>
+        <Button 
+          variant="secondary" 
+          onClick={onMobileSidebarToggle} 
+          size="small"
+          className="mobile-menu-btn"
+          icon={<FiMenu />}
+          aria-label="Open mobile menu"
+        />
       </div>
 
       <div className="header-right">

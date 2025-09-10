@@ -373,4 +373,97 @@
 .menu-item:focus {
   outline: 2px solid var(--primary-500);
   outline-offset: 2px;
+}
+
+/* Mobile Menu Button Responsive Design */
+.desktop-menu-btn {
+  display: block;
+}
+
+.mobile-menu-btn {
+  display: none;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .desktop-menu-btn {
+    display: none;
+  }
+  
+  .mobile-menu-btn {
+    display: block;
+  }
+  
+  .header {
+    padding: 0 var(--space-4);
+    height: 70px;
+  }
+  
+  .header-left,
+  .header-right {
+    gap: var(--space-3);
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 0 var(--space-3);
+    height: 60px;
+  }
+  
+  .header-left,
+  .header-right {
+    gap: var(--space-2);
+  }
+  
+  .header-item img {
+    height: 24px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 0 var(--space-2);
+    height: 56px;
+  }
+  
+  .header-left,
+  .header-right {
+    gap: var(--space-1);
+  }
+  
+  .header-item img {
+    height: 20px !important;
+  }
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .header-item {
+    padding: var(--space-2);
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .profile-menu-item {
+    padding: var(--space-3) var(--space-4);
+    min-height: 44px;
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .header {
+    backdrop-filter: none;
+  }
+  
+  .header-item,
+  .profile-menu-item {
+    transition: none;
+  }
+  
+  .header-item:hover,
+  .profile-menu-item:hover {
+    transform: none;
+  }
 } 

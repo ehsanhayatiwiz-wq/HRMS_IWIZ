@@ -50,7 +50,21 @@
   }
 }
 
-/* Responsive Design */
+/* Enhanced Responsive Design - Mobile First Approach */
+
+/* Large Tablets and Small Desktops */
+@media (max-width: 1200px) {
+  .main-content {
+    margin-left: 260px;
+    padding: var(--space-7);
+  }
+  
+  .main-content.sidebar-collapsed {
+    margin-left: 70px;
+  }
+}
+
+/* Tablets */
 @media (max-width: 1024px) {
   .main-content {
     margin-left: 0;
@@ -62,15 +76,87 @@
   }
 }
 
+/* Large Mobile Devices */
 @media (max-width: 768px) {
+  .main-content {
+    padding: var(--space-4);
+    min-height: calc(100vh - 60px);
+  }
+}
+
+/* Medium Mobile Devices */
+@media (max-width: 640px) {
+  .main-content {
+    padding: var(--space-3);
+  }
+}
+
+/* Small Mobile Devices */
+@media (max-width: 480px) {
+  .main-content {
+    padding: var(--space-2);
+  }
+}
+
+/* Extra Small Devices */
+@media (max-width: 360px) {
+  .main-content {
+    padding: var(--space-1);
+  }
+}
+
+/* Landscape Orientation on Mobile */
+@media (max-height: 600px) and (orientation: landscape) {
+  .main-content {
+    padding: var(--space-2);
+    min-height: calc(100vh - 50px);
+  }
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) and (pointer: coarse) {
   .main-content {
     padding: var(--space-4);
   }
 }
 
-@media (max-width: 640px) {
+/* High DPI Displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
   .main-content {
-    padding: var(--space-3);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Dark Mode Responsive Adjustments */
+@media (prefers-color-scheme: dark) {
+  .app-container {
+    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  }
+}
+
+/* Mobile Overlay */
+.mobile-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 2500;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .main-content {
+    transition: none;
+  }
+  
+  .mobile-overlay {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 }
 

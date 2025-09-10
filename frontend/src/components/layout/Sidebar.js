@@ -17,7 +17,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import './Sidebar.css';
 import Button from '../common/Button';
 
-const Sidebar = ({ collapsed, onToggle, user }) => {
+const Sidebar = ({ collapsed, onToggle, user, isMobileOpen, onMobileToggle }) => {
   const { logout } = useAuth();
   const isAdmin = user?.role === 'admin' || user?.role === 'hr';
   const basePath = isAdmin ? '/admin' : '';
@@ -78,7 +78,7 @@ const Sidebar = ({ collapsed, onToggle, user }) => {
   );
 
   return (
-    <div className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
+    <div className={`sidebar ${collapsed ? 'collapsed' : ''} ${isMobileOpen ? 'mobile-open' : ''}`}>
       {/* Sidebar Header */}
       <div className="sidebar-header">
         <div className="brand">
@@ -87,7 +87,13 @@ const Sidebar = ({ collapsed, onToggle, user }) => {
             {!collapsed && <span className="brand-text">IWIZ</span>}
           </div>
         </div>
-        <Button variant="secondary" onClick={onToggle} icon={collapsed ? <FiMenu /> : <FiX />} size="small"></Button>
+        <Button 
+          variant="secondary" 
+          onClick={onToggle} 
+          icon={collapsed ? <FiMenu /> : <FiX />} 
+          size="small"
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        />
       </div>
 
       {/* Search Bar */}

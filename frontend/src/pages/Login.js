@@ -204,7 +204,7 @@ const Login = () => {
           <div className="form-group">
             <label className="form-label">Email Address *</label>
             <div className="input-wrapper">
-              <FiMail className="input-icon" />
+              <FiMail className="input-icon" style={{ display: 'block' }} />
               <input
                 type="email"
                 name="email"
@@ -224,7 +224,7 @@ const Login = () => {
           <div className="form-group">
             <label className="form-label">Password *</label>
             <div className="input-wrapper">
-              <FiLock className="input-icon" />
+              <FiLock className="input-icon" style={{ display: 'block' }} />
               <input
                 type={showPassword ? 'text' : 'password'}
                 name="password"
