@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
-import { FiBell, FiUser, FiLogOut } from 'react-icons/fi';
+import { FiUser, FiLogOut } from 'react-icons/fi';
 import { useAuth } from '../contexts/AuthContext';
-import { useNotifications } from '../contexts/NotificationContext';
+// Notification context removed
 import { useNavigate } from 'react-router-dom';
 import './Header.css';
 
-const Header = ({ onSidebarToggle, user, onShowNotifications }) => {
+const Header = ({ onSidebarToggle, user }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const { logout } = useAuth();
   const navigate = useNavigate();
-  const { unreadCount } = useNotifications();
+  // Notification count removed
 
   const handleLogout = () => {
     logout();
@@ -21,11 +21,7 @@ const Header = ({ onSidebarToggle, user, onShowNotifications }) => {
     setShowProfileMenu(false);
   };
 
-  const handleNotificationClick = () => {
-    if (onShowNotifications) {
-      onShowNotifications();
-    }
-  };
+  // Notification click handler removed
 
   return (
     <header className="header">
@@ -38,17 +34,7 @@ const Header = ({ onSidebarToggle, user, onShowNotifications }) => {
       </div>
 
       <div className="header-right">
-        {/* Notifications */}
-        <div className="header-item">
-          <button className="notification-btn" onClick={handleNotificationClick}>
-            <FiBell className="notification-icon" />
-            {unreadCount > 0 && (
-              <span className="notification-badge" aria-label={`You have ${unreadCount} unread notifications`}>
-                {unreadCount}
-              </span>
-            )}
-          </button>
-        </div>
+        {/* Notifications removed */}
 
         {/* User Profile */}
         <div className="header-item">
