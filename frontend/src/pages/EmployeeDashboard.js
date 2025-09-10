@@ -1,22 +1,22 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FiClock, FiCalendar, FiTrendingUp, FiActivity, FiBell, FiCheck, FiX } from 'react-icons/fi';
+import { FiClock, FiCalendar, FiTrendingUp, FiActivity, FiCheck, FiX } from 'react-icons/fi';
 import Button from '../components/common/Button';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
-import { useNotifications } from '../contexts/NotificationContext';
+// Notification context removed
 import './Dashboard.css';
 
 const EmployeeDashboard = () => {
   const { user } = useAuth();
-  const { notifications, unreadCount, markAsRead, markAllAsRead, addNotification } = useNotifications();
+  // Notification functionality removed
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [checkInLoading, setCheckInLoading] = useState(false);
   const [checkOutLoading, setCheckOutLoading] = useState(false);
   const [reCheckInLoading, setReCheckInLoading] = useState(false);
   const [reCheckOutLoading, setReCheckOutLoading] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
+  // Notification state removed
   const [todayStatus, setTodayStatus] = useState({
     canCheckIn: true,
     canCheckOut: false,
@@ -42,29 +42,14 @@ const EmployeeDashboard = () => {
         });
       }
       
-      // Check for new leave status updates and create notifications
-      const recentLeaves = dashRes.data?.data?.recentLeaves || [];
-      // Generate notifications for any approved/rejected leaves that are not yet in context
-      recentLeaves.forEach(leave => {
-        if (leave.status === 'approved' || leave.status === 'rejected') {
-          const exists = notifications.some(n => n.id === leave.id && n.type === leave.status);
-          if (!exists) {
-            addNotification({
-              id: leave.id,
-              type: leave.status,
-              title: `Leave Request ${leave.status === 'approved' ? 'Approved' : 'Rejected'}`,
-              message: `Your ${leave.leaveType} leave from ${leave.fromDate} to ${leave.toDate} has been ${leave.status}`
-            });
-          }
-        }
-      });
+      // Notification functionality removed
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       toast.error('Failed to load dashboard data');
     } finally {
       setLoading(false);
     }
-  }, [addNotification, notifications]);
+  }, []);
 
   useEffect(() => {
     fetchDashboardData();
@@ -73,9 +58,7 @@ const EmployeeDashboard = () => {
     return () => clearInterval(interval);
   }, [fetchDashboardData]);
 
-  const markNotificationAsRead = (notificationId) => {
-    markAsRead(notificationId);
-  };
+  // Notification functions removed
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -170,50 +153,7 @@ const EmployeeDashboard = () => {
 
   return (
     <div className="dashboard-container">
-      {/* Notification Header */}
-      <div className="notification-header">
-        <div className="notification-bell" onClick={() => setShowNotifications(!showNotifications)}>
-          <FiBell className="bell-icon" />
-          {unreadCount > 0 && (
-            <span className="notification-badge">
-              {unreadCount}
-            </span>
-          )}
-        </div>
-        
-        {showNotifications && (
-          <div className="notifications-dropdown">
-            <div className="notifications-header">
-              <h4>Notifications</h4>
-              <Button variant="secondary" onClick={markAllAsRead} size="small">Mark all read</Button>
-            </div>
-            {notifications.length > 0 ? (
-              <div className="notifications-list">
-                {notifications.map((notification) => (
-                  <div 
-                    key={notification.id} 
-                    className={`notification-item ${notification.read ? 'read' : 'unread'}`}
-                    onClick={() => markNotificationAsRead(notification.id)}
-                  >
-                    <div className="notification-icon">
-                      {notification.type === 'approved' ? <FiCheck className="approved" /> : <FiX className="rejected" />}
-                    </div>
-                    <div className="notification-content">
-                      <div className="notification-title">{notification.title}</div>
-                      <div className="notification-message">{notification.message}</div>
-                      <div className="notification-time">
-                        {new Date(notification.timestamp).toLocaleTimeString()}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="no-notifications">No notifications</div>
-            )}
-          </div>
-        )}
-      </div>
+      {/* Notification Header removed */}
 
       {/* Page Header */}
       <div className="page-header">

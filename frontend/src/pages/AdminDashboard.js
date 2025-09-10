@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { FiHome, FiUsers, FiClock, FiFileText, FiBarChart2, FiSearch, FiDownload, FiCheck, FiX, FiEdit, FiTrash2, FiEye, FiCalendar, FiUser, FiTrendingUp, FiTrendingDown, FiBell, FiDollarSign } from 'react-icons/fi';
+import { FiHome, FiUsers, FiClock, FiFileText, FiBarChart2, FiSearch, FiDownload, FiCheck, FiX, FiEdit, FiTrash2, FiEye, FiCalendar, FiUser, FiTrendingUp, FiTrendingDown, FiDollarSign } from 'react-icons/fi';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
-import { useNotifications } from '../contexts/NotificationContext';
+// Notification context removed
 import { Reports } from '../components/dashboard';
 // moment.js removed - using native Date methods
 import './AdminDashboard.css';
@@ -48,7 +48,7 @@ const AdminDashboard = () => {
   const [selectedLeaveRecord, setSelectedLeaveRecord] = useState(null);
   
   const { logout } = useAuth();
-  const { addNotification, unreadCount, markAllAsRead } = useNotifications();
+  // Notification functionality removed
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -197,17 +197,9 @@ const AdminDashboard = () => {
     const previousLeaves = leaveRequests;
     setLeaveRequests(prev => prev.map(l => l.id === leaveId ? { ...l, status: 'approved' } : l));
     try {
-      const leave = previousLeaves.find(l => l.id === leaveId);
       await api.put(`/leaves/${leaveId}/approve`, { notes: 'Approved by admin' });
       toast.success('Leave request approved successfully!');
-      if (leave) {
-        addNotification({
-          type: 'leave_approved',
-          title: 'Leave Request Approved',
-          message: `Your ${leave.leaveType} leave has been approved`,
-          employeeId: leave.employeeId
-        });
-      }
+      // Notification functionality removed
       fetchDashboardData();
     } catch (error) {
       // Rollback on failure
@@ -239,17 +231,9 @@ const AdminDashboard = () => {
     const previousLeaves = leaveRequests;
     setLeaveRequests(prev => prev.map(l => l.id === leaveId ? { ...l, status: 'rejected', rejectionReason: reason } : l));
     try {
-      const leave = previousLeaves.find(l => l.id === leaveId);
       await api.put(`/leaves/${leaveId}/reject`, { rejectionReason: reason });
       toast.success('Leave request rejected successfully!');
-      if (leave) {
-        addNotification({
-          type: 'leave_rejected',
-          title: 'Leave Request Rejected',
-          message: `Your ${leave.leaveType} leave has been rejected: ${reason}`,
-          employeeId: leave.employeeId
-        });
-      }
+      // Notification functionality removed
       fetchDashboardData();
     } catch (error) {
       // Rollback on failure
@@ -919,10 +903,7 @@ const AdminDashboard = () => {
         <div className="header-content">
           <h2>{sidebarItems.find(item => item.section === activeSection)?.label || 'Dashboard'}</h2>
           <div className="header-actions">
-            <button className="btn btn-secondary btn-sm" onClick={() => markAllAsRead()} title="Mark all notifications as read">
-              <FiBell />
-              {unreadCount > 0 && <span className="badge" style={{marginLeft: 6}}>{unreadCount}</span>}
-            </button>
+            {/* Notification button removed */}
             <button className="btn btn-secondary btn-sm" onClick={logout}>
               <FiUser />
               <span>Logout</span>
