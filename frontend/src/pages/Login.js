@@ -16,6 +16,7 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const roleSelectorRef = React.useRef(null);
   
   // Password visibility toggle function
   const togglePasswordVisibility = () => {
@@ -35,6 +36,25 @@ const Login = () => {
       navigate(intendedPath, { replace: true });
     }
   }, [user, navigate, location]);
+
+  // Handle click outside to close role dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (roleSelectorRef.current && !roleSelectorRef.current.contains(event.target)) {
+        setShowRoleDropdown(false);
+      }
+    };
+
+    if (showRoleDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [showRoleDropdown]);
 
   // Test backend connection
   const handleTestConnection = async () => {
@@ -77,6 +97,27 @@ const Login = () => {
     if (errors.role) {
       setErrors(prev => ({ ...prev, role: '' }));
     }
+  };
+
+  const handleRoleDropdownToggle = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowRoleDropdown(!showRoleDropdown);
+  };
+
+  const handleRoleKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setShowRoleDropdown(!showRoleDropdown);
+    } else if (e.key === 'Escape') {
+      setShowRoleDropdown(false);
+    }
+  };
+
+  const handleRoleOptionClick = (role, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleRoleSelect(role);
   };
 
   const validateForm = () => {
@@ -168,12 +209,15 @@ const Login = () => {
           {/* Role Selector */}
           <div className="form-group">
             <label className="form-label">Login as *</label>
-            <div className="role-selector">
+            <div className="role-selector" ref={roleSelectorRef}>
               <button
                 type="button"
                 className={`role-selector-btn ${showRoleDropdown ? 'active' : ''} ${errors.role ? 'error' : ''}`}
-                onClick={() => setShowRoleDropdown(!showRoleDropdown)}
-                onBlur={() => setTimeout(() => setShowRoleDropdown(false), 200)}
+                onClick={handleRoleDropdownToggle}
+                onKeyDown={handleRoleKeyDown}
+                onMouseDown={(e) => e.preventDefault()}
+                aria-expanded={showRoleDropdown}
+                aria-haspopup="listbox"
               >
                 <div className="role-info">
                   <span className="role-icon">
@@ -193,7 +237,8 @@ const Login = () => {
                       key={role.value}
                       type="button"
                       className={`role-option ${formData.role === role.value ? 'selected' : ''}`}
-                      onClick={() => handleRoleSelect(role.value)}
+                      onClick={(e) => handleRoleOptionClick(role.value, e)}
+                      onMouseDown={(e) => e.preventDefault()}
                     >
                       <span className="role-icon">{role.icon}</span>
                       <span className="role-text">{role.label}</span>

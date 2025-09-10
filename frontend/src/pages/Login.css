@@ -178,6 +178,10 @@
   font-family: var(--font-sans);
   font-size: var(--text-base);
   color: #ffffff;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .role-selector-btn:hover,
@@ -247,6 +251,10 @@
   font-family: var(--font-sans);
   font-size: var(--text-base);
   color: #ffffff;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .role-option:hover {
