@@ -16,6 +16,11 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  
+  // Password visibility toggle function
+  const togglePasswordVisibility = () => {
+    setShowPassword(prev => !prev);
+  };
   const [generalError, setGeneralError] = useState('');
   const [isThrottled, setIsThrottled] = useState(false);
 
@@ -237,8 +242,17 @@ const Login = () => {
               <button
                 type="button"
                 className="password-toggle"
-                onClick={() => setShowPassword(!showPassword)}
+                onClick={togglePasswordVisibility}
                 disabled={loading}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                style={{
+                  pointerEvents: 'auto',
+                  zIndex: 10,
+                  position: 'absolute',
+                  right: '1rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)'
+                }}
               >
                 {showPassword ? <FiEyeOff /> : <FiEye />}
               </button>

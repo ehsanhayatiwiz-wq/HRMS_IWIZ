@@ -277,6 +277,7 @@
 .form-input {
   width: 100%;
   padding: var(--space-4);
+  padding-right: 3rem; /* Make space for the toggle button */
   border: 1px solid #8b5cf6;
   border-radius: var(--radius-xl);
   font-size: var(--text-base);
@@ -313,6 +314,8 @@
 .password-toggle {
   position: absolute;
   right: var(--space-4);
+  top: 50%;
+  transform: translateY(-50%);
   background: none;
   border: none;
   color: #9ca3af;
@@ -321,11 +324,26 @@
   padding: var(--space-1);
   border-radius: var(--radius-md);
   transition: all var(--transition-fast);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
 }
 
 .password-toggle:hover {
   color: #8b5cf6;
   background: var(--bg-tertiary);
+}
+
+.password-toggle:focus {
+  outline: 2px solid #8b5cf6;
+  outline-offset: 2px;
+}
+
+.password-toggle:active {
+  transform: translateY(-50%) scale(0.95);
 }
 
 /* Error Messages */
@@ -453,6 +471,7 @@
   
   .form-input {
     padding: var(--space-3);
+    padding-right: 2.5rem; /* Space for toggle button */
     font-size: var(--text-base);
   }
   
@@ -499,6 +518,7 @@
   
   .form-input {
     padding: var(--space-2) var(--space-3);
+    padding-right: 2.25rem; /* Space for toggle button */
     font-size: var(--text-sm);
   }
   
@@ -554,6 +574,7 @@
   
   .form-input {
     padding: var(--space-2);
+    padding-right: 2rem; /* Space for toggle button */
     font-size: var(--text-xs);
   }
   
@@ -613,6 +634,7 @@
   
   .form-input {
     padding: var(--space-1) var(--space-2);
+    padding-right: 1.75rem; /* Space for toggle button */
   }
   
   /* Icon styles removed */
@@ -652,6 +674,7 @@
   
   .form-input {
     padding: var(--space-2) var(--space-3);
+    padding-right: 2.25rem; /* Space for toggle button */
   }
   
   .submit-button {
