@@ -133,7 +133,7 @@ const Button = ({ variant = 'primary', icon, children, onClick, disabled, type =
       onFocus={() => setHover(true)}
       onBlur={() => setHover(false)}
     >
-      {/* Shimmer effect */}
+      {/* Shimmer effect - Fixed animation */}
       {hover && !disabled && (
         <div
           style={{
@@ -143,8 +143,8 @@ const Button = ({ variant = 'primary', icon, children, onClick, disabled, type =
             width: '100%',
             height: '100%',
             background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
-            transition: 'left 0.5s',
-            animation: 'shimmer 0.5s forwards'
+            transition: 'left 0.5s ease-out',
+            animation: 'shimmer 0.5s ease-out forwards'
           }}
         />
       )}
